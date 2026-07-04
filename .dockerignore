@@ -1,0 +1,7 @@
+.gradle
+build
+bin
+*.log
+.git
+.github
+.idea
