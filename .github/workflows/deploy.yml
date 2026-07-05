@@ -27,8 +27,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/promsearch-backend:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/promsearch-backend:${{ github.event.workflow_run.head_sha }}
+            ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
+            ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:${{ github.event.workflow_run.head_sha }}
 
   deploy:
     needs: build-and-push
@@ -41,10 +41,10 @@ jobs:
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/promsearch-backend:latest
-            docker stop promsearch-backend || true
-            docker rm promsearch-backend || true
-            docker run -d --name promsearch-backend --restart unless-stopped -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/promsearch-backend:latest
+            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
+            docker stop promsearch || true
+            docker rm promsearch || true
+            docker run -d --name promsearch --restart unless-stopped -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
             docker image prune -f
 
       - name: Notify Discord on failure

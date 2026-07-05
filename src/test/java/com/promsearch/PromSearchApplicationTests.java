@@ -1,10 +1,10 @@
-package com.promsearch.backend;
+package com.promsearch;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class BackendApplicationTests {
+class PromSearchApplicationTests {
 
 	@Test
 	void contextLoads() {

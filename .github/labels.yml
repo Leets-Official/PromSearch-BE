@@ -1,0 +1,56 @@
+- name: feature
+  color: "0E8A16"
+  description: 새로운 기능 추가
+
+- name: bug
+  color: "D73A4A"
+  description: 버그 수정
+
+- name: refactor
+  color: "5319E7"
+  description: 기능 변경 없는 구조 개선
+
+- name: chore
+  color: "C5DEF5"
+  description: 빌드, 설정, CI/CD, 환경 작업
+
+- name: docs
+  color: "0075CA"
+  description: 문서 작성 또는 수정
+
+- name: task
+  color: "FBCA04"
+  description: 여러 작업을 묶는 상위 이슈
+
+- name: domain:auth
+  color: "BFDADC"
+  description: 인증/인가 도메인
+
+- name: domain:user
+  color: "BFDADC"
+  description: 사용자 도메인
+
+- name: domain:prompt
+  color: "BFDADC"
+  description: 프롬프트 도메인
+
+- name: domain:point
+  color: "BFDADC"
+  description: 포인트/언락 도메인
+
+- name: domain:tracking
+  color: "BFDADC"
+  description: 이벤트/지표 도메인
+
+- name: security
+  color: "B60205"
+  description: 보안, 권한, 민감 정보 노출
+
+- name: api
+  color: "1D76DB"
+  description: API 계약 변경
+
+- name: db
+  color: "7057FF"
+  description: DB, ERD, 마이그레이션
+

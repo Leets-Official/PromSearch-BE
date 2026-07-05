@@ -27,8 +27,8 @@ http://localhost:8080/health
 ## Docker로 로컬 실행
 
 ```bash
-docker build -t promsearch-backend .
-docker run -p 8080:8080 promsearch-backend
+docker build -t promsearch .
+docker run -p 8080:8080 promsearch
 ```
 
 ## 배포된 서버 확인

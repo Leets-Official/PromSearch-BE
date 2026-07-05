@@ -1,0 +1,7 @@
+# PromSearch CODEOWNERS
+# 실제 GitHub 팀 또는 사용자 계정이 정해지면 아래 예시의 주석을 해제해 사용하세요.
+#
+# * @your-org/server-team
+# /src/main/java/com/promsearch/prompt/ @your-org/prompt-domain-owner
+# /src/main/java/com/promsearch/point/ @your-org/point-domain-owner
+# /.github/ @your-org/devops-owner
