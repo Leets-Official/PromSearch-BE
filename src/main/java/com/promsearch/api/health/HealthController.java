@@ -1,4 +1,4 @@
-package com.promsearch.backend.api.health;
+package com.promsearch.api.health;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

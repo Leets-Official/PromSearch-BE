@@ -1,0 +1,89 @@
+name: "Feature"
+description: 새로운 기능을 제안하거나 구현합니다.
+title: "[Feat] "
+labels: ["feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        PromSearch의 새로운 기능 추가에 사용하는 템플릿입니다.
+        기능의 목적, 사용자 가치, 도메인 영향 범위를 함께 작성해주세요.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 어떤 기능인가요?
+      description: 무엇을, 왜 구현해야 하는지 작성해주세요.
+      placeholder: |
+        e.g. 유료 프롬프트를 포인트로 언락할 수 있도록 post_unlocks 기록과 포인트 차감 로직을 추가합니다.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: domain
+    attributes:
+      label: 관련 도메인
+      multiple: true
+      options:
+        - auth
+        - user
+        - prompt
+        - point
+        - interaction
+        - comment
+        - moderation
+        - tracking
+        - admin
+        - global
+        - docs/config
+    validations:
+      required: true
+
+  - type: textarea
+    id: requirements
+    attributes:
+      label: 요구사항
+      description: 기능이 만족해야 하는 조건을 체크리스트로 작성해주세요.
+      placeholder: |
+        - [ ] FREE 프롬프트는 원문을 즉시 반환한다.
+        - [ ] PREMIUM/MASTER 프롬프트는 언락 전 원문을 마스킹한다.
+        - [ ] 언락 시 포인트 내역과 언락 기록을 함께 저장한다.
+    validations:
+      required: true
+
+  - type: textarea
+    id: todo
+    attributes:
+      label: TODO
+      description: 구현 작업을 가능한 작은 단위로 나눠주세요.
+      placeholder: |
+        - [ ] Command/Query 객체 정의
+        - [ ] UseCase 구현
+        - [ ] Controller 및 DTO 구현
+        - [ ] 테스트 추가
+    validations:
+      required: false
+
+  - type: textarea
+    id: references
+    attributes:
+      label: 참고 자료
+      description: 기획서, ERD, API 명세, 관련 이슈/PR 링크를 첨부해주세요.
+      placeholder: |
+        - related to #
+        - https://...
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 유료 콘텐츠 원문 노출 정책에 영향이 있는지 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false
+

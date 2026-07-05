@@ -1,0 +1,68 @@
+name: "Docs"
+description: 문서를 작성하거나 수정합니다.
+title: "[Docs] "
+labels: ["docs"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        README, API 명세, 아키텍처, ERD, 운영 문서 등 문서 작업에 사용해주세요.
+
+  - type: dropdown
+    id: doc_type
+    attributes:
+      label: 문서 유형
+      options:
+        - 아키텍처 / 설계
+        - API 명세
+        - ERD / 데이터베이스
+        - 도메인 정책
+        - 개발 가이드 / 컨벤션
+        - 운영 / 배포 가이드
+        - README
+        - 기타
+    validations:
+      required: true
+
+  - type: textarea
+    id: target
+    attributes:
+      label: 문서화 대상
+      description: 어떤 부분을 문서화하려는지 작성해주세요.
+      placeholder: |
+        e.g. 유료 프롬프트 마스킹 정책과 언락 플로우
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: 문서화가 필요한 이유
+      description: 왜 지금 이 문서가 필요한지 작성해주세요.
+      placeholder: |
+        e.g. 프론트엔드가 유료 콘텐츠 응답 필드를 잘못 해석하지 않도록 API 정책 문서가 필요합니다.
+    validations:
+      required: false
+
+  - type: textarea
+    id: content
+    attributes:
+      label: 주요 내용
+      description: 포함되어야 할 핵심 내용을 작성해주세요.
+      placeholder: |
+        - 공개 필드
+        - 마스킹 필드
+        - 언락 권한 판단 기준
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 제출 전 확인사항
+      options:
+        - label: 동일하거나 유사한 이슈가 없는지 확인했습니다.
+          required: true
+        - label: 적절한 라벨과 Assignee를 설정했습니다.
+          required: false
+
