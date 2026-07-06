@@ -28,12 +28,12 @@ body:
         - auth
         - user
         - prompt
-        - point
-        - interaction
-        - comment
+        - commerce
+        - community
         - moderation
         - tracking
         - admin
+        - common
         - global
         - docs/config
     validations:
@@ -86,4 +86,3 @@ body:
           required: true
         - label: 적절한 라벨과 Assignee를 설정했습니다.
           required: false
-

@@ -22,14 +22,27 @@ promsearch
 ├── auth
 ├── user
 ├── prompt
-├── point
-├── interaction
-├── comment
+├── commerce
+├── community
 ├── moderation
 ├── tracking
 ├── admin
+├── common
 └── global
 ```
+
+도메인 책임:
+
+- `auth`: 로그인, 로그아웃, 토큰 재발급 등 인증 흐름
+- `user`: 회원 정보, 프로필, 권한, 크리에이터 등급, 유저 상태
+- `prompt`: 프롬프트 콘텐츠 본체, 이미지, 태그, 검색, 통계
+- `commerce`: 포인트 내역, 유료 프롬프트 언락, 창작자 보상
+- `community`: 댓글, 좋아요, 북마크 등 사용자 반응
+- `moderation`: 신고, 숨김, 검토, 제재 정책
+- `tracking`: 이벤트 로그 수집
+- `admin`: 관리자 API 입구. 실제 처리는 각 도메인의 UseCase 호출
+- `common`: 공통 기반 클래스와 공통 예외
+- `global`: 전역 설정, 전역 예외 처리, 공통 응답, 보안, 유틸
 
 각 주요 도메인은 다음 계층을 기준으로 구성합니다.
 
@@ -44,6 +57,7 @@ promsearch
 │   └── port
 │       └── out
 ├── domain
+│   └── enums
 └── infrastructure
     └── persistence
 ```
@@ -85,6 +99,9 @@ promsearch
 - 프론트엔드는 언락 권한이 없는 유료 프롬프트 원문을 받을 수 없어야 합니다.
 - 포인트 차감과 언락 기록은 일관성을 갖도록 하나의 트랜잭션에서 처리합니다.
 - 조회수, 복사, 좋아요, 신고, 댓글 등 지표는 도메인 정책과 집계 정책을 분리합니다.
+- 포인트/언락 흐름은 `commerce`에 둡니다.
+- 댓글/좋아요/북마크는 `community`에 둡니다.
+- 태그와 프롬프트 이미지는 `prompt` 내부 개념으로 둡니다.
 
 ## 테스트 기준
 

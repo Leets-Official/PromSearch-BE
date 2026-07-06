@@ -11,4 +11,6 @@ FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /app/build/libs/*.jar app.jar
 EXPOSE 8080
+HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
+  CMD wget -q --spider http://localhost:8080/test/health-check || exit 1
 ENTRYPOINT ["java", "-jar", "app.jar"]

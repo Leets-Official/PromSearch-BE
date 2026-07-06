@@ -1,0 +1,46 @@
+package com.promsearch.user.domain.exception;
+
+import com.promsearch.global.response.code.BaseCode;
+import org.springframework.http.HttpStatus;
+
+public enum UserErrorCode implements BaseCode {
+
+    USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-001", "사용자를 찾을 수 없습니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER-002", "이미 사용 중인 이메일입니다."),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER-003", "이미 사용 중인 닉네임입니다."),
+    INVALID_EMAIL(HttpStatus.BAD_REQUEST, "USER-004", "이메일이 유효하지 않습니다."),
+    INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER-005", "비밀번호가 유효하지 않습니다."),
+    INVALID_NICKNAME(HttpStatus.BAD_REQUEST, "USER-006", "닉네임이 유효하지 않습니다."),
+    INVALID_USER_STATUS(HttpStatus.BAD_REQUEST, "USER-007", "사용자 상태가 유효하지 않습니다."),
+    INSUFFICIENT_POINT(HttpStatus.CONFLICT, "USER-008", "보유 포인트가 부족합니다."),
+    INVALID_ID(HttpStatus.BAD_REQUEST, "USER-009", "사용자 식별자가 유효하지 않습니다."),
+    INVALID_NAME(HttpStatus.BAD_REQUEST, "USER-010", "이름이 유효하지 않습니다."),
+    INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "USER-011", "사용자 권한이 유효하지 않습니다."),
+    INVALID_USER_GRADE(HttpStatus.BAD_REQUEST, "USER-012", "사용자 등급이 유효하지 않습니다."),
+    INVALID_POINT(HttpStatus.BAD_REQUEST, "USER-013", "보유 포인트가 유효하지 않습니다.");
+
+    private final HttpStatus httpStatus;
+    private final String code;
+    private final String message;
+
+    UserErrorCode(HttpStatus httpStatus, String code, String message) {
+        this.httpStatus = httpStatus;
+        this.code = code;
+        this.message = message;
+    }
+
+    @Override
+    public HttpStatus getHttpStatus() {
+        return httpStatus;
+    }
+
+    @Override
+    public String getCode() {
+        return code;
+    }
+
+    @Override
+    public String getMessage() {
+        return message;
+    }
+}

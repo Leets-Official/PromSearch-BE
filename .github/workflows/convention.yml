@@ -1,0 +1,31 @@
+name: Convention
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, ready_for_review]
+
+jobs:
+  pr-convention:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if [[ ! "$PR_TITLE" =~ ^\[(Feat|Fix|Hotfix|Refactor|Chore|Docs|Test)\]\ .+ ]]; then
+            echo "PR 제목은 '[Type] 한국어 요약' 형식이어야 합니다."
+            echo "예시: [Feat] 프로젝트 초기 설정 및 엔티티 구성"
+            echo "허용 태그: [Feat], [Fix], [Hotfix], [Refactor], [Chore], [Docs], [Test]"
+            exit 1
+          fi
+
+      - name: Check branch name
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
+        run: |
+          if [[ ! "$BRANCH_NAME" =~ ^(feat|fix|hotfix|refactor|chore|docs|test)/#[0-9]+-[a-z0-9][a-z0-9-]*$ ]]; then
+            echo "브랜치명은 'type/#이슈번호-영문-요약' 형식이어야 합니다."
+            echo "예시: feat/#2-entity-config-setting"
+            echo "허용 type: feat, fix, hotfix, refactor, chore, docs, test"
+            exit 1
+          fi
