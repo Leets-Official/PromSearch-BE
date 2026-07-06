@@ -145,6 +145,11 @@ Spring Data JPA repositories may use standard Spring Data method names.
 
 - Commit format: `<type>: <subject>`
 - Allowed types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`
-- PR title format: `[Type] Subject`
-- Allowed PR tags: `[Feat]`, `[Fix]`, `[Hotfix]`, `[Refactor]`, `[Chore]`, `[Docs]`
+- Commit subjects may be written in Korean.
+- Branch format: `type/#issue-number-english-summary`
+- Branch examples: `feat/#2-entity-config-setting`, `docs/#8-update-pr-template`
+- Quote branch names containing `#` in shell commands, for example `git push -u origin 'feat/#2-entity-config-setting'`.
+- PR title format: `[Type] Korean summary`
+- PR title examples: `[Feat] 프로젝트 초기 설정 및 엔티티 구성`, `[Docs] PR 템플릿 컨벤션 정리`
+- Allowed PR tags: `[Feat]`, `[Fix]`, `[Hotfix]`, `[Refactor]`, `[Chore]`, `[Docs]`, `[Test]`
 - Never add AI authorship or `Co-authored-by` trailers referencing AI agents.

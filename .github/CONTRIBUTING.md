@@ -8,9 +8,26 @@ PromSearch는 프롬프트 마켓플레이스/커뮤니티 서비스의 API 서�
 ## 브랜치 전략
 
 - 기본 브랜치: `main`
-- 기능 브랜치: `feat/{issue-number}-{short-description}`
-- 버그 수정 브랜치: `fix/{issue-number}-{short-description}`
-- 문서/설정 브랜치: `docs/{issue-number}-{short-description}`, `chore/{issue-number}-{short-description}`
+- 기능 브랜치: `feat/#{issue-number}-{short-description}`
+- 버그 수정 브랜치: `fix/#{issue-number}-{short-description}`
+- 문서/설정 브랜치: `docs/#{issue-number}-{short-description}`, `chore/#{issue-number}-{short-description}`
+- 리팩터링/테스트 브랜치: `refactor/#{issue-number}-{short-description}`, `test/#{issue-number}-{short-description}`
+
+예시:
+
+```text
+feat/#2-entity-config-setting
+docs/#8-update-pr-template
+fix/#15-prompt-access-check
+chore/#21-github-actions-setting
+```
+
+GitHub Issue의 `Create a branch` 버튼을 사용할 때도 위 형식으로 브랜치명을 수정한 뒤 생성해주세요.
+`#`이 포함된 브랜치를 터미널에서 직접 푸시할 때는 shell 주석으로 해석되지 않도록 따옴표로 감싸주세요.
+
+```bash
+git push -u origin 'feat/#2-entity-config-setting'
+```
 
 팀에서 `develop` 브랜치를 운영하기로 결정하면 PR 대상 브랜치를 `develop`으로 맞춰주세요.
 
@@ -41,6 +58,7 @@ fix: mask paid prompt body before unlock
 ## Pull Request 규칙
 
 - PR 제목은 `[Feat] 프롬프트 언락 기능 추가`처럼 대괄호 태그를 사용합니다.
+- 허용 PR 태그: `[Feat]`, `[Fix]`, `[Hotfix]`, `[Refactor]`, `[Chore]`, `[Docs]`, `[Test]`
 - PR 본문에 연관 이슈, 작업 내용, 테스트 결과를 작성합니다.
 - 유료 프롬프트 원문, 토큰, 개인정보가 로그나 응답 예시에 포함되지 않도록 주의합니다.
 - 최소 1명 이상의 리뷰 승인 후 병합합니다.
