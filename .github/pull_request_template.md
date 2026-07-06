@@ -1,3 +1,4 @@
+<!--
 ## PR 제목 / 브랜치 컨벤션
 
 > PR 제목은 `[Type] 한국어 요약` 형식으로 작성해주세요.
@@ -16,6 +17,7 @@ PR 제목 예시:
 - `docs/#8-update-pr-template`
 - `fix/#15-prompt-access-check`
 - `chore/#21-github-actions-setting`
+-->
 
 ## 체크리스트
 
