@@ -20,7 +20,7 @@
 
 정상 실행되면 아래 주소로 헬스체크 확인:
 ```
-http://localhost:8080/health
+http://localhost:8080/test/health-check
 → OK
 ```
 
@@ -34,7 +34,7 @@ docker run -p 8080:8080 promsearch
 ## 배포된 서버 확인
 
 ```
-http://[EC2_퍼블릭_IP]:8080/health
+http://[EC2_퍼블릭_IP]:8080/test/health-check
 ```
 
 실제 IP는 팀 내부 인프라 문서(Notion) 참고. 이 값은 보안상 README에 직접 기재하지 않습니다.

@@ -3,5 +3,6 @@
 #
 # * @your-org/server-team
 # /src/main/java/com/promsearch/prompt/ @your-org/prompt-domain-owner
-# /src/main/java/com/promsearch/point/ @your-org/point-domain-owner
+# /src/main/java/com/promsearch/commerce/ @your-org/commerce-domain-owner
+# /src/main/java/com/promsearch/community/ @your-org/community-domain-owner
 # /.github/ @your-org/devops-owner

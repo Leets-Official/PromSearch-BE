@@ -15,7 +15,7 @@ body:
       label: 어떤 작업인가요?
       description: 목표와 배경을 작성해주세요.
       placeholder: |
-        e.g. 프롬프트 MVP 핵심 도메인(prompt, point, tracking) 초기 골격을 구성합니다.
+        e.g. 프롬프트 MVP 핵심 도메인(prompt, commerce, tracking) 초기 골격을 구성합니다.
     validations:
       required: true
 
@@ -26,7 +26,7 @@ body:
       description: 하위 작업을 체크리스트로 작성해주세요.
       placeholder: |
         - [ ] prompt 도메인 패키지 생성
-        - [ ] point 도메인 패키지 생성
+        - [ ] commerce 도메인 패키지 생성
         - [ ] tracking 이벤트 로그 정책 정리
     validations:
       required: true
@@ -51,4 +51,3 @@ body:
           required: true
         - label: 적절한 라벨과 Assignee를 설정했습니다.
           required: false
-

@@ -34,9 +34,13 @@
   color: "BFDADC"
   description: 프롬프트 도메인
 
-- name: domain:point
+- name: domain:commerce
   color: "BFDADC"
-  description: 포인트/언락 도메인
+  description: 포인트/언락/창작자 보상 도메인
+
+- name: domain:community
+  color: "BFDADC"
+  description: 댓글/좋아요/북마크 도메인
 
 - name: domain:tracking
   color: "BFDADC"
@@ -53,4 +57,3 @@
 - name: db
   color: "7057FF"
   description: DB, ERD, 마이그레이션
-

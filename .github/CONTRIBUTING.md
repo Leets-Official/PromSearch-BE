@@ -47,7 +47,7 @@ fix: mask paid prompt body before unlock
 
 ## 아키텍처 원칙
 
-- 패키지는 도메인 기준으로 나눕니다. 예: `auth`, `user`, `prompt`, `point`, `interaction`, `comment`, `moderation`, `tracking`, `admin`, `global`
+- 패키지는 도메인 기준으로 나눕니다. 예: `auth`, `user`, `prompt`, `commerce`, `community`, `moderation`, `tracking`, `admin`, `common`, `global`
 - Controller는 비즈니스 로직을 갖지 않고 UseCase를 호출합니다.
 - Application Service는 트랜잭션 경계와 유스케이스 오케스트레이션을 담당합니다.
 - Domain은 Spring, JPA, Application, Infrastructure에 의존하지 않습니다.

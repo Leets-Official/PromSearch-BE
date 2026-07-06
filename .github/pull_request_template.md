@@ -23,12 +23,12 @@
 - [ ] `auth`
 - [ ] `user`
 - [ ] `prompt`
-- [ ] `point`
-- [ ] `interaction`
-- [ ] `comment`
+- [ ] `commerce`
+- [ ] `community`
 - [ ] `moderation`
 - [ ] `tracking`
 - [ ] `admin`
+- [ ] `common`
 - [ ] `global`
 - [ ] 문서 / 설정 / 배포
 
@@ -49,4 +49,3 @@
 ## 스크린샷 / 응답 예시
 
 > API 응답, Swagger, 로그, 화면 캡처 등 확인에 필요한 자료가 있다면 첨부해주세요.
-
