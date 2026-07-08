@@ -97,4 +97,8 @@ public class UserJpaEntity extends BaseEntity {
                 getUpdatedAt()
         );
     }
+
+    public String getPassword() {
+        return password;
+    }
 }
