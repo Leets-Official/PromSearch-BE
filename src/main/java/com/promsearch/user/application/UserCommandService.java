@@ -19,8 +19,8 @@ public class UserCommandService implements SignupUseCase {
 
     @Override
     public SignupInfo signup(SignupCommand command) {
-        validateDuplicateNickname(command.nickname());
         validateDuplicateEmail(command.email());
+        validateDuplicateNickname(command.nickname());
 
         String encodedPassword = passwordEncoder.encode(command.password());
         User user = User.create(
@@ -31,7 +31,7 @@ public class UserCommandService implements SignupUseCase {
                 null
         );
 
-        return SignupInfo.from(userRepository.save(user));
+        return SignupInfo.from(userRepository.create(user));
     }
 
     private void validateDuplicateNickname(String nickname) {

@@ -16,16 +16,16 @@ public class UserPersistenceAdapter implements UserRepository {
     private final UserJpaRepository userJpaRepository;
 
     @Override
-    public User save(User user) {
+    public User create(User user) {
         try {
-            UserJpaEntity savedUser = userJpaRepository.save(UserMapper.toJpaEntity(user));
+            UserJpaEntity savedUser = userJpaRepository.saveAndFlush(UserMapper.toJpaEntity(user));
             return UserMapper.toDomain(savedUser);
         } catch (DataIntegrityViolationException e) {
-            if (userJpaRepository.existsByNickname(user.getNickname())) {
-                throw new UserDomainException(UserErrorCode.DUPLICATE_NICKNAME);
-            }
             if (userJpaRepository.existsByEmail(user.getEmail())) {
                 throw new UserDomainException(UserErrorCode.DUPLICATE_EMAIL);
+            }
+            if (userJpaRepository.existsByNickname(user.getNickname())) {
+                throw new UserDomainException(UserErrorCode.DUPLICATE_NICKNAME);
             }
             throw e;
         }
