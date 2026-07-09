@@ -113,6 +113,27 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("USER-002"));
     }
 
+
+    @DisplayName("이메일과 닉네임이 모두 중복이면 이메일 중복 에러를 우선 반환한다")
+    @Test
+    void signupFailWithEmailErrorWhenEmailAndNicknameDuplicated() throws Exception {
+        signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
+
+        SignupRequest duplicatedRequest = new SignupRequest(
+            "Kim Gil Dong",
+            "gildong",
+            "gildong@example.com",
+            "password123"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicatedRequest)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("USER-002"));
+    }
+
     @DisplayName("잘못된 요청값이면 회원가입에 실패한다")
     @Test
     void signupFailWhenRequestInvalid() throws Exception {
@@ -212,25 +233,6 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
-    @DisplayName("이메일과 닉네임이 모두 중복이면 이메일 중복 에러를 우선 반환한다")
-    @Test
-    void signupFailWithEmailErrorWhenEmailAndNicknameDuplicated() throws Exception {
-        signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
-
-        SignupRequest duplicatedRequest = new SignupRequest(
-                "Kim Gil Dong",
-                "gildong",
-                "gildong@example.com",
-                "password123"
-        );
-
-        mockMvc.perform(post("/api/v1/auth/signup")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicatedRequest)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("USER-002"));
-    }
 
     private void signup(String name, String nickname, String email, String password) throws Exception {
         SignupRequest request = new SignupRequest(name, nickname, email, password);
