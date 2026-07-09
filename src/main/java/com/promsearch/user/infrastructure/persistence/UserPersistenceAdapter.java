@@ -32,6 +32,12 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findById(Long userId) {
+        return userJpaRepository.findById(userId)
+                .map(UserMapper::toDomain);
+    }
+
+    @Override
     public Optional<User> findByEmail(String email) {
         return userJpaRepository.findByEmail(email)
                 .map(UserMapper::toDomain);

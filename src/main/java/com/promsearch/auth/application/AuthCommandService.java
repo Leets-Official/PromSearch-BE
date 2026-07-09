@@ -1,6 +1,7 @@
 package com.promsearch.auth.application;
 
 import com.promsearch.auth.application.port.out.AccessTokenProvider;
+import com.promsearch.auth.application.port.out.RefreshTokenProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
 import com.promsearch.user.application.port.out.UserRepository;
@@ -14,11 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class AuthCommandService implements LoginUseCase {
+public class AuthCommandService implements LoginUseCase, ReissueUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenProvider accessTokenProvider;
+    private final RefreshTokenProvider refreshTokenProvider;
 
     @Override
     public LoginInfo login(LoginCommand command) {
@@ -30,8 +32,23 @@ public class AuthCommandService implements LoginUseCase {
 
         return LoginInfo.of(
                 accessTokenProvider.createAccessToken(user),
+                refreshTokenProvider.createRefreshToken(user),
                 accessTokenProvider.getAccessTokenExpirationSeconds(),
                 user
+        );
+    }
+
+    @Override
+    public ReissueInfo reissue(ReissueCommand command) {
+        Long userId = refreshTokenProvider.getUserId(command.refreshToken());
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AuthDomainException(AuthErrorCode.INVALID_TOKEN));
+
+        validateActiveUser(user);
+
+        return ReissueInfo.of(
+                accessTokenProvider.createAccessToken(user),
+                accessTokenProvider.getAccessTokenExpirationSeconds()
         );
     }
 

@@ -6,8 +6,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.auth.interfaces.dto.LoginRequest;
+import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
@@ -166,6 +168,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-200"))
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
@@ -173,6 +176,51 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
+    }
+
+    @DisplayName("refresh token으로 access token 재발급에 성공한다")
+    @Test
+    void reissueSuccess() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+
+        LoginRequest loginRequest = new LoginRequest("gildong@example.com", "password123");
+
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode loginResult = objectMapper.readTree(loginResponse).get("result");
+        String refreshToken = loginResult.get("refreshToken").asText();
+
+        ReissueRequest reissueRequest = new ReissueRequest(refreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.result.expiresIn").value(3600));
+    }
+
+    @DisplayName("유효하지 않은 refresh token이면 access token 재발급에 실패한다")
+    @Test
+    void reissueFailWhenRefreshTokenInvalid() throws Exception {
+        ReissueRequest request = new ReissueRequest("invalid-refresh-token");
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
     }
 
     @DisplayName("존재하지 않는 이메일이면 로그인에 실패한다")

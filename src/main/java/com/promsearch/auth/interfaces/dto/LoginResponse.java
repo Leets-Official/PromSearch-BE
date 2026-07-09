@@ -4,6 +4,7 @@ import com.promsearch.auth.application.LoginInfo;
 
 public record LoginResponse(
         String accessToken,
+        String refreshToken,
         String tokenType,
         Long expiresIn,
         Long userId,
@@ -15,6 +16,7 @@ public record LoginResponse(
     public static LoginResponse from(LoginInfo info) {
         return new LoginResponse(
                 info.accessToken(),
+                info.refreshToken(),
                 info.tokenType(),
                 info.expiresIn(),
                 info.userId(),

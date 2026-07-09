@@ -7,6 +7,8 @@ public interface UserRepository {
 
     User create(User user);
 
+    Optional<User> findById(Long userId);
+
     Optional<User> findByEmail(String email);
 
     boolean existsByNickname(String nickname);
