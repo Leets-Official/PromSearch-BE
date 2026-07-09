@@ -106,6 +106,42 @@ public class User {
                 .build();
     }
 
+    public User updateProfile(String email, String password, String nickname, String name, String profileImageUrl) {
+        validateRequired(email, password, nickname, name, point, role, grade, status);
+
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    public User delete() {
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(UserStatus.DELETED)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
     private static void validateRequired(
             String email,
             String password,

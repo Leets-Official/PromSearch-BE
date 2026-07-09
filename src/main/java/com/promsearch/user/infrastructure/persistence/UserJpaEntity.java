@@ -6,6 +6,8 @@ import com.promsearch.user.domain.User.UserId;
 import com.promsearch.user.domain.enums.UserGrade;
 import com.promsearch.user.domain.enums.UserRole;
 import com.promsearch.user.domain.enums.UserStatus;
+import com.promsearch.user.domain.exception.UserDomainException;
+import com.promsearch.user.domain.exception.UserErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -81,6 +83,21 @@ public class UserJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public void updateProfile(String email, String password, String nickname, String name, String profileImageUrl) {
+        validateProfile(email, password, nickname, name);
+
+        this.email = email;
+        this.password = password;
+        this.nickname = nickname;
+        this.name = name;
+        this.profileImageUrl = profileImageUrl;
+    }
+
+    public void delete() {
+        this.status = UserStatus.DELETED;
+        markDeleted();
+    }
+
     public User toDomain() {
         return User.reconstruct(
                 new UserId(id),
@@ -100,5 +117,20 @@ public class UserJpaEntity extends BaseEntity {
 
     public String getPassword() {
         return password;
+    }
+
+    private void validateProfile(String email, String password, String nickname, String name) {
+        if (email == null || email.isBlank()) {
+            throw new UserDomainException(UserErrorCode.INVALID_EMAIL);
+        }
+        if (password == null || password.isBlank()) {
+            throw new UserDomainException(UserErrorCode.INVALID_PASSWORD);
+        }
+        if (nickname == null || nickname.isBlank()) {
+            throw new UserDomainException(UserErrorCode.INVALID_NICKNAME);
+        }
+        if (name == null || name.isBlank()) {
+            throw new UserDomainException(UserErrorCode.INVALID_NAME);
+        }
     }
 }
