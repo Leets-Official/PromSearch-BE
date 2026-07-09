@@ -1,3 +1,8 @@
 spring:
   application:
     name: promsearch
+
+auth:
+  jwt:
+    secret: ${JWT_SECRET:promsearch-local-jwt-secret-key-for-development-only}
+    access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:3600}

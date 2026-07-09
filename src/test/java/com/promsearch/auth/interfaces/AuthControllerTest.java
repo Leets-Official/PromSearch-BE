@@ -7,14 +7,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.promsearch.auth.interfaces.dto.LoginRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,6 +39,12 @@ class AuthControllerTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @DisplayName("회원가입에 성공한다")
     @Test
@@ -117,6 +126,87 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(invalidRequest)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
+    @Test
+    void loginSuccess() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+
+        LoginRequest request = new LoginRequest("gildong@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.result.expiresIn").value(3600))
+                .andExpect(jsonPath("$.result.userId", notNullValue()))
+                .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.nickname").value("gildong"))
+                .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
+                .andExpect(jsonPath("$.result.password").doesNotExist());
+    }
+
+    @DisplayName("존재하지 않는 이메일이면 로그인에 실패한다")
+    @Test
+    void loginFailWhenEmailNotFound() throws Exception {
+        LoginRequest request = new LoginRequest("unknown@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("비밀번호가 일치하지 않으면 로그인에 실패한다")
+    @Test
+    void loginFailWhenPasswordMismatch() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+
+        LoginRequest request = new LoginRequest("gildong@example.com", "wrong-password");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("ACTIVE 상태가 아닌 사용자는 로그인에 실패한다")
+    @Test
+    void loginFailWhenUserIsNotActive() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        jdbcTemplate.update("UPDATE users SET status = 'BANNED' WHERE email = ?", "gildong@example.com");
+        entityManager.clear();
+
+        LoginRequest request = new LoginRequest("gildong@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("잘못된 요청값이면 로그인에 실패한다")
+    @Test
+    void loginFailWhenRequestInvalid() throws Exception {
+        LoginRequest request = new LoginRequest("invalid-email", "");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
