@@ -4,7 +4,7 @@ import com.promsearch.user.domain.User;
 
 public interface UserRepository {
 
-    User save(User user);
+    User create(User user);
 
     boolean existsByNickname(String nickname);
 
