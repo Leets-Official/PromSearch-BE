@@ -9,9 +9,8 @@ import com.promsearch.auth.application.port.out.TokenHasher;
 import com.promsearch.auth.domain.RefreshTokenSession;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
-import com.promsearch.user.application.port.out.UserRepository;
-import com.promsearch.user.domain.User;
-import com.promsearch.user.domain.enums.UserStatus;
+import com.promsearch.user.application.AuthUserInfo;
+import com.promsearch.user.application.GetUserCredentialUseCase;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Transactional(readOnly = true)
 public class AuthCommandService implements LoginUseCase, ReissueUseCase {
 
-    private final UserRepository userRepository;
+    private final GetUserCredentialUseCase getUserCredentialUseCase;
     private final PasswordEncoder passwordEncoder;
     private final AccessTokenProvider accessTokenProvider;
     private final RefreshTokenProvider refreshTokenProvider;
@@ -34,14 +33,14 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
     @Override
     @Transactional
     public LoginInfo login(LoginCommand command) {
-        User user = userRepository.findByEmail(command.email())
+        AuthUserInfo user = getUserCredentialUseCase.findByEmail(command.email())
                 .orElseThrow(() -> new AuthDomainException(AuthErrorCode.INVALID_CREDENTIALS));
 
-        validatePassword(command.password(), user.getPassword());
+        validatePassword(command.password(), user.encodedPassword());
         validateActiveUser(user);
 
         RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(user);
-        saveRefreshTokenSession(user.getUserId().id(), refreshToken, UUID.randomUUID().toString());
+        saveRefreshTokenSession(user.userId(), refreshToken, UUID.randomUUID().toString());
 
         return LoginInfo.of(
                 accessTokenProvider.createAccessToken(user),
@@ -61,14 +60,14 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
         Instant now = Instant.now();
         validateRefreshTokenSession(session, claims, now);
 
-        User user = userRepository.findById(claims.userId())
+        AuthUserInfo user = getUserCredentialUseCase.findById(claims.userId())
                 .orElseThrow(() -> new AuthDomainException(AuthErrorCode.INVALID_TOKEN));
 
         validateActiveUser(user);
         session.revoke(now);
         refreshTokenSessionRepository.save(session);
         RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(user);
-        saveRefreshTokenSession(user.getUserId().id(), refreshToken, session.getFamilyId());
+        saveRefreshTokenSession(user.userId(), refreshToken, session.getFamilyId());
 
         return ReissueInfo.of(
                 accessTokenProvider.createAccessToken(user),
@@ -96,8 +95,8 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
         }
     }
 
-    private void validateActiveUser(User user) {
-        if (user.getStatus() != UserStatus.ACTIVE) {
+    private void validateActiveUser(AuthUserInfo user) {
+        if (!user.active()) {
             throw new AuthDomainException(AuthErrorCode.INVALID_CREDENTIALS);
         }
     }

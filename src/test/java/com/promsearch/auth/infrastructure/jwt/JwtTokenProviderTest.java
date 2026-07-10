@@ -6,11 +6,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.promsearch.auth.application.port.out.RefreshTokenProvider.RefreshToken;
 import com.promsearch.auth.application.port.out.RefreshTokenProvider.RefreshTokenClaims;
 import com.promsearch.auth.domain.exception.AuthDomainException;
-import com.promsearch.user.domain.User;
-import com.promsearch.user.domain.User.UserId;
-import com.promsearch.user.domain.enums.UserGrade;
-import com.promsearch.user.domain.enums.UserRole;
-import com.promsearch.user.domain.enums.UserStatus;
+import com.promsearch.user.application.AuthUserInfo;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -70,20 +66,15 @@ class JwtTokenProviderTest {
         return new JwtTokenProvider(properties, Clock.fixed(instant, ZoneOffset.UTC));
     }
 
-    private User createUser() {
-        return User.reconstruct(
-                new UserId(1L),
+    private AuthUserInfo createUser() {
+        return new AuthUserInfo(
+                1L,
                 "gildong@example.com",
                 "encoded-password",
                 "gildong",
                 "Hong Gil Dong",
-                null,
-                0L,
-                UserRole.USER,
-                UserGrade.NORMAL,
-                UserStatus.ACTIVE,
-                NOW,
-                NOW
+                "USER",
+                true
         );
     }
 }

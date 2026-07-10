@@ -4,7 +4,7 @@ import com.promsearch.auth.application.port.out.AccessTokenProvider;
 import com.promsearch.auth.application.port.out.RefreshTokenProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
-import com.promsearch.user.domain.User;
+import com.promsearch.user.application.AuthUserInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -45,15 +45,15 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
     }
 
     @Override
-    public String createAccessToken(User user) {
+    public String createAccessToken(AuthUserInfo user) {
         Instant now = Instant.now(clock);
         Instant expiresAt = now.plusSeconds(getAccessTokenExpirationSeconds());
 
         return Jwts.builder()
-                .subject(String.valueOf(user.getUserId().id()))
-                .claim("userId", user.getUserId().id())
-                .claim("email", user.getEmail())
-                .claim("role", user.getRole().name())
+                .subject(String.valueOf(user.userId()))
+                .claim("userId", user.userId())
+                .claim("email", user.email())
+                .claim("role", user.role())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
                 .signWith(secretKey, Jwts.SIG.HS256)
@@ -66,13 +66,13 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
     }
 
     @Override
-    public RefreshToken createRefreshToken(User user) {
+    public RefreshToken createRefreshToken(AuthUserInfo user) {
         Instant now = Instant.ofEpochSecond(Instant.now(clock).getEpochSecond());
         Instant expiresAt = now.plusSeconds(jwtProperties.refreshTokenExpirationSeconds());
 
         String token = Jwts.builder()
-                .subject(String.valueOf(user.getUserId().id()))
-                .claim("userId", user.getUserId().id())
+                .subject(String.valueOf(user.userId()))
+                .claim("userId", user.userId())
                 .claim("tokenType", REFRESH_TOKEN_TYPE)
                 .id(UUID.randomUUID().toString())
                 .issuedAt(Date.from(now))
