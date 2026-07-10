@@ -1,10 +1,17 @@
 package com.promsearch.auth.application.port.out;
 
 import com.promsearch.user.domain.User;
+import java.time.Instant;
 
 public interface RefreshTokenProvider {
 
-    String createRefreshToken(User user);
+    RefreshToken createRefreshToken(User user);
 
-    Long getUserId(String refreshToken);
+    RefreshTokenClaims parse(String refreshToken);
+
+    record RefreshToken(String value, Instant expiresAt) {
+    }
+
+    record RefreshTokenClaims(Long userId, String jti, Instant expiresAt) {
+    }
 }

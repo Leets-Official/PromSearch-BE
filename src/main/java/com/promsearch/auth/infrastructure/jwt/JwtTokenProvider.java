@@ -14,6 +14,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Map;
+import java.util.UUID;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,9 +71,10 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
     }
 
     @Override
-    public String createRefreshToken(User user) {
-        Instant now = Instant.now(clock);
+    public RefreshToken createRefreshToken(User user) {
+        Instant now = Instant.ofEpochSecond(Instant.now(clock).getEpochSecond());
         Instant expiresAt = now.plusSeconds(jwtProperties.refreshTokenExpirationSeconds());
+        String jti = UUID.randomUUID().toString();
 
         Map<String, Object> header = Map.of(
                 "typ", TOKEN_TYPE,
@@ -81,17 +83,18 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
         Map<String, Object> payload = Map.of(
                 "sub", String.valueOf(user.getUserId().id()),
                 "userId", user.getUserId().id(),
+                "jti", jti,
                 "tokenType", REFRESH_TOKEN_TYPE,
                 "iat", now.getEpochSecond(),
                 "exp", expiresAt.getEpochSecond()
         );
 
         String unsignedToken = encodeJson(header) + "." + encodeJson(payload);
-        return unsignedToken + "." + sign(unsignedToken);
+        return new RefreshToken(unsignedToken + "." + sign(unsignedToken), expiresAt);
     }
 
     @Override
-    public Long getUserId(String refreshToken) {
+    public RefreshTokenClaims parse(String refreshToken) {
         Map<String, Object> payload = parseAndValidate(refreshToken);
         if (!REFRESH_TOKEN_TYPE.equals(payload.get("tokenType"))) {
             throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
@@ -99,16 +102,37 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
 
         Object userId = payload.get("userId");
         if (userId instanceof Number number) {
-            return number.longValue();
+            return createClaims(number.longValue(), payload);
         }
         if (userId instanceof String value) {
             try {
-                return Long.parseLong(value);
+                return createClaims(Long.parseLong(value), payload);
             } catch (NumberFormatException e) {
                 throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
             }
         }
         throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
+    }
+
+    private RefreshTokenClaims createClaims(Long userId, Map<String, Object> payload) {
+        Object jti = payload.get("jti");
+        Object exp = payload.get("exp");
+        if (!(jti instanceof String jtiValue) || jtiValue.isBlank()) {
+            throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
+        }
+        long expiresAt;
+        if (exp instanceof Number number) {
+            expiresAt = number.longValue();
+        } else if (exp instanceof String value) {
+            try {
+                expiresAt = Long.parseLong(value);
+            } catch (NumberFormatException e) {
+                throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
+            }
+        } else {
+            throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
+        }
+        return new RefreshTokenClaims(userId, jtiValue, Instant.ofEpochSecond(expiresAt));
     }
 
     private String encodeJson(Map<String, Object> value) {

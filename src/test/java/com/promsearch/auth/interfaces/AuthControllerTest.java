@@ -198,16 +198,36 @@ class AuthControllerTest {
 
         ReissueRequest reissueRequest = new ReissueRequest(refreshToken);
 
-        mockMvc.perform(post("/api/v1/auth/reissue")
+        String reissueResponse = mockMvc.perform(post("/api/v1/auth/reissue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(reissueRequest)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-200"))
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
-                .andExpect(jsonPath("$.result.refreshToken").doesNotExist())
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
-                .andExpect(jsonPath("$.result.expiresIn").value(3600));
+                .andExpect(jsonPath("$.result.expiresIn").value(3600))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String rotatedRefreshToken = objectMapper.readTree(reissueResponse)
+                .get("result")
+                .get("refreshToken")
+                .asText();
+        assertThat(rotatedRefreshToken).isNotEqualTo(refreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ReissueRequest(rotatedRefreshToken))))
+                .andExpect(status().isOk());
     }
 
     @DisplayName("유효하지 않은 refresh token이면 access token 재발급에 실패한다")
