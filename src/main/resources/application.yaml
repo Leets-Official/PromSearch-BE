@@ -2,6 +2,16 @@ spring:
   application:
     name: promsearch
 
+springdoc:
+  api-docs:
+    # 문서 노출은 환경변수로만 켠다. 기본값은 비공개다.
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    # UI와 JSON 문서는 같은 토글을 사용해 노출 상태를 맞춘다.
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+
 auth:
   jwt:
     access-secret: ${JWT_ACCESS_SECRET}

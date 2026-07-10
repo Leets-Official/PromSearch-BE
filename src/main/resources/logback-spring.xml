@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration>
+    <!-- local에서는 사람이 읽기 쉬운 한 줄 로그를 사용한다. -->
+    <property name="CONSOLE_LOG_PATTERN"
+              value="%d{yyyy-MM-dd'T'HH:mm:ss.SSSXXX} %-5level [%thread] %logger{36} requestId=%X{requestId:-} traceId=%X{traceId:-} method=%X{method:-} path=%X{path:-} status=%X{statusCode:-} durationMs=%X{durationMs:-} event=%X{event:-} exception=%X{exception:-} - %msg%n"/>
+
+    <springProfile name="local,default">
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+                <pattern>${CONSOLE_LOG_PATTERN}</pattern>
+                <charset>UTF-8</charset>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="dev,prod">
+        <!-- dev/prod 로그는 수집기에서 필드 검색하기 쉽도록 JSON으로 남긴다. -->
+        <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+            <encoder class="net.logstash.logback.encoder.LoggingEventCompositeJsonEncoder">
+                <providers>
+                    <timestamp>
+                        <fieldName>timestamp</fieldName>
+                    </timestamp>
+                    <logLevel>
+                        <fieldName>level</fieldName>
+                    </logLevel>
+                    <threadName>
+                        <fieldName>thread</fieldName>
+                    </threadName>
+                    <loggerName>
+                        <fieldName>logger</fieldName>
+                    </loggerName>
+                    <message>
+                        <fieldName>message</fieldName>
+                    </message>
+                    <!-- MDC에는 허용된 요청 메타데이터만 담는다. 헤더나 본문은 넣지 않는다. -->
+                    <mdc>
+                        <includeMdcKeyName>requestId</includeMdcKeyName>
+                        <includeMdcKeyName>traceId</includeMdcKeyName>
+                        <includeMdcKeyName>method</includeMdcKeyName>
+                        <includeMdcKeyName>path</includeMdcKeyName>
+                        <includeMdcKeyName>clientIp</includeMdcKeyName>
+                        <includeMdcKeyName>userId</includeMdcKeyName>
+                        <includeMdcKeyName>memberId</includeMdcKeyName>
+                        <includeMdcKeyName>event</includeMdcKeyName>
+                        <includeMdcKeyName>uriTemplate</includeMdcKeyName>
+                        <includeMdcKeyName>statusCode</includeMdcKeyName>
+                        <includeMdcKeyName>durationMs</includeMdcKeyName>
+                        <includeMdcKeyName>exception</includeMdcKeyName>
+                    </mdc>
+                    <stackTrace>
+                        <fieldName>stackTrace</fieldName>
+                    </stackTrace>
+                </providers>
+            </encoder>
+        </appender>
+
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+</configuration>
