@@ -15,14 +15,11 @@ public record UpdateUserProfileRequest(
         @Size(max = 255, message = "email must be 255 characters or less")
         String email,
 
-        @Size(min = 8, max = 100, message = "password must be between 8 and 100 characters")
-        String password,
-
         @Size(max = 500, message = "profileImageUrl must be 500 characters or less")
         String profileImageUrl
 ) {
 
     public UpdateUserProfileCommand toCommand(Long userId) {
-        return UpdateUserProfileCommand.of(userId, name, nickname, email, password, profileImageUrl);
+        return UpdateUserProfileCommand.of(userId, name, nickname, email, profileImageUrl);
     }
 }

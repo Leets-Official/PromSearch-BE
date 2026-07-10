@@ -47,23 +47,21 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     @Override
-    public User updateProfile(
-            Long userId,
-            String email,
-            String password,
-            String nickname,
-            String name,
-            String profileImageUrl
-    ) {
-        UserJpaEntity user = getActiveUserJpaEntity(userId);
-        user.updateProfile(email, password, nickname, name, profileImageUrl);
-        return UserMapper.toDomain(user);
-    }
-
-    @Override
-    public void deleteById(Long userId) {
-        UserJpaEntity user = getActiveUserJpaEntity(userId);
-        user.delete();
+    public User update(User user) {
+        try {
+            UserJpaEntity userJpaEntity = getActiveUserJpaEntity(user.getUserId().id());
+            userJpaEntity.updateFrom(user);
+            userJpaRepository.flush();
+            return UserMapper.toDomain(userJpaEntity);
+        } catch (DataIntegrityViolationException e) {
+            if (userJpaRepository.existsByEmailAndIdNot(user.getEmail(), user.getUserId().id())) {
+                throw new UserDomainException(UserErrorCode.DUPLICATE_EMAIL);
+            }
+            if (userJpaRepository.existsByNicknameAndIdNot(user.getNickname(), user.getUserId().id())) {
+                throw new UserDomainException(UserErrorCode.DUPLICATE_NICKNAME);
+            }
+            throw e;
+        }
     }
 
     private UserJpaEntity getActiveUserJpaEntity(Long userId) {

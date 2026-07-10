@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCase, DeleteUserUseCase {
+public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCase, ChangePasswordUseCase, DeleteUserUseCase {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -45,7 +45,6 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
                 UserErrorCode.INVALID_NICKNAME
         );
         String email = resolveRequiredProfileValue(command.email(), user.getEmail(), UserErrorCode.INVALID_EMAIL);
-        String password = resolvePassword(command.password(), user.getPassword());
         String profileImageUrl = resolveOptionalProfileValue(command.profileImageUrl(), user.getProfileImageUrl());
 
         if (!nickname.equals(user.getNickname())) {
@@ -55,20 +54,33 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
             validateDuplicateEmail(email);
         }
 
-        User updatedUser = userRepository.updateProfile(
-                user.getUserId().id(),
+        User updatedUser = user.updateProfile(
                 email,
-                password,
                 nickname,
                 name,
                 profileImageUrl
         );
-        return UserInfo.from(updatedUser);
+        return UserInfo.from(userRepository.update(updatedUser));
+    }
+
+    @Override
+    public void changePassword(ChangePasswordCommand command) {
+        User user = userRepository.getById(command.userId());
+        String currentPassword = resolveRequiredPassword(command.currentPassword());
+        String newPassword = resolveRequiredPassword(command.newPassword());
+
+        if (!passwordEncoder.matches(currentPassword, user.getPassword())) {
+            throw new UserDomainException(UserErrorCode.INVALID_PASSWORD);
+        }
+
+        User updatedUser = user.changePassword(passwordEncoder.encode(newPassword));
+        userRepository.update(updatedUser);
     }
 
     @Override
     public void delete(Long userId) {
-        userRepository.deleteById(userId);
+        User user = userRepository.getById(userId);
+        userRepository.update(user.delete());
     }
 
     private void validateDuplicateNickname(String nickname) {
@@ -93,14 +105,11 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
         return requestedValue.trim();
     }
 
-    private String resolvePassword(String requestedPassword, String currentPassword) {
-        if (requestedPassword == null) {
-            return currentPassword;
-        }
-        if (requestedPassword.isBlank()) {
+    private String resolveRequiredPassword(String password) {
+        if (password == null || password.isBlank()) {
             throw new UserDomainException(UserErrorCode.INVALID_PASSWORD);
         }
-        return passwordEncoder.encode(requestedPassword);
+        return password;
     }
 
     private String resolveOptionalProfileValue(String requestedValue, String currentValue) {

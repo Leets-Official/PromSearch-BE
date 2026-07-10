@@ -39,7 +39,6 @@ class UserCommandServiceTest {
                         " newName ",
                         " newNick ",
                         " new@example.com ",
-                        "new-password",
                         " https://image.test/me.png "
                 )
         );
@@ -48,7 +47,7 @@ class UserCommandServiceTest {
         assertThat(userInfo.nickname()).isEqualTo("newNick");
         assertThat(userInfo.email()).isEqualTo("new@example.com");
         assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/me.png");
-        assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("encoded:new-password");
+        assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
     }
 
     @Test
@@ -56,7 +55,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, null, null, null)
+                UpdateUserProfileCommand.of(1L, null, null, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
@@ -72,7 +71,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "two", null, null, null)
+                UpdateUserProfileCommand.of(1L, null, "two", null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -85,7 +84,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, "user2@example.com", null, null)
+                UpdateUserProfileCommand.of(1L, null, null, "user2@example.com", null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -93,12 +92,68 @@ class UserCommandServiceTest {
     }
 
     @Test
-    void deleteMarksUserAsDeleted() {
+    void changePasswordEncodesNewPasswordWhenCurrentPasswordMatches() {
+        userRepository.save(testUser(
+                1L,
+                "old@example.com",
+                "encoded:old-password",
+                "oldNick",
+                "oldName",
+                null,
+                UserStatus.ACTIVE
+        ));
+
+        userCommandService.changePassword(ChangePasswordCommand.of(1L, "old-password", "new-password"));
+
+        assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("encoded:new-password");
+    }
+
+    @Test
+    void changePasswordRejectsMismatchedCurrentPassword() {
+        userRepository.save(testUser(
+                1L,
+                "old@example.com",
+                "encoded:old-password",
+                "oldNick",
+                "oldName",
+                null,
+                UserStatus.ACTIVE
+        ));
+
+        assertThatThrownBy(() -> userCommandService.changePassword(
+                ChangePasswordCommand.of(1L, "wrong-password", "new-password")
+        ))
+                .isInstanceOf(UserDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(UserErrorCode.INVALID_PASSWORD);
+    }
+
+    @Test
+    void deleteMarksUserAsDeletedAndAnonymizesUniqueInformation() {
         userRepository.save(testUser(1L, "old@example.com", "password", "oldNick", "oldName", null, UserStatus.ACTIVE));
 
         userCommandService.delete(1L);
 
-        assertThat(userRepository.users.get(1L).getStatus()).isEqualTo(UserStatus.DELETED);
+        User deletedUser = userRepository.users.get(1L);
+        assertThat(deletedUser.getStatus()).isEqualTo(UserStatus.DELETED);
+        assertThat(deletedUser.getEmail()).startsWith("deleted_1_").endsWith("@deleted.promsearch");
+        assertThat(deletedUser.getNickname()).startsWith("deleted_1_").endsWith("_user");
+        assertThat(deletedUser.getName()).isEqualTo("Deleted User");
+        assertThat(deletedUser.getProfileImageUrl()).isNull();
+    }
+
+    @Test
+    void signupAllowsReusingEmailAndNicknameAfterDelete() {
+        userRepository.save(testUser(1L, "old@example.com", "password", "oldNick", "oldName", null, UserStatus.ACTIVE));
+
+        userCommandService.delete(1L);
+        SignupInfo signupInfo = userCommandService.signup(
+                SignupCommand.of("newName", "oldNick", "old@example.com", "new-password")
+        );
+
+        assertThat(signupInfo.userId()).isEqualTo(2L);
+        assertThat(signupInfo.email()).isEqualTo("old@example.com");
+        assertThat(signupInfo.nickname()).isEqualTo("oldNick");
     }
 
     private User testUser(
@@ -139,6 +194,7 @@ class UserCommandServiceTest {
         @Override
         public User create(User user) {
             Long userId = user.getUserId() == null ? nextId++ : user.getUserId().id();
+            nextId = Math.max(nextId, userId + 1);
             User savedUser = User.reconstruct(
                     new UserId(userId),
                     user.getEmail(),
@@ -181,23 +237,11 @@ class UserCommandServiceTest {
         }
 
         @Override
-        public User updateProfile(
-                Long userId,
-                String email,
-                String password,
-                String nickname,
-                String name,
-                String profileImageUrl
-        ) {
-            User user = getById(userId).updateProfile(email, password, nickname, name, profileImageUrl);
+        public User update(User user) {
+            Long userId = user.getUserId().id();
+            getById(userId);
             users.put(userId, user);
             return user;
-        }
-
-        @Override
-        public void deleteById(Long userId) {
-            User user = getById(userId).delete();
-            users.put(userId, user);
         }
     }
 

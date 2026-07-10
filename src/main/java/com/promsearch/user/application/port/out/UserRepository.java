@@ -12,14 +12,5 @@ public interface UserRepository {
 
     boolean existsByEmail(String email);
 
-    User updateProfile(
-            Long userId,
-            String email,
-            String password,
-            String nickname,
-            String name,
-            String profileImageUrl
-    );
-
-    void deleteById(Long userId);
+    User update(User user);
 }

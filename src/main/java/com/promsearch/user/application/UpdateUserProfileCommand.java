@@ -5,7 +5,6 @@ public record UpdateUserProfileCommand(
         String name,
         String nickname,
         String email,
-        String password,
         String profileImageUrl
 ) {
 
@@ -14,9 +13,8 @@ public record UpdateUserProfileCommand(
             String name,
             String nickname,
             String email,
-            String password,
             String profileImageUrl
     ) {
-        return new UpdateUserProfileCommand(userId, name, nickname, email, password, profileImageUrl);
+        return new UpdateUserProfileCommand(userId, name, nickname, email, profileImageUrl);
     }
 }

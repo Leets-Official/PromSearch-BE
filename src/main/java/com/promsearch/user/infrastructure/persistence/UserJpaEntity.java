@@ -83,19 +83,22 @@ public class UserJpaEntity extends BaseEntity {
                 .build();
     }
 
-    public void updateProfile(String email, String password, String nickname, String name, String profileImageUrl) {
-        validateProfile(email, password, nickname, name);
+    public void updateFrom(User user) {
+        validateProfile(user.getEmail(), user.getPassword(), user.getNickname(), user.getName());
 
-        this.email = email;
-        this.password = password;
-        this.nickname = nickname;
-        this.name = name;
-        this.profileImageUrl = profileImageUrl;
-    }
+        this.email = user.getEmail();
+        this.password = user.getPassword();
+        this.nickname = user.getNickname();
+        this.name = user.getName();
+        this.profileImageUrl = user.getProfileImageUrl();
+        this.points = user.getPoint();
+        this.role = user.getRole();
+        this.grade = user.getGrade();
+        this.status = user.getStatus();
 
-    public void delete() {
-        this.status = UserStatus.DELETED;
-        markDeleted();
+        if (user.getStatus() == UserStatus.DELETED) {
+            markDeleted();
+        }
     }
 
     public User toDomain() {
