@@ -6,7 +6,11 @@ public interface UserRepository {
 
     User create(User user);
 
+    User getById(Long userId);
+
     boolean existsByNickname(String nickname);
 
     boolean existsByEmail(String email);
+
+    User update(User user);
 }

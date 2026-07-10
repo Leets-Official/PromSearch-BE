@@ -106,6 +106,64 @@ public class User {
                 .build();
     }
 
+    public User updateProfile(String email, String nickname, String name, String profileImageUrl) {
+        validateRequired(email, password, nickname, name, point, role, grade, status);
+
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    public User changePassword(String password) {
+        validateRequired(email, password, nickname, name, point, role, grade, status);
+
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    public User delete() {
+        Instant now = Instant.now();
+        String deletedPrefix = "deleted_" + userId.id() + "_" + now.toEpochMilli();
+
+        return User.builder()
+                .userId(userId)
+                .email(deletedPrefix + "@deleted.promsearch")
+                .password(deletedPrefix)
+                .nickname(deletedPrefix + "_user")
+                .name("Deleted User")
+                .profileImageUrl(null)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(UserStatus.DELETED)
+                .createdAt(createdAt)
+                .updatedAt(now)
+                .build();
+    }
+
     private static void validateRequired(
             String email,
             String password,
