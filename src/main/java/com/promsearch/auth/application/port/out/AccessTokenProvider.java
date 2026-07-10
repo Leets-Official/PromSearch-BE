@@ -1,10 +1,10 @@
 package com.promsearch.auth.application.port.out;
 
-import com.promsearch.user.application.AuthUserInfo;
+import com.promsearch.auth.application.AuthenticatedUserInfo;
 
 public interface AccessTokenProvider {
 
-    String createAccessToken(AuthUserInfo user);
+    String createAccessToken(AuthenticatedUserInfo user);
 
     Long getAccessTokenExpirationSeconds();
 }

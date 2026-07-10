@@ -1,7 +1,5 @@
 package com.promsearch.auth.application;
 
-import com.promsearch.user.application.AuthUserInfo;
-
 public record LoginInfo(
         String accessToken,
         String refreshToken,
@@ -13,19 +11,32 @@ public record LoginInfo(
         String email
 ) {
 
-    public static LoginInfo of(String accessToken, Long expiresIn, AuthUserInfo user) {
-        return of(accessToken, null, expiresIn, user);
+    public static LoginInfo of(
+            String accessToken,
+            Long expiresIn,
+            AuthenticatedUserInfo user,
+            String name,
+            String nickname
+    ) {
+        return of(accessToken, null, expiresIn, user, name, nickname);
     }
 
-    public static LoginInfo of(String accessToken, String refreshToken, Long expiresIn, AuthUserInfo user) {
+    public static LoginInfo of(
+            String accessToken,
+            String refreshToken,
+            Long expiresIn,
+            AuthenticatedUserInfo user,
+            String name,
+            String nickname
+    ) {
         return new LoginInfo(
                 accessToken,
                 refreshToken,
                 "Bearer",
                 expiresIn,
                 user.userId(),
-                user.name(),
-                user.nickname(),
+                name,
+                nickname,
                 user.email()
         );
     }

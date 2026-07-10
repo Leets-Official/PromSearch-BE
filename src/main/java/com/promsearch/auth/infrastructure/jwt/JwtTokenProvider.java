@@ -1,10 +1,10 @@
 package com.promsearch.auth.infrastructure.jwt;
 
+import com.promsearch.auth.application.AuthenticatedUserInfo;
 import com.promsearch.auth.application.port.out.AccessTokenProvider;
 import com.promsearch.auth.application.port.out.RefreshTokenProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
-import com.promsearch.user.application.AuthUserInfo;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
@@ -45,14 +45,13 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
     }
 
     @Override
-    public String createAccessToken(AuthUserInfo user) {
+    public String createAccessToken(AuthenticatedUserInfo user) {
         Instant now = Instant.now(clock);
         Instant expiresAt = now.plusSeconds(getAccessTokenExpirationSeconds());
 
         return Jwts.builder()
                 .subject(String.valueOf(user.userId()))
                 .claim("userId", user.userId())
-                .claim("email", user.email())
                 .claim("role", user.role())
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiresAt))
@@ -66,7 +65,7 @@ public class JwtTokenProvider implements AccessTokenProvider, RefreshTokenProvid
     }
 
     @Override
-    public RefreshToken createRefreshToken(AuthUserInfo user) {
+    public RefreshToken createRefreshToken(AuthenticatedUserInfo user) {
         Instant now = Instant.ofEpochSecond(Instant.now(clock).getEpochSecond());
         Instant expiresAt = now.plusSeconds(jwtProperties.refreshTokenExpirationSeconds());
 

@@ -38,15 +38,18 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
 
         validatePassword(command.password(), user.encodedPassword());
         validateActiveUser(user);
+        AuthenticatedUserInfo authenticatedUser = AuthenticatedUserInfo.from(user);
 
-        RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(user);
-        saveRefreshTokenSession(user.userId(), refreshToken, UUID.randomUUID().toString());
+        RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(authenticatedUser);
+        saveRefreshTokenSession(authenticatedUser.userId(), refreshToken, UUID.randomUUID().toString());
 
         return LoginInfo.of(
-                accessTokenProvider.createAccessToken(user),
+                accessTokenProvider.createAccessToken(authenticatedUser),
                 refreshToken.value(),
                 accessTokenProvider.getAccessTokenExpirationSeconds(),
-                user
+                authenticatedUser,
+                user.name(),
+                user.nickname()
         );
     }
 
@@ -64,13 +67,14 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
                 .orElseThrow(() -> new AuthDomainException(AuthErrorCode.INVALID_TOKEN));
 
         validateActiveUser(user);
+        AuthenticatedUserInfo authenticatedUser = AuthenticatedUserInfo.from(user);
         session.revoke(now);
         refreshTokenSessionRepository.save(session);
-        RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(user);
-        saveRefreshTokenSession(user.userId(), refreshToken, session.getFamilyId());
+        RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(authenticatedUser);
+        saveRefreshTokenSession(authenticatedUser.userId(), refreshToken, session.getFamilyId());
 
         return ReissueInfo.of(
-                accessTokenProvider.createAccessToken(user),
+                accessTokenProvider.createAccessToken(authenticatedUser),
                 refreshToken.value(),
                 accessTokenProvider.getAccessTokenExpirationSeconds()
         );
