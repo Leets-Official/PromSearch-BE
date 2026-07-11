@@ -4,6 +4,7 @@ import com.promsearch.auth.application.AuthenticatedUserInfo;
 import com.promsearch.auth.application.port.out.AccessTokenProvider;
 import com.promsearch.auth.interfaces.dto.SwaggerTokenRequest;
 import com.promsearch.auth.interfaces.dto.SwaggerTokenResponse;
+import com.promsearch.auth.interfaces.docs.LocalSwaggerAuthControllerDocs;
 import com.promsearch.global.response.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -17,11 +18,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class LocalSwaggerAuthController {
+public class LocalSwaggerAuthController implements LocalSwaggerAuthControllerDocs {
 
     private final AccessTokenProvider accessTokenProvider;
 
     @PostMapping("/swagger-token")
+    @Override
     public ApiResponse<SwaggerTokenResponse> createSwaggerToken(
             @Valid @RequestBody(required = false) SwaggerTokenRequest request
     ) {

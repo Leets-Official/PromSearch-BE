@@ -14,11 +14,13 @@ import com.promsearch.user.application.GetUserCredentialUseCase;
 import java.time.Instant;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class AuthCommandService implements LoginUseCase, ReissueUseCase {
@@ -42,6 +44,8 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
 
         RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(authenticatedUser);
         saveRefreshTokenSession(authenticatedUser.userId(), refreshToken, UUID.randomUUID().toString());
+
+        log.info("auth_login_succeeded userId={}", authenticatedUser.userId());
 
         return LoginInfo.of(
                 accessTokenProvider.createAccessToken(authenticatedUser),
@@ -73,6 +77,10 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
         RefreshToken refreshToken = refreshTokenProvider.createRefreshToken(authenticatedUser);
         saveRefreshTokenSession(authenticatedUser.userId(), refreshToken, session.getFamilyId());
 
+        log.info("auth_token_reissued userId={} refreshTokenFamilyId={}",
+                authenticatedUser.userId(),
+                session.getFamilyId());
+
         return ReissueInfo.of(
                 accessTokenProvider.createAccessToken(authenticatedUser),
                 refreshToken.value(),
@@ -87,18 +95,22 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
 
     private void validateRefreshTokenSession(RefreshTokenSession session, RefreshTokenClaims claims, Instant now) {
         if (!session.getUserId().equals(claims.userId()) || !session.getExpiresAt().equals(claims.expiresAt())) {
-            revokeTokenFamilyAndReject(session, now);
+            revokeTokenFamilyAndReject(session, now, "claim_mismatch");
         }
         if (session.isRevoked()) {
-            revokeTokenFamilyAndReject(session, now);
+            revokeTokenFamilyAndReject(session, now, "revoked_token_reuse");
         }
         if (session.isExpiredAt(now)) {
             throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
         }
     }
 
-    private void revokeTokenFamilyAndReject(RefreshTokenSession session, Instant now) {
+    private void revokeTokenFamilyAndReject(RefreshTokenSession session, Instant now, String reason) {
         refreshTokenSessionRepository.revokeFamily(session.getFamilyId(), now);
+        log.warn("refresh_token_family_revoked userId={} refreshTokenFamilyId={} reason={}",
+                session.getUserId(),
+                session.getFamilyId(),
+                reason);
         throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
     }
 

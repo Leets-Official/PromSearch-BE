@@ -6,7 +6,9 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -17,6 +19,9 @@ import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.servlet.HandlerMapping;
 
 class RequestMdcInterceptorTest {
@@ -25,6 +30,7 @@ class RequestMdcInterceptorTest {
 
     @AfterEach
     void tearDown() {
+        SecurityContextHolder.clearContext();
         MDC.clear();
     }
 
@@ -47,6 +53,28 @@ class RequestMdcInterceptorTest {
         assertThat(MDC.get("clientIp")).isEqualTo("10.0.0.1");
         assertThat(MDC.get("userId")).isEmpty();
         assertThat(MDC.get("memberId")).isEmpty();
+        assertThat(MDC.get("userRole")).isEmpty();
+    }
+
+    @DisplayName("인증된 사용자가 있으면 userId, memberId, userRole을 MDC에 담는다")
+    @Test
+    void putAuthenticatedUserContextToMdc() {
+        AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(7L, "USER");
+        SecurityContextHolder.getContext().setAuthentication(
+                UsernamePasswordAuthenticationToken.authenticated(
+                        principal,
+                        null,
+                        List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                )
+        );
+        MockHttpServletRequest request = new MockHttpServletRequest("PATCH", "/api/v1/users/me");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        interceptor.preHandle(request, response, new Object());
+
+        assertThat(MDC.get("userId")).isEqualTo("7");
+        assertThat(MDC.get("memberId")).isEqualTo("7");
+        assertThat(MDC.get("userRole")).isEqualTo("USER");
     }
 
     @DisplayName("X-Request-Id가 없으면 생성하고 X-Forwarded-For의 첫 IP만 사용한다")
@@ -209,6 +237,7 @@ class RequestMdcInterceptorTest {
                     "clientIp",
                     "userId",
                     "memberId",
+                    "userRole",
                     "event",
                     "uriTemplate",
                     "statusCode",
