@@ -6,15 +6,20 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.promsearch.auth.interfaces.dto.LoginRequest;
+import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -36,6 +41,12 @@ class AuthControllerTest {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    private EntityManager entityManager;
 
     @DisplayName("회원가입에 성공한다")
     @Test
@@ -104,6 +115,27 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("USER-002"));
     }
 
+
+    @DisplayName("이메일과 닉네임이 모두 중복이면 이메일 중복 에러를 우선 반환한다")
+    @Test
+    void signupFailWithEmailErrorWhenEmailAndNicknameDuplicated() throws Exception {
+        signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
+
+        SignupRequest duplicatedRequest = new SignupRequest(
+            "Kim Gil Dong",
+            "gildong",
+            "gildong@example.com",
+            "password123"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(objectMapper.writeValueAsString(duplicatedRequest)))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.code").value("USER-002"));
+    }
+
     @DisplayName("잘못된 요청값이면 회원가입에 실패한다")
     @Test
     void signupFailWhenRequestInvalid() throws Exception {
@@ -122,25 +154,153 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
-    @DisplayName("이메일과 닉네임이 모두 중복이면 이메일 중복 에러를 우선 반환한다")
+    @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
-    void signupFailWithEmailErrorWhenEmailAndNicknameDuplicated() throws Exception {
-        signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
+    void loginSuccess() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
 
-        SignupRequest duplicatedRequest = new SignupRequest(
-                "Kim Gil Dong",
-                "gildong",
-                "gildong@example.com",
-                "password123"
-        );
+        LoginRequest request = new LoginRequest("gildong@example.com", "password123");
 
-        mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/v1/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(duplicatedRequest)))
-                .andExpect(status().isConflict())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("USER-002"));
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.result.expiresIn").value(3600))
+                .andExpect(jsonPath("$.result.userId", notNullValue()))
+                .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.nickname").value("gildong"))
+                .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
+                .andExpect(jsonPath("$.result.password").doesNotExist());
     }
+
+    @DisplayName("refresh token으로 access token 재발급에 성공한다")
+    @Test
+    void reissueSuccess() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+
+        LoginRequest loginRequest = new LoginRequest("gildong@example.com", "password123");
+
+        String loginResponse = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        JsonNode loginResult = objectMapper.readTree(loginResponse).get("result");
+        String refreshToken = loginResult.get("refreshToken").asText();
+
+        ReissueRequest reissueRequest = new ReissueRequest(refreshToken);
+
+        String reissueResponse = mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
+                .andExpect(jsonPath("$.result.expiresIn").value(3600))
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        String rotatedRefreshToken = objectMapper.readTree(reissueResponse)
+                .get("result")
+                .get("refreshToken")
+                .asText();
+        assertThat(rotatedRefreshToken).isNotEqualTo(refreshToken);
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(reissueRequest)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ReissueRequest(rotatedRefreshToken))))
+                .andExpect(status().isOk());
+    }
+
+    @DisplayName("유효하지 않은 refresh token이면 access token 재발급에 실패한다")
+    @Test
+    void reissueFailWhenRefreshTokenInvalid() throws Exception {
+        ReissueRequest request = new ReissueRequest("invalid-refresh-token");
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+    }
+
+    @DisplayName("존재하지 않는 이메일이면 로그인에 실패한다")
+    @Test
+    void loginFailWhenEmailNotFound() throws Exception {
+        LoginRequest request = new LoginRequest("unknown@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("비밀번호가 일치하지 않으면 로그인에 실패한다")
+    @Test
+    void loginFailWhenPasswordMismatch() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+
+        LoginRequest request = new LoginRequest("gildong@example.com", "wrong-password");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("ACTIVE 상태가 아닌 사용자는 로그인에 실패한다")
+    @Test
+    void loginFailWhenUserIsNotActive() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        jdbcTemplate.update("UPDATE users SET status = 'BANNED' WHERE email = ?", "gildong@example.com");
+        entityManager.clear();
+
+        LoginRequest request = new LoginRequest("gildong@example.com", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-001"));
+    }
+
+    @DisplayName("잘못된 요청값이면 로그인에 실패한다")
+    @Test
+    void loginFailWhenRequestInvalid() throws Exception {
+        LoginRequest request = new LoginRequest("invalid-email", "");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
 
     private void signup(String name, String nickname, String email, String password) throws Exception {
         SignupRequest request = new SignupRequest(name, nickname, email, password);

@@ -1,5 +1,11 @@
 package com.promsearch.auth.interfaces;
 
+import com.promsearch.auth.application.LoginUseCase;
+import com.promsearch.auth.application.ReissueUseCase;
+import com.promsearch.auth.interfaces.dto.LoginRequest;
+import com.promsearch.auth.interfaces.dto.LoginResponse;
+import com.promsearch.auth.interfaces.dto.ReissueRequest;
+import com.promsearch.auth.interfaces.dto.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.auth.interfaces.dto.SignupResponse;
 import com.promsearch.global.response.ApiResponse;
@@ -19,6 +25,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class AuthController {
 
     private final SignupUseCase signupUseCase;
+    private final LoginUseCase loginUseCase;
+    private final ReissueUseCase reissueUseCase;
 
     @PostMapping("/signup")
     public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
@@ -29,6 +37,30 @@ public class AuthController {
 
         return ResponseEntity
                 .status(SuccessCode.CREATED.getHttpStatus())
+                .body(response);
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
+        ApiResponse<LoginResponse> response = ApiResponse.onSuccess(
+                SuccessCode.OK,
+                LoginResponse.from(loginUseCase.login(request.toCommand()))
+        );
+
+        return ResponseEntity
+                .status(SuccessCode.OK.getHttpStatus())
+                .body(response);
+    }
+
+    @PostMapping("/reissue")
+    public ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request) {
+        ApiResponse<ReissueResponse> response = ApiResponse.onSuccess(
+                SuccessCode.OK,
+                ReissueResponse.from(reissueUseCase.reissue(request.toCommand()))
+        );
+
+        return ResponseEntity
+                .status(SuccessCode.OK.getHttpStatus())
                 .body(response);
     }
 }
