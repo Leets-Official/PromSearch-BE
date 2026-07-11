@@ -1,9 +1,14 @@
 package com.promsearch.global.config.openapi;
 
+import com.promsearch.auth.interfaces.AuthController;
+import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
+import com.promsearch.test.interfaces.TestController;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -24,7 +29,20 @@ public class OpenApiConfig {
                         .addSecuritySchemes(JWT_BEARER_SCHEME, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
-                                .bearerFormat("JWT")
-                                .description("JWT Bearer authentication scheme for documented APIs.")));
+                        .bearerFormat("JWT")
+                        .description("JWT Bearer authentication scheme for documented APIs.")));
+    }
+
+    @Bean
+    public OperationCustomizer jwtSecurityOperationCustomizer() {
+        return (operation, handlerMethod) -> {
+            Class<?> beanType = handlerMethod.getBeanType();
+            if (AuthController.class.isAssignableFrom(beanType)
+                    || LocalSwaggerAuthController.class.isAssignableFrom(beanType)
+                    || TestController.class.isAssignableFrom(beanType)) {
+                return operation;
+            }
+            return operation.addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));
+        };
     }
 }
