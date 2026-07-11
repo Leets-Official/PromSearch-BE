@@ -1,0 +1,32 @@
+spring:
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:promsearch-test;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+
+  jpa:
+    open-in-view: false
+    show-sql: false
+    hibernate:
+      ddl-auto: create-drop
+    properties:
+      hibernate:
+        format_sql: false
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
+
+auth:
+  jwt:
+    access-secret: promsearch-test-access-secret-with-at-least-32-bytes
+    refresh-secret: promsearch-test-refresh-secret-with-at-least-32-bytes
+    access-token-expiration-seconds: 3600
+    refresh-token-expiration-seconds: 1209600

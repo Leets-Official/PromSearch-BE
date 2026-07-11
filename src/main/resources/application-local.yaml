@@ -1,0 +1,49 @@
+spring:
+  application:
+    name: promsearch
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: ${LOCAL_POSTGRES_URL:jdbc:postgresql://localhost:5432/promsearch}
+    username: ${LOCAL_POSTGRES_USERNAME:promsearch}
+    password: ${LOCAL_POSTGRES_PASSWORD:promsearch}
+
+  jpa:
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        format_sql: true
+        highlight_sql: true
+        jdbc:
+          time_zone: UTC
+
+  h2:
+    console:
+      enabled: false
+
+logging:
+  level:
+    com.promsearch: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+springdoc:
+  api-docs:
+    enabled: true
+    path: /docs-json
+  swagger-ui:
+    enabled: true
+    path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
+    display-request-duration: true
+
+auth:
+  jwt:
+    access-secret: ${JWT_ACCESS_SECRET:promsearch-local-access-secret-with-at-least-32-bytes}
+    refresh-secret: ${JWT_REFRESH_SECRET:promsearch-local-refresh-secret-with-at-least-32-bytes}
+    access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:3600}
+    refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:1209600}
