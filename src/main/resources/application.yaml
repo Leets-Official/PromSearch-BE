@@ -11,6 +11,8 @@ springdoc:
     # UI와 JSON 문서는 같은 토글을 사용해 노출 상태를 맞춘다.
     enabled: ${SWAGGER_ENABLE:false}
     path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
 
 auth:
   jwt:
