@@ -23,9 +23,8 @@ public class OpenApiConfig {
                 .info(new Info()
                         .title("PromSearch API")
                         .version("v1")
-                        .description("PromSearch Backend API documentation"))
+                        .description("PromSearch 백엔드 API 문서입니다. local 환경에서는 `/api/v1/auth/swagger-token`으로 Swagger 테스트용 Bearer 토큰을 발급할 수 있습니다."))
                 .components(new Components()
-                        /* JWT 구현 전까지 문서에 인증 방식만 노출하고 전역 security requirement는 걸지 않는다. */
                         .addSecuritySchemes(JWT_BEARER_SCHEME, new SecurityScheme()
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")

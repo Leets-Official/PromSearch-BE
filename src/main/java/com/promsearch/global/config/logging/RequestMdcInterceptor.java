@@ -1,5 +1,6 @@
 package com.promsearch.global.config.logging;
 
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.util.Map;
@@ -11,6 +12,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
 import org.springframework.lang.Nullable;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 import org.springframework.web.servlet.HandlerMapping;
@@ -30,6 +33,7 @@ public class RequestMdcInterceptor implements HandlerInterceptor {
             "clientIp",
             "userId",
             "memberId",
+            "userRole",
             "event",
             "uriTemplate",
             "statusCode",
@@ -57,10 +61,26 @@ public class RequestMdcInterceptor implements HandlerInterceptor {
         MDC.put("method", request.getMethod());
         MDC.put("path", request.getRequestURI());
         MDC.put("clientIp", resolveClientIp(request));
-        MDC.put("userId", EMPTY_USER_ID);
-        MDC.put("memberId", EMPTY_USER_ID);
+        putAuthenticatedUserContext();
         MDC.put("event", "http.request");
         return true;
+    }
+
+    private void putAuthenticatedUserContext() {
+        MDC.put("userId", EMPTY_USER_ID);
+        MDC.put("memberId", EMPTY_USER_ID);
+        MDC.put("userRole", "");
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return;
+        }
+        if (authentication.getPrincipal() instanceof AuthenticatedUserPrincipal principal) {
+            String userId = String.valueOf(principal.userId());
+            MDC.put("userId", userId);
+            MDC.put("memberId", userId);
+            MDC.put("userRole", principal.role() == null ? "" : principal.role());
+        }
     }
 
     @Override
