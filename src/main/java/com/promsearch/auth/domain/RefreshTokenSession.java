@@ -46,6 +46,14 @@ public class RefreshTokenSession {
         return revokedAt == null && now.isBefore(expiresAt);
     }
 
+    public boolean isRevoked() {
+        return revokedAt != null;
+    }
+
+    public boolean isExpiredAt(Instant now) {
+        return !now.isBefore(expiresAt);
+    }
+
     public void revoke(Instant now) {
         if (revokedAt == null) {
             revokedAt = now;

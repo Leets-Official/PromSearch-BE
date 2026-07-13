@@ -2,6 +2,7 @@ package com.promsearch.auth.infrastructure.persistence;
 
 import com.promsearch.auth.application.port.out.RefreshTokenSessionRepository;
 import com.promsearch.auth.domain.RefreshTokenSession;
+import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -24,5 +25,10 @@ public class RefreshTokenSessionPersistenceAdapter implements RefreshTokenSessio
     @Override
     public Optional<RefreshTokenSession> findByTokenHashForUpdate(String tokenHash) {
         return repository.findByTokenHashForUpdate(tokenHash).map(RefreshTokenSessionJpaEntity::toDomain);
+    }
+
+    @Override
+    public void revokeFamily(String familyId, Instant revokedAt) {
+        repository.revokeFamily(familyId, revokedAt);
     }
 }

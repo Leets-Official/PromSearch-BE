@@ -2,6 +2,7 @@ package com.promsearch.auth.interfaces;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -11,6 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.auth.interfaces.dto.LoginRequest;
 import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
+import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
 import jakarta.persistence.EntityManager;
@@ -20,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.servlet.MockMvc;
@@ -227,7 +230,41 @@ class AuthControllerTest {
         mockMvc.perform(post("/api/v1/auth/reissue")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new ReissueRequest(rotatedRefreshToken))))
-                .andExpect(status().isOk());
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+    }
+
+    @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
+    @Test
+    void protectedApiRequiresAccessToken() throws Exception {
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-002"));
+    }
+
+    @DisplayName("보호된 API는 access token의 사용자 ID를 사용하고 X-User-Id 헤더를 신뢰하지 않는다")
+    @Test
+    void protectedApiUsesAuthenticatedPrincipal() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        String accessToken = loginAndGetResult("gildong@example.com", "password123")
+                .get("accessToken")
+                .asText();
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .header("X-User-Id", "999")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.name").value("새이름"))
+                .andExpect(jsonPath("$.result.nickname").value("gildong"));
     }
 
     @DisplayName("유효하지 않은 refresh token이면 access token 재발급에 실패한다")
@@ -309,5 +346,18 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated());
+    }
+
+    private JsonNode loginAndGetResult(String email, String password) throws Exception {
+        LoginRequest loginRequest = new LoginRequest(email, password);
+        String response = mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(loginRequest)))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        return objectMapper.readTree(response).get("result");
     }
 }

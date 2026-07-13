@@ -1,0 +1,14 @@
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+
+auth:
+  jwt:
+    access-secret: promsearch-test-access-secret-with-at-least-32-bytes
+    refresh-secret: promsearch-test-refresh-secret-with-at-least-32-bytes
+    access-token-expiration-seconds: 3600
+    refresh-token-expiration-seconds: 1209600

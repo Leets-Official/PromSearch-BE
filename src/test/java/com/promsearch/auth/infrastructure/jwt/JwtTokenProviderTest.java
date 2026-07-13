@@ -14,7 +14,8 @@ import org.junit.jupiter.api.Test;
 
 class JwtTokenProviderTest {
 
-    private static final String SECRET = "promsearch-test-jwt-secret-key-with-at-least-32-bytes";
+    private static final String ACCESS_SECRET = "promsearch-test-access-secret-with-at-least-32-bytes";
+    private static final String REFRESH_SECRET = "promsearch-test-refresh-secret-with-at-least-32-bytes";
     private static final Instant NOW = Instant.parse("2026-07-10T00:00:00Z");
 
     @Test
@@ -62,7 +63,7 @@ class JwtTokenProviderTest {
     }
 
     private JwtTokenProvider createProvider(Instant instant) {
-        JwtProperties properties = new JwtProperties(SECRET, 60L, 120L);
+        JwtProperties properties = new JwtProperties(ACCESS_SECRET, REFRESH_SECRET, 60L, 120L);
         return new JwtTokenProvider(properties, Clock.fixed(instant, ZoneOffset.UTC));
     }
 

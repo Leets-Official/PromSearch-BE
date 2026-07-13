@@ -86,11 +86,20 @@ public class AuthCommandService implements LoginUseCase, ReissueUseCase {
     }
 
     private void validateRefreshTokenSession(RefreshTokenSession session, RefreshTokenClaims claims, Instant now) {
-        if (!session.getUserId().equals(claims.userId())
-                || !session.getExpiresAt().equals(claims.expiresAt())
-                || !session.isAvailableAt(now)) {
+        if (!session.getUserId().equals(claims.userId()) || !session.getExpiresAt().equals(claims.expiresAt())) {
+            revokeTokenFamilyAndReject(session, now);
+        }
+        if (session.isRevoked()) {
+            revokeTokenFamilyAndReject(session, now);
+        }
+        if (session.isExpiredAt(now)) {
             throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
         }
+    }
+
+    private void revokeTokenFamilyAndReject(RefreshTokenSession session, Instant now) {
+        refreshTokenSessionRepository.revokeFamily(session.getFamilyId(), now);
+        throw new AuthDomainException(AuthErrorCode.INVALID_TOKEN);
     }
 
     private void validatePassword(String rawPassword, String encodedPassword) {
