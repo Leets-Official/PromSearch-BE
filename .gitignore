@@ -52,6 +52,8 @@ Icon
 ### Spring Boot ###
 application-local.yml
 application-local.yaml
+**/application-local.yml
+**/application-local.yaml
 application-dev.yml
 application-dev.yaml
 application-prod.yml

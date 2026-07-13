@@ -2,6 +2,16 @@ spring:
   application:
     name: promsearch
 
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
+
 auth:
   jwt:
     access-secret: ${JWT_ACCESS_SECRET}

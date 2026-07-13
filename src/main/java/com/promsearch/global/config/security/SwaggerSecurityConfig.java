@@ -4,10 +4,10 @@ import com.promsearch.global.security.ApiAccessDeniedHandler;
 import com.promsearch.global.security.ApiAuthenticationEntryPoint;
 import com.promsearch.global.security.JwtAuthenticationFilter;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -37,7 +37,7 @@ public class SwaggerSecurityConfig {
     @Bean
     @Order(1)
     @Profile({"dev", "prod"})
-    @ConditionalOnProperty(name = "SWAGGER_ENABLE", havingValue = "true")
+    @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
     public SecurityFilterChain swaggerDocsSecurityFilterChain(HttpSecurity http) throws Exception {
         /* dev/prod에서 Swagger 경로만 Basic Auth로 막고 일반 API 보안 정책과 분리한다. */
         return http
@@ -76,6 +76,7 @@ public class SwaggerSecurityConfig {
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue",
+                                "/api/v1/auth/swagger-token",
                                 "/error"
                         ).permitAll()
                         .anyRequest().authenticated())
@@ -95,7 +96,7 @@ public class SwaggerSecurityConfig {
 
     @Bean
     @Profile({"dev", "prod"})
-    @ConditionalOnProperty(name = "SWAGGER_ENABLE", havingValue = "true")
+    @ConditionalOnProperty(name = "springdoc.api-docs.enabled", havingValue = "true")
     public UserDetailsService swaggerUserDetailsService(
             @Value("${SWAGGER_AUTH_USERNAME:}") String username,
             @Value("${SWAGGER_AUTH_PASSWORD:}") String password,

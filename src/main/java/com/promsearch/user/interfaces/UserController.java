@@ -9,6 +9,7 @@ import com.promsearch.user.application.UserInfo;
 import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
 import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
 import com.promsearch.user.interfaces.dto.UserResponse;
+import com.promsearch.user.interfaces.docs.UserControllerDocs;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,13 +24,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/users")
-public class UserController {
+public class UserController implements UserControllerDocs {
 
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
     private final ChangePasswordUseCase changePasswordUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
 
     @PatchMapping("/me")
+    @Override
     public ApiResponse<UserResponse> updateProfile(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @Valid @RequestBody UpdateUserProfileRequest request
@@ -39,6 +41,7 @@ public class UserController {
     }
 
     @PatchMapping("/me/password")
+    @Override
     public ApiResponse<Void> changePassword(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @Valid @RequestBody ChangePasswordRequest request
@@ -48,6 +51,7 @@ public class UserController {
     }
 
     @DeleteMapping("/me")
+    @Override
     public ApiResponse<Void> delete(@AuthenticationPrincipal AuthenticatedUserPrincipal user) {
         deleteUserUseCase.delete(user.userId());
         return ApiResponse.<Void>onSuccess(null);

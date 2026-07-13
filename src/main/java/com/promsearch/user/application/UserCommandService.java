@@ -5,11 +5,13 @@ import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCase, ChangePasswordUseCase, DeleteUserUseCase {
@@ -31,7 +33,9 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
                 null
         );
 
-        return SignupInfo.from(userRepository.create(user));
+        SignupInfo signupInfo = SignupInfo.from(userRepository.create(user));
+        log.info("user_signup_completed userId={}", signupInfo.userId());
+        return signupInfo;
     }
 
     @Override
@@ -60,7 +64,9 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
                 name,
                 profileImageUrl
         );
-        return UserInfo.from(userRepository.update(updatedUser));
+        UserInfo userInfo = UserInfo.from(userRepository.update(updatedUser));
+        log.info("user_profile_updated userId={}", userInfo.userId());
+        return userInfo;
     }
 
     @Override
@@ -75,12 +81,14 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
 
         User updatedUser = user.changePassword(passwordEncoder.encode(newPassword));
         userRepository.update(updatedUser);
+        log.info("user_password_changed userId={}", command.userId());
     }
 
     @Override
     public void delete(Long userId) {
         User user = userRepository.getById(userId);
         userRepository.update(user.delete());
+        log.info("user_deleted userId={}", userId);
     }
 
     private void validateDuplicateNickname(String nickname) {

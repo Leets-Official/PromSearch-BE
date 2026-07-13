@@ -21,17 +21,24 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	/* Swagger 문서 경로만 Basic Auth로 보호하기 위해 Spring Security를 추가한다. */
 	implementation 'org.springframework.boot:spring-boot-starter-security'
+	/* /docs, /docs-json 문서 생성을 담당한다. 실제 노출 여부는 application.yaml의 SWAGGER_ENABLE로 제어한다. */
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17'
+	/* dev/prod에서 MDC 기반 구조화 JSON 로그를 출력한다. */
+	implementation 'net.logstash.logback:logstash-logback-encoder:8.1'
 	implementation 'org.springframework.security:spring-security-crypto'
 	implementation 'io.jsonwebtoken:jjwt-api:0.13.0'
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
 	runtimeOnly 'com.h2database:h2'
+	runtimeOnly 'org.postgresql:postgresql'
 	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.13.0'
 	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.13.0'
 	testCompileOnly 'org.projectlombok:lombok'
 	testAnnotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	/* Swagger Basic Auth 접근 제어를 MockMvc에서 검증한다. */
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
