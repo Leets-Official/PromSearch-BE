@@ -6,12 +6,15 @@ import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.auth.interfaces.dto.SignupResponse;
+import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
 import com.promsearch.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Auth | 인증", description = "회원가입, 로그인, Access Token 재발급 API")
@@ -49,4 +52,19 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
     })
     ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request);
+
+    @Operation(
+            summary = "[AUTH-004] 소셜 로그인",
+            description = "프론트엔드에서 전달받은 OAuth 인가 코드로 소셜 로그인 또는 자동 회원가입을 수행하고 "
+                    + "Access Token과 Refresh Token을 발급합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "소셜 로그인 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패 또는 지원하지 않는 제공자"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "소셜 인증 실패")
+    })
+    ResponseEntity<ApiResponse<LoginResponse>> socialLogin(
+            @Parameter(description = "소셜 로그인 제공자", example = "kakao") @PathVariable String provider,
+            @Valid @RequestBody SocialLoginRequest request
+    );
 }
