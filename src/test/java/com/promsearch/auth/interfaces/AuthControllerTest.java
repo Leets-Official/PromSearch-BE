@@ -14,6 +14,7 @@ import com.promsearch.auth.application.port.out.SocialLoginClient.SocialUserInfo
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
+import com.promsearch.auth.infrastructure.oauth.GoogleSocialLoginClient;
 import com.promsearch.auth.infrastructure.oauth.KakaoSocialLoginClient;
 import com.promsearch.auth.interfaces.dto.LoginRequest;
 import com.promsearch.auth.interfaces.dto.ReissueRequest;
@@ -61,6 +62,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private KakaoSocialLoginClient kakaoSocialLoginClient;
+
+    @MockitoBean
+    private GoogleSocialLoginClient googleSocialLoginClient;
 
     @DisplayName("회원가입에 성공한다")
     @Test
@@ -392,6 +396,58 @@ class AuthControllerTest {
         long userCountAfterFirstLogin = userJpaRepository.count();
 
         String secondResponse = mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
+
+        assertThat(secondUserId).isEqualTo(firstUserId);
+        assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);
+    }
+
+    @DisplayName("신규 구글 계정으로 소셜 로그인하면 자동 회원가입 후 로그인에 성공한다")
+    @Test
+    void socialLoginSuccessWithNewGoogleAccount() throws Exception {
+        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("google-1", "google-user@example.com", "구글유저", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.result.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.result.nickname").value("구글유저"))
+                .andExpect(jsonPath("$.result.password").doesNotExist());
+
+        assertThat(userJpaRepository.existsByEmail("google-user@example.com")).isTrue();
+    }
+
+    @DisplayName("이미 연동된 구글 계정으로 다시 로그인하면 회원을 새로 만들지 않는다")
+    @Test
+    void socialLoginReusesLinkedGoogleAccount() throws Exception {
+        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("google-2", "google-user2@example.com", "구글유저2", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        String firstResponse = mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long firstUserId = objectMapper.readTree(firstResponse).get("result").get("userId").asLong();
+        long userCountAfterFirstLogin = userJpaRepository.count();
+
+        String secondResponse = mockMvc.perform(post("/api/v1/auth/oauth/google")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())

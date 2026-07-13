@@ -5,7 +5,8 @@ import com.promsearch.auth.domain.exception.AuthErrorCode;
 
 public enum SocialProvider {
 
-    KAKAO;
+    KAKAO,
+    GOOGLE;
 
     public static SocialProvider from(String value) {
         if (value == null || value.isBlank()) {
