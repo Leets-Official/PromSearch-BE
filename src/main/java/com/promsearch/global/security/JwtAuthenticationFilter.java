@@ -5,6 +5,7 @@ import com.promsearch.auth.application.port.out.AccessTokenProvider;
 import com.promsearch.auth.application.port.out.AccessTokenProvider.AccessTokenClaims;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
+import com.promsearch.global.config.logging.RequestLoggingFilter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -60,6 +61,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     List.of(new SimpleGrantedAuthority("ROLE_" + claims.role()))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
+            RequestLoggingFilter.putAuthenticatedUserContext(request, principal.userId(), principal.role());
             filterChain.doFilter(request, response);
         } catch (AuthDomainException e) {
             SecurityContextHolder.clearContext();
