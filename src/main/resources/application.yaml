@@ -1,3 +1,20 @@
 spring:
-  profiles:
-    active: ${SPRING_PROFILES_ACTIVE:local}
+  application:
+    name: promsearch
+
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
+
+auth:
+  jwt:
+    access-secret: ${JWT_ACCESS_SECRET}
+    refresh-secret: ${JWT_REFRESH_SECRET}
+    access-token-expiration-seconds: ${JWT_ACCESS_TOKEN_EXPIRATION_SECONDS:3600}
+    refresh-token-expiration-seconds: ${JWT_REFRESH_TOKEN_EXPIRATION_SECONDS:1209600}
