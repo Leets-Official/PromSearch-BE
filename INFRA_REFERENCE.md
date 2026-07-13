@@ -49,6 +49,17 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `EC2_USERNAME` | EC2 SSH 접속 계정 |
 | `EC2_SSH_KEY` | EC2 SSH 접속 프라이빗 키 |
 | `DISCORD_WEBHOOK` | 배포 실패 알림용 Discord 웹훅 URL |
+| `JWT_ACCESS_SECRET` | Access Token 서명 키 (HS256, 32바이트 이상) |
+| `JWT_REFRESH_SECRET` | Refresh Token 서명 키 (HS256, 32바이트 이상) |
+| `SWAGGER_ENABLE` | prod에서 Swagger 문서 노출 여부 (보통 `false`) |
+| `SWAGGER_AUTH_USERNAME` | `SWAGGER_ENABLE=true`일 때 Swagger Basic Auth 계정 |
+| `SWAGGER_AUTH_PASSWORD` | `SWAGGER_ENABLE=true`일 때 Swagger Basic Auth 비밀번호 |
+| `KAKAO_CLIENT_ID` | 카카오 소셜 로그인 REST API 키 |
+| `KAKAO_CLIENT_SECRET` | 카카오 Client Secret 사용 시에만 필요 (아니면 빈 값) |
+| `GOOGLE_CLIENT_ID` | 구글 소셜 로그인 OAuth 2.0 클라이언트 ID |
+| `GOOGLE_CLIENT_SECRET` | 구글 소셜 로그인 OAuth 2.0 클라이언트 Secret |
+
+`deploy.yml`은 위 값들을 `docker run -e`로 컨테이너에 직접 전달합니다 (`docker run`에 아무 환경변수도 넘기지 않던 이전 버전에서는 컨테이너가 필수 설정값 검증에서 부팅에 실패했습니다).
 
 ## 브랜치 ↔ 파이프라인 매핑
 
