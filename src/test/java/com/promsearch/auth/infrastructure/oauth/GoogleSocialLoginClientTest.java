@@ -39,7 +39,7 @@ class GoogleSocialLoginClientTest {
         server.expect(requestTo(PROPERTIES.userInfoUri()))
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
-                        "{\"sub\":\"google-987\",\"email\":\"google-user@example.com\","
+                        "{\"sub\":\"google-987\",\"email\":\"google-user@example.com\",\"email_verified\":true,"
                                 + "\"name\":\"구글유저\",\"picture\":\"https://example.com/profile.png\"}",
                         MediaType.APPLICATION_JSON));
 
@@ -65,6 +65,26 @@ class GoogleSocialLoginClientTest {
 
         server.expect(requestTo(PROPERTIES.userInfoUri()))
                 .andRespond(withSuccess("{\"sub\":\"google-987\",\"name\":\"구글유저\"}", MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .isInstanceOf(AuthDomainException.class)
+                .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
+    }
+
+    @Test
+    void fetchUserInfoFailsWhenEmailNotVerified() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        GoogleSocialLoginClient client = new GoogleSocialLoginClient(PROPERTIES, builder);
+
+        server.expect(requestTo(PROPERTIES.tokenUri()))
+                .andRespond(withSuccess("{\"access_token\":\"google-access-token\"}", MediaType.APPLICATION_JSON));
+
+        server.expect(requestTo(PROPERTIES.userInfoUri()))
+                .andRespond(withSuccess(
+                        "{\"sub\":\"google-987\",\"email\":\"google-user@example.com\",\"email_verified\":false,"
+                                + "\"name\":\"구글유저\"}",
+                        MediaType.APPLICATION_JSON));
 
         assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class)

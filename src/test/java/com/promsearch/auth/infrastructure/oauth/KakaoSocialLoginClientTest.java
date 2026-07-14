@@ -40,6 +40,7 @@ class KakaoSocialLoginClientTest {
                 .andExpect(method(HttpMethod.GET))
                 .andRespond(withSuccess(
                         "{\"id\":123456,\"kakao_account\":{\"email\":\"kakao-user@example.com\","
+                                + "\"is_email_valid\":true,\"is_email_verified\":true,"
                                 + "\"profile\":{\"nickname\":\"카카오유저\","
                                 + "\"profile_image_url\":\"https://example.com/profile.png\"}}}",
                         MediaType.APPLICATION_JSON));
@@ -67,6 +68,27 @@ class KakaoSocialLoginClientTest {
         server.expect(requestTo(PROPERTIES.userInfoUri()))
                 .andRespond(withSuccess(
                         "{\"id\":123456,\"kakao_account\":{\"profile\":{\"nickname\":\"카카오유저\"}}}",
+                        MediaType.APPLICATION_JSON));
+
+        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .isInstanceOf(AuthDomainException.class)
+                .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
+    }
+
+    @Test
+    void fetchUserInfoFailsWhenEmailNotVerified() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
+
+        server.expect(requestTo(PROPERTIES.tokenUri()))
+                .andRespond(withSuccess("{\"access_token\":\"kakao-access-token\"}", MediaType.APPLICATION_JSON));
+
+        server.expect(requestTo(PROPERTIES.userInfoUri()))
+                .andRespond(withSuccess(
+                        "{\"id\":123456,\"kakao_account\":{\"email\":\"kakao-user@example.com\","
+                                + "\"is_email_valid\":true,\"is_email_verified\":false,"
+                                + "\"profile\":{\"nickname\":\"카카오유저\"}}}",
                         MediaType.APPLICATION_JSON));
 
         assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))

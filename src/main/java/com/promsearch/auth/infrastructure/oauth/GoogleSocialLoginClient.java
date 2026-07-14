@@ -21,7 +21,7 @@ public class GoogleSocialLoginClient implements SocialLoginClient {
 
     @Autowired
     public GoogleSocialLoginClient(GoogleOAuthProperties properties) {
-        this(properties, RestClient.builder());
+        this(properties, RestClient.builder().requestFactory(OAuthRestClientFactory.create()));
     }
 
     GoogleSocialLoginClient(GoogleOAuthProperties properties, RestClient.Builder restClientBuilder) {
@@ -73,7 +73,7 @@ public class GoogleSocialLoginClient implements SocialLoginClient {
         if (response.sub() == null || response.sub().isBlank()) {
             throw new AuthDomainException(AuthErrorCode.OAUTH_AUTHENTICATION_FAILED);
         }
-        if (response.email() == null || response.email().isBlank()) {
+        if (response.email() == null || response.email().isBlank() || !Boolean.TRUE.equals(response.emailVerified())) {
             throw new AuthDomainException(AuthErrorCode.OAUTH_EMAIL_NOT_AVAILABLE);
         }
 
@@ -95,6 +95,7 @@ public class GoogleSocialLoginClient implements SocialLoginClient {
     private record GoogleUserResponse(
             String sub,
             String email,
+            @JsonProperty("email_verified") Boolean emailVerified,
             String name,
             String picture
     ) {

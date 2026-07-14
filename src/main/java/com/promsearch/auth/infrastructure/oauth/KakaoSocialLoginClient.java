@@ -21,7 +21,7 @@ public class KakaoSocialLoginClient implements SocialLoginClient {
 
     @Autowired
     public KakaoSocialLoginClient(KakaoOAuthProperties properties) {
-        this(properties, RestClient.builder());
+        this(properties, RestClient.builder().requestFactory(OAuthRestClientFactory.create()));
     }
 
     KakaoSocialLoginClient(KakaoOAuthProperties properties, RestClient.Builder restClientBuilder) {
@@ -77,8 +77,11 @@ public class KakaoSocialLoginClient implements SocialLoginClient {
         KakaoUserResponse.KakaoAccount account = response.kakaoAccount();
         KakaoUserResponse.KakaoAccount.KakaoProfile profile = account != null ? account.profile() : null;
         String email = account != null ? account.email() : null;
+        boolean emailVerified = account != null
+                && Boolean.TRUE.equals(account.isEmailValid())
+                && Boolean.TRUE.equals(account.isEmailVerified());
 
-        if (email == null || email.isBlank()) {
+        if (email == null || email.isBlank() || !emailVerified) {
             throw new AuthDomainException(AuthErrorCode.OAUTH_EMAIL_NOT_AVAILABLE);
         }
 
@@ -109,6 +112,8 @@ public class KakaoSocialLoginClient implements SocialLoginClient {
 
         private record KakaoAccount(
                 String email,
+                @JsonProperty("is_email_valid") Boolean isEmailValid,
+                @JsonProperty("is_email_verified") Boolean isEmailVerified,
                 KakaoProfile profile
         ) {
 
