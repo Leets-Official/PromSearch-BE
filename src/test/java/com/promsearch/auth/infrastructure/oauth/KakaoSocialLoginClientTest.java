@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import com.promsearch.auth.application.port.out.SocialLoginClient.SocialUserInfo;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
+import com.promsearch.auth.domain.exception.AuthErrorCode;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.client.MockRestServiceServer;
 import org.springframework.web.client.RestClient;
@@ -107,5 +110,50 @@ class KakaoSocialLoginClientTest {
 
         assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class);
+    }
+
+    @Test
+    void exchangeCodeAndFetchUserInfoTranslatesRateLimitResponse() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
+
+        server.expect(requestTo(PROPERTIES.tokenUri()))
+                .andRespond(withStatus(HttpStatus.TOO_MANY_REQUESTS));
+
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .isInstanceOf(AuthDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthErrorCode.OAUTH_PROVIDER_RATE_LIMITED);
+    }
+
+    @Test
+    void exchangeCodeAndFetchUserInfoTranslatesUnauthorizedTokenResponse() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
+
+        server.expect(requestTo(PROPERTIES.tokenUri()))
+                .andRespond(withStatus(HttpStatus.UNAUTHORIZED));
+
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .isInstanceOf(AuthDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthErrorCode.OAUTH_AUTHENTICATION_FAILED);
+    }
+
+    @Test
+    void exchangeCodeAndFetchUserInfoTranslatesProviderServerError() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
+
+        server.expect(requestTo(PROPERTIES.tokenUri()))
+                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
+
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .isInstanceOf(AuthDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(AuthErrorCode.OAUTH_PROVIDER_UNAVAILABLE);
     }
 }

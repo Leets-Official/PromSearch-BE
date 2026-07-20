@@ -488,21 +488,21 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("AUTH-008"));
     }
 
-    @DisplayName("소셜 인증 서버 호출이 실패하면 소셜 로그인에 실패한다")
+    @DisplayName("소셜 제공자 서버 장애로 사용자 정보 조회에 실패하면 소셜 로그인에 실패한다")
     @Test
-    void socialLoginFailWhenProviderCallFails() throws Exception {
+    void socialLoginFailWhenProviderUnavailable() throws Exception {
         given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
         given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willThrow(new IllegalStateException("kakao server error"));
+                .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_PROVIDER_UNAVAILABLE));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
         mockMvc.perform(post("/api/v1/auth/oauth/kakao")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isUnauthorized())
+                .andExpect(status().isServiceUnavailable())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("AUTH-007"));
+                .andExpect(jsonPath("$.code").value("AUTH-012"));
     }
 
     @DisplayName("인가 코드가 없으면 소셜 로그인 요청이 실패한다")

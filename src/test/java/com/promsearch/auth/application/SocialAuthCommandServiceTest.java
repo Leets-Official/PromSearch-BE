@@ -108,14 +108,13 @@ class SocialAuthCommandServiceTest {
     }
 
     @Test
-    void socialLoginWrapsClientRuntimeExceptionAsAuthenticationFailure() {
-        kakaoClient.willThrow(new RuntimeException("kakao server error"));
+    void socialLoginPropagatesClientExceptionWithoutTranslation() {
+        RuntimeException clientFailure = new RuntimeException("kakao server error");
+        kakaoClient.willThrow(clientFailure);
 
         assertThatThrownBy(() -> socialAuthCommandService.socialLogin(
                 SocialLoginCommand.of("KAKAO", "auth-code", "https://promsearch.com/callback")))
-                .isInstanceOf(AuthDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(AuthErrorCode.OAUTH_AUTHENTICATION_FAILED);
+                .isSameAs(clientFailure);
     }
 
     private static class FakeSocialLoginClient implements SocialLoginClient {

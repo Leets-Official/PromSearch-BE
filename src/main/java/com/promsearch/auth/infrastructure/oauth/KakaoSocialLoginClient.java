@@ -36,8 +36,10 @@ public class KakaoSocialLoginClient implements SocialLoginClient {
 
     @Override
     public SocialUserInfo exchangeCodeAndFetchUserInfo(String authorizationCode, String redirectUri) {
-        String accessToken = exchangeAccessToken(authorizationCode, redirectUri);
-        return fetchProfile(accessToken);
+        return OAuthExceptionTranslator.execute(provider(), () -> {
+            String accessToken = exchangeAccessToken(authorizationCode, redirectUri);
+            return fetchProfile(accessToken);
+        });
     }
 
     private String exchangeAccessToken(String authorizationCode, String redirectUri) {

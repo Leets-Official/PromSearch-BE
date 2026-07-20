@@ -44,7 +44,8 @@ public class SocialAuthCommandService implements SocialLoginUseCase {
     @Transactional
     public LoginInfo socialLogin(SocialLoginCommand command) {
         SocialLoginClient client = resolveClient(command.provider());
-        SocialUserInfo socialUserInfo = fetchSocialUserInfo(client, command);
+        SocialUserInfo socialUserInfo = client.exchangeCodeAndFetchUserInfo(
+                command.authorizationCode(), command.redirectUri());
 
         Long userId = socialAccountRepository
                 .findByProviderAndProviderUserId(command.provider(), socialUserInfo.providerUserId())
@@ -84,18 +85,6 @@ public class SocialAuthCommandService implements SocialLoginUseCase {
         log.info("auth_social_account_linked userId={} provider={}", signupInfo.userId(), provider);
 
         return signupInfo.userId();
-    }
-
-    private SocialUserInfo fetchSocialUserInfo(SocialLoginClient client, SocialLoginCommand command) {
-        try {
-            return client.exchangeCodeAndFetchUserInfo(command.authorizationCode(), command.redirectUri());
-        } catch (AuthDomainException e) {
-            throw e;
-        } catch (RuntimeException e) {
-            log.warn("oauth_user_info_fetch_failed provider={} reason={}",
-                    command.provider(), e.getClass().getSimpleName());
-            throw new AuthDomainException(AuthErrorCode.OAUTH_AUTHENTICATION_FAILED);
-        }
     }
 
     private SocialLoginClient resolveClient(SocialProvider provider) {
