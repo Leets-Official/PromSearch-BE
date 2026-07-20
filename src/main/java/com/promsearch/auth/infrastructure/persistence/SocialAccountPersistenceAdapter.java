@@ -21,7 +21,11 @@ public class SocialAccountPersistenceAdapter implements SocialAccountRepository 
         try {
             return socialAccountJpaRepository.saveAndFlush(SocialAccountJpaEntity.from(socialAccount)).toDomain();
         } catch (DataIntegrityViolationException e) {
-            throw new AuthDomainException(AuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+            if (socialAccountJpaRepository.existsByProviderAndProviderUserId(
+                    socialAccount.getProvider(), socialAccount.getProviderUserId())) {
+                throw new AuthDomainException(AuthErrorCode.SOCIAL_ACCOUNT_ALREADY_LINKED);
+            }
+            throw e;
         }
     }
 
