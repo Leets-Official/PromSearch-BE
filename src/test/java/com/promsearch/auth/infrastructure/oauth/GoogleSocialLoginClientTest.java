@@ -25,7 +25,7 @@ class GoogleSocialLoginClientTest {
     );
 
     @Test
-    void fetchUserInfoSuccess() {
+    void exchangeCodeAndFetchUserInfoSuccess() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         GoogleSocialLoginClient client = new GoogleSocialLoginClient(PROPERTIES, builder);
@@ -43,7 +43,7 @@ class GoogleSocialLoginClientTest {
                                 + "\"name\":\"구글유저\",\"picture\":\"https://example.com/profile.png\"}",
                         MediaType.APPLICATION_JSON));
 
-        SocialUserInfo userInfo = client.fetchUserInfo("auth-code", "https://promsearch.com/callback");
+        SocialUserInfo userInfo = client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback");
 
         assertThat(client.provider()).isEqualTo(SocialProvider.GOOGLE);
         assertThat(userInfo.providerUserId()).isEqualTo("google-987");
@@ -55,7 +55,7 @@ class GoogleSocialLoginClientTest {
     }
 
     @Test
-    void fetchUserInfoFailsWhenEmailMissing() {
+    void exchangeCodeAndFetchUserInfoFailsWhenEmailMissing() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         GoogleSocialLoginClient client = new GoogleSocialLoginClient(PROPERTIES, builder);
@@ -66,13 +66,13 @@ class GoogleSocialLoginClientTest {
         server.expect(requestTo(PROPERTIES.userInfoUri()))
                 .andRespond(withSuccess("{\"sub\":\"google-987\",\"name\":\"구글유저\"}", MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class)
                 .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
     }
 
     @Test
-    void fetchUserInfoFailsWhenEmailNotVerified() {
+    void exchangeCodeAndFetchUserInfoFailsWhenEmailNotVerified() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         GoogleSocialLoginClient client = new GoogleSocialLoginClient(PROPERTIES, builder);
@@ -86,13 +86,13 @@ class GoogleSocialLoginClientTest {
                                 + "\"name\":\"구글유저\"}",
                         MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class)
                 .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
     }
 
     @Test
-    void fetchUserInfoFailsWhenTokenResponseMissingAccessToken() {
+    void exchangeCodeAndFetchUserInfoFailsWhenTokenResponseMissingAccessToken() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         GoogleSocialLoginClient client = new GoogleSocialLoginClient(PROPERTIES, builder);
@@ -100,7 +100,7 @@ class GoogleSocialLoginClientTest {
         server.expect(requestTo(PROPERTIES.tokenUri()))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class);
     }
 }

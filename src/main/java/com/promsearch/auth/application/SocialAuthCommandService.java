@@ -88,7 +88,7 @@ public class SocialAuthCommandService implements SocialLoginUseCase {
 
     private SocialUserInfo fetchSocialUserInfo(SocialLoginClient client, SocialLoginCommand command) {
         try {
-            return client.fetchUserInfo(command.authorizationCode(), command.redirectUri());
+            return client.exchangeCodeAndFetchUserInfo(command.authorizationCode(), command.redirectUri());
         } catch (AuthDomainException e) {
             throw e;
         } catch (RuntimeException e) {

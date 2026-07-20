@@ -142,7 +142,7 @@ class SocialAuthCommandServiceTest {
         }
 
         @Override
-        public SocialUserInfo fetchUserInfo(String authorizationCode, String redirectUri) {
+        public SocialUserInfo exchangeCodeAndFetchUserInfo(String authorizationCode, String redirectUri) {
             if (failure != null) {
                 throw failure;
             }

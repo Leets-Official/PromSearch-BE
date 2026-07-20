@@ -358,7 +358,7 @@ class AuthControllerTest {
     @Test
     void socialLoginSuccessWithNewKakaoAccount() throws Exception {
         given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willReturn(new SocialUserInfo("kakao-1", "kakao-user@example.com", "카카오유저", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -382,7 +382,7 @@ class AuthControllerTest {
     @Test
     void socialLoginReusesLinkedAccount() throws Exception {
         given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willReturn(new SocialUserInfo("kakao-2", "kakao-user2@example.com", "카카오유저2", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -410,7 +410,7 @@ class AuthControllerTest {
     @Test
     void socialLoginSuccessWithNewGoogleAccount() throws Exception {
         given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
-        given(googleSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willReturn(new SocialUserInfo("google-1", "google-user@example.com", "구글유저", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -434,7 +434,7 @@ class AuthControllerTest {
     @Test
     void socialLoginReusesLinkedGoogleAccount() throws Exception {
         given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
-        given(googleSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willReturn(new SocialUserInfo("google-2", "google-user2@example.com", "구글유저2", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -475,7 +475,7 @@ class AuthControllerTest {
     @Test
     void socialLoginFailWhenEmailNotAvailable() throws Exception {
         given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_EMAIL_NOT_AVAILABLE));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -492,7 +492,7 @@ class AuthControllerTest {
     @Test
     void socialLoginFailWhenProviderCallFails() throws Exception {
         given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willThrow(new IllegalStateException("kakao server error"));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");

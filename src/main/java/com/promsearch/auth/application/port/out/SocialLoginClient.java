@@ -6,7 +6,7 @@ public interface SocialLoginClient {
 
     SocialProvider provider();
 
-    SocialUserInfo fetchUserInfo(String authorizationCode, String redirectUri);
+    SocialUserInfo exchangeCodeAndFetchUserInfo(String authorizationCode, String redirectUri);
 
     record SocialUserInfo(
             String providerUserId,

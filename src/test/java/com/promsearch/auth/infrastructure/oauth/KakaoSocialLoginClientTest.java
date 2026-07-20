@@ -25,7 +25,7 @@ class KakaoSocialLoginClientTest {
     );
 
     @Test
-    void fetchUserInfoSuccess() {
+    void exchangeCodeAndFetchUserInfoSuccess() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
@@ -45,7 +45,7 @@ class KakaoSocialLoginClientTest {
                                 + "\"profile_image_url\":\"https://example.com/profile.png\"}}}",
                         MediaType.APPLICATION_JSON));
 
-        SocialUserInfo userInfo = client.fetchUserInfo("auth-code", "https://promsearch.com/callback");
+        SocialUserInfo userInfo = client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback");
 
         assertThat(client.provider()).isEqualTo(SocialProvider.KAKAO);
         assertThat(userInfo.providerUserId()).isEqualTo("123456");
@@ -57,7 +57,7 @@ class KakaoSocialLoginClientTest {
     }
 
     @Test
-    void fetchUserInfoFailsWhenEmailNotConsented() {
+    void exchangeCodeAndFetchUserInfoFailsWhenEmailNotConsented() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
@@ -70,13 +70,13 @@ class KakaoSocialLoginClientTest {
                         "{\"id\":123456,\"kakao_account\":{\"profile\":{\"nickname\":\"카카오유저\"}}}",
                         MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class)
                 .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
     }
 
     @Test
-    void fetchUserInfoFailsWhenEmailNotVerified() {
+    void exchangeCodeAndFetchUserInfoFailsWhenEmailNotVerified() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
@@ -91,13 +91,13 @@ class KakaoSocialLoginClientTest {
                                 + "\"profile\":{\"nickname\":\"카카오유저\"}}}",
                         MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class)
                 .hasMessage("소셜 계정에서 이메일 정보를 가져올 수 없습니다.");
     }
 
     @Test
-    void fetchUserInfoFailsWhenTokenResponseMissingAccessToken() {
+    void exchangeCodeAndFetchUserInfoFailsWhenTokenResponseMissingAccessToken() {
         RestClient.Builder builder = RestClient.builder();
         MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
         KakaoSocialLoginClient client = new KakaoSocialLoginClient(PROPERTIES, builder);
@@ -105,7 +105,7 @@ class KakaoSocialLoginClientTest {
         server.expect(requestTo(PROPERTIES.tokenUri()))
                 .andRespond(withSuccess("{}", MediaType.APPLICATION_JSON));
 
-        assertThatThrownBy(() -> client.fetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        assertThatThrownBy(() -> client.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .isInstanceOf(AuthDomainException.class);
     }
 }
