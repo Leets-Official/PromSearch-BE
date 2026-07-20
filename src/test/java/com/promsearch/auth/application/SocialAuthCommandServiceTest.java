@@ -43,8 +43,7 @@ class SocialAuthCommandServiceTest {
         kakaoClient = new FakeSocialLoginClient(SocialProvider.KAKAO);
         socialAccountRepository = new FakeSocialAccountRepository();
         userDirectory = new FakeUserDirectory();
-        socialAuthCommandService = new SocialAuthCommandService(
-                List.of(kakaoClient),
+        SocialLoginTransactionService socialLoginTransactionService = new SocialLoginTransactionService(
                 socialAccountRepository,
                 userDirectory,
                 userDirectory,
@@ -53,6 +52,7 @@ class SocialAuthCommandServiceTest {
                 new FakeRefreshTokenSessionRepository(),
                 new FakeTokenHasher()
         );
+        socialAuthCommandService = new SocialAuthCommandService(List.of(kakaoClient), socialLoginTransactionService);
     }
 
     @Test
