@@ -1,0 +1,27 @@
+springdoc:
+  api-docs:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs-json
+  swagger-ui:
+    enabled: ${SWAGGER_ENABLE:false}
+    path: /docs
+    persist-authorization: true
+    try-it-out-enabled: true
+
+auth:
+  jwt:
+    access-secret: promsearch-test-access-secret-with-at-least-32-bytes
+    refresh-secret: promsearch-test-refresh-secret-with-at-least-32-bytes
+    access-token-expiration-seconds: 3600
+    refresh-token-expiration-seconds: 1209600
+  oauth:
+    kakao:
+      client-id: test-kakao-client-id
+      client-secret: test-kakao-client-secret
+      token-uri: https://kauth.kakao.com/oauth/token
+      user-info-uri: https://kapi.kakao.com/v2/user/me
+    google:
+      client-id: test-google-client-id
+      client-secret: test-google-client-secret
+      token-uri: https://oauth2.googleapis.com/token
+      user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo

@@ -23,6 +23,11 @@ jobs:
         env:
           BRANCH_NAME: ${{ github.head_ref }}
         run: |
+          if [[ "$BRANCH_NAME" == "main" || "$BRANCH_NAME" == "develop" ]]; then
+            echo "main/develop 브랜치는 네이밍 검사를 건너뜁니다."
+            exit 0
+          fi
+          
           if [[ ! "$BRANCH_NAME" =~ ^(feat|fix|hotfix|refactor|chore|docs|test)/#[0-9]+-[a-z0-9][a-z0-9-]*$ ]]; then
             echo "브랜치명은 'type/#이슈번호-영문-요약' 형식이어야 합니다."
             echo "예시: feat/#2-entity-config-setting"

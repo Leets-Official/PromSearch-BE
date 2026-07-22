@@ -43,29 +43,36 @@ http://[EC2_퍼블릭_IP]:8080/test/health-check
 
 ```
 main            → 배포 브랜치 (protected, 직접 push 불가)
+develop         → 개발 통합 브랜치 (protected, 직접 push 불가)
 feature/기능명   → 작업 브랜치, 예: feature/auth-login, feature/prompt-upload
 ```
 
+- `develop`으로 머지하려면:
+  1. `feature/*` 브랜치에서 작업 후 PR 생성 (base: `develop`)
+  2. CI(`build-and-test`) 통과
+  - 이 단계는 검증만 수행하며 배포는 발생하지 않습니다.
 - `main`으로 머지하려면:
-  1. `feature/*` 브랜치에서 작업 후 PR 생성
+  1. `develop`이 릴리스 준비되면 `develop` → `main` PR 생성
   2. 팀원 1명 이상 승인(Approve)
   3. CI(`build-and-test`) 통과
   - 위 조건 미충족 시 GitHub이 머지 버튼을 자동으로 막습니다.
-- `main`에 직접 push 및 force push는 차단되어 있습니다.
+- `main`, `develop` 모두 직접 push 및 force push는 차단되어 있습니다.
 
 ## CI/CD 동작 방식
 
 ```
-[feature 브랜치 push / PR] → CI 실행 (빌드 + 테스트)
-                                └ 실패해도 알림 없음, 개발 중 자유롭게 반복 가능
+[feature 브랜치 push / PR → develop] → CI 실행 (빌드 + 테스트)
+                                          └ 배포 없음, 개발 중 자유롭게 반복 가능
 
-[PR 승인 + main 머지] → CI 재실행 → 성공 시에만 CD 실행
-                          └ Docker 이미지 빌드 → Docker Hub 푸시 (latest + git sha 태그)
-                          → EC2 SSH 접속 → 컨테이너 재기동
-                          └ 실패 시 Discord #ci-cd 채널 알림
+[develop → main PR 승인 + 머지] → CI 재실행 → 성공 시에만 CD 실행
+                                    └ Docker 이미지 빌드 → Docker Hub 푸시 (latest + git sha 태그)
+                                    → EC2 SSH 접속 → 컨테이너 재기동
+                                    └ 실패 시 Discord #ci-cd 채널 알림
 ```
 
-- CI가 실패한 커밋은 **절대 배포되지 않습니다** (`workflow_run` + `conclusion == 'success'` 조건으로 연결).
+- CI(`ci.yml`)는 `develop`, `main` 두 브랜치를 대상으로 push/PR 시 모두 실행됩니다.
+- 배포(`deploy.yml`)는 `workflow_run` + `branches: [main]` 조건으로 **`main`에서 CI가 성공했을 때만** 트리거됩니다. `develop`에서의 CI 성공은 배포를 트리거하지 않습니다.
+- CI가 실패한 커밋은 **절대 배포되지 않습니다** (`conclusion == 'success'` 조건으로 연결).
 - 배포된 컨테이너는 `--restart unless-stopped`로 EC2 재부팅 시에도 자동 기동됩니다.
 - 배포 시마다 이전 이미지는 `docker image prune -f`로 정리됩니다.
 
@@ -79,4 +86,5 @@ feature/기능명   → 작업 브랜치, 예: feature/auth-login, feature/promp
 
 - API 명세서 / ERD: *(링크 추가 예정)*
 - 팀 개발 컨벤션: *(링크 추가 예정)*
-- 인프라/인증정보 레퍼런스: 팀 Notion (비공개) — GitHub에는 올리지 않습니다.
+- CI/CD 파이프라인 · 배포 인프라 상세: [INFRA_REFERENCE.md](INFRA_REFERENCE.md)
+- 인프라 인증정보(EC2 IP, 키 등): 팀 Notion (비공개) — GitHub에는 올리지 않습니다.

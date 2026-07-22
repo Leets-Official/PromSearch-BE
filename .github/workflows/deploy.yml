@@ -36,15 +36,37 @@ jobs:
     steps:
       - name: Deploy to EC2
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
+          JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
+          SWAGGER_ENABLE: ${{ secrets.SWAGGER_ENABLE }}
+          SWAGGER_AUTH_USERNAME: ${{ secrets.SWAGGER_AUTH_USERNAME }}
+          SWAGGER_AUTH_PASSWORD: ${{ secrets.SWAGGER_AUTH_PASSWORD }}
+          KAKAO_CLIENT_ID: ${{ secrets.KAKAO_CLIENT_ID }}
+          KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: JWT_ACCESS_SECRET,JWT_REFRESH_SECRET,SWAGGER_ENABLE,SWAGGER_AUTH_USERNAME,SWAGGER_AUTH_PASSWORD,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
           script: |
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
             docker stop promsearch || true
             docker rm promsearch || true
-            docker run -d --name promsearch --restart unless-stopped -p 8080:8080 ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
+            docker run -d --name promsearch --restart unless-stopped -p 8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET" \
+              -e JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET" \
+              -e SWAGGER_ENABLE="$SWAGGER_ENABLE" \
+              -e SWAGGER_AUTH_USERNAME="$SWAGGER_AUTH_USERNAME" \
+              -e SWAGGER_AUTH_PASSWORD="$SWAGGER_AUTH_PASSWORD" \
+              -e KAKAO_CLIENT_ID="$KAKAO_CLIENT_ID" \
+              -e KAKAO_CLIENT_SECRET="$KAKAO_CLIENT_SECRET" \
+              -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
+              -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
+              ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
             docker image prune -f
 
       - name: Notify Discord on failure
