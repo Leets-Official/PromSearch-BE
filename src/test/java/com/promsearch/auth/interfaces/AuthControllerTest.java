@@ -2,6 +2,7 @@ package com.promsearch.auth.interfaces;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -9,9 +10,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.promsearch.auth.application.port.out.SocialLoginClient.SocialUserInfo;
+import com.promsearch.auth.domain.enums.SocialProvider;
+import com.promsearch.auth.domain.exception.AuthDomainException;
+import com.promsearch.auth.domain.exception.AuthErrorCode;
+import com.promsearch.auth.infrastructure.oauth.GoogleSocialLoginClient;
+import com.promsearch.auth.infrastructure.oauth.KakaoSocialLoginClient;
 import com.promsearch.auth.interfaces.dto.LoginRequest;
 import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
+import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
 import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
@@ -25,6 +33,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -50,6 +59,12 @@ class AuthControllerTest {
 
     @Autowired
     private EntityManager entityManager;
+
+    @MockitoBean
+    private KakaoSocialLoginClient kakaoSocialLoginClient;
+
+    @MockitoBean
+    private GoogleSocialLoginClient googleSocialLoginClient;
 
     @DisplayName("회원가입에 성공한다")
     @Test
@@ -338,6 +353,170 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
+
+    @DisplayName("신규 카카오 계정으로 소셜 로그인하면 자동 회원가입 후 로그인에 성공한다")
+    @Test
+    void socialLoginSuccessWithNewKakaoAccount() throws Exception {
+        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("kakao-1", "kakao-user@example.com", "카카오유저", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.result.email").value("kakao-user@example.com"))
+                .andExpect(jsonPath("$.result.nickname").value("카카오유저"))
+                .andExpect(jsonPath("$.result.password").doesNotExist());
+
+        assertThat(userJpaRepository.existsByEmail("kakao-user@example.com")).isTrue();
+    }
+
+    @DisplayName("이미 연동된 카카오 계정으로 다시 로그인하면 회원을 새로 만들지 않는다")
+    @Test
+    void socialLoginReusesLinkedAccount() throws Exception {
+        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("kakao-2", "kakao-user2@example.com", "카카오유저2", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        String firstResponse = mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long firstUserId = objectMapper.readTree(firstResponse).get("result").get("userId").asLong();
+        long userCountAfterFirstLogin = userJpaRepository.count();
+
+        String secondResponse = mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
+
+        assertThat(secondUserId).isEqualTo(firstUserId);
+        assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);
+    }
+
+    @DisplayName("신규 구글 계정으로 소셜 로그인하면 자동 회원가입 후 로그인에 성공한다")
+    @Test
+    void socialLoginSuccessWithNewGoogleAccount() throws Exception {
+        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("google-1", "google-user@example.com", "구글유저", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result.accessToken", notNullValue()))
+                .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
+                .andExpect(jsonPath("$.result.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.result.nickname").value("구글유저"))
+                .andExpect(jsonPath("$.result.password").doesNotExist());
+
+        assertThat(userJpaRepository.existsByEmail("google-user@example.com")).isTrue();
+    }
+
+    @DisplayName("이미 연동된 구글 계정으로 다시 로그인하면 회원을 새로 만들지 않는다")
+    @Test
+    void socialLoginReusesLinkedGoogleAccount() throws Exception {
+        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialUserInfo("google-2", "google-user2@example.com", "구글유저2", null));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        String firstResponse = mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long firstUserId = objectMapper.readTree(firstResponse).get("result").get("userId").asLong();
+        long userCountAfterFirstLogin = userJpaRepository.count();
+
+        String secondResponse = mockMvc.perform(post("/api/v1/auth/oauth/google")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
+        long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
+
+        assertThat(secondUserId).isEqualTo(firstUserId);
+        assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);
+    }
+
+    @DisplayName("지원하지 않는 소셜 로그인 제공자면 실패한다")
+    @Test
+    void socialLoginFailWhenProviderUnsupported() throws Exception {
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/facebook")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-006"));
+    }
+
+    @DisplayName("소셜 계정에서 이메일을 가져올 수 없으면 소셜 로그인에 실패한다")
+    @Test
+    void socialLoginFailWhenEmailNotAvailable() throws Exception {
+        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_EMAIL_NOT_AVAILABLE));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-008"));
+    }
+
+    @DisplayName("소셜 제공자 서버 장애로 사용자 정보 조회에 실패하면 소셜 로그인에 실패한다")
+    @Test
+    void socialLoginFailWhenProviderUnavailable() throws Exception {
+        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_PROVIDER_UNAVAILABLE));
+
+        SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isServiceUnavailable())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-012"));
+    }
+
+    @DisplayName("인가 코드가 없으면 소셜 로그인 요청이 실패한다")
+    @Test
+    void socialLoginFailWhenRequestInvalid() throws Exception {
+        SocialLoginRequest request = new SocialLoginRequest("", "");
+
+        mockMvc.perform(post("/api/v1/auth/oauth/kakao")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
 
     private void signup(String name, String nickname, String email, String password) throws Exception {
         SignupRequest request = new SignupRequest(name, nickname, email, password);

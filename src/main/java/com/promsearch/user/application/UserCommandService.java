@@ -4,6 +4,8 @@ import com.promsearch.user.application.port.out.UserRepository;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -14,7 +16,17 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @RequiredArgsConstructor
 @Transactional
-public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCase, ChangePasswordUseCase, DeleteUserUseCase {
+public class UserCommandService implements
+        SignupUseCase,
+        UpdateUserProfileUseCase,
+        ChangePasswordUseCase,
+        DeleteUserUseCase,
+        RegisterSocialUserUseCase {
+
+    private static final String DEFAULT_SOCIAL_NICKNAME = "user";
+    private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
+    private static final int NICKNAME_HINT_MAX_LENGTH = 90;
+    private static final int NICKNAME_RETRY_LIMIT = 5;
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -89,6 +101,49 @@ public class UserCommandService implements SignupUseCase, UpdateUserProfileUseCa
         User user = userRepository.getById(userId);
         userRepository.update(user.delete());
         log.info("user_deleted userId={}", userId);
+    }
+
+    @Override
+    public SignupInfo registerSocialUser(RegisterSocialUserCommand command) {
+        validateDuplicateEmail(command.email());
+
+        String nickname = resolveAvailableNickname(command.nickname());
+        String name = resolveSocialName(command.name());
+        String placeholderPassword = passwordEncoder.encode(UUID.randomUUID().toString());
+
+        User user = User.create(command.email(), placeholderPassword, nickname, name, command.profileImageUrl());
+
+        SignupInfo signupInfo = SignupInfo.from(userRepository.create(user));
+        log.info("user_social_signup_completed userId={}", signupInfo.userId());
+        return signupInfo;
+    }
+
+    private String resolveAvailableNickname(String nicknameHint) {
+        String base = normalizeNicknameHint(nicknameHint);
+        String candidate = base;
+        int attempt = 0;
+        while (userRepository.existsByNickname(candidate)) {
+            attempt++;
+            String suffix = attempt <= NICKNAME_RETRY_LIMIT
+                    ? String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000))
+                    : UUID.randomUUID().toString().substring(0, 8);
+            candidate = base + "_" + suffix;
+        }
+        return candidate;
+    }
+
+    private String normalizeNicknameHint(String nicknameHint) {
+        String trimmed = nicknameHint == null ? "" : nicknameHint.trim();
+        if (trimmed.isBlank()) {
+            trimmed = DEFAULT_SOCIAL_NICKNAME;
+        }
+        return trimmed.length() > NICKNAME_HINT_MAX_LENGTH
+                ? trimmed.substring(0, NICKNAME_HINT_MAX_LENGTH)
+                : trimmed;
+    }
+
+    private String resolveSocialName(String name) {
+        return (name == null || name.isBlank()) ? DEFAULT_SOCIAL_NAME : name.trim();
     }
 
     private void validateDuplicateNickname(String nickname) {

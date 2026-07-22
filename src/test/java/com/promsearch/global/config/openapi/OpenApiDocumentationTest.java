@@ -50,7 +50,7 @@ class OpenApiDocumentationTest {
                 UserController.class.getMethod("delete", AuthenticatedUserPrincipal.class)
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
-                new AuthController(null, null, null),
+                new AuthController(null, null, null, null),
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.LoginRequest.class)
         ));
 
