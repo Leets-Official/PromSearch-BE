@@ -20,6 +20,7 @@ import com.promsearch.auth.interfaces.dto.LoginRequest;
 import com.promsearch.auth.interfaces.dto.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.SignupRequest;
 import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
+import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
 import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
 import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
@@ -172,6 +173,42 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
+    @DisplayName("이메일이 인증 도메인 정책을 위반하면 회원가입에 실패한다")
+    @Test
+    void signupFailWhenEmailViolatesCredentialPolicy() throws Exception {
+        SignupRequest request = new SignupRequest(
+                "홍길동",
+                "gildong",
+                "invalid-email",
+                "password123"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-013"));
+    }
+
+    @DisplayName("비밀번호가 인증 도메인 정책을 위반하면 회원가입에 실패한다")
+    @Test
+    void signupFailWhenPasswordViolatesCredentialPolicy() throws Exception {
+        SignupRequest request = new SignupRequest(
+                "홍길동",
+                "gildong",
+                "gildong@example.com",
+                "password"
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-014"));
+    }
+
     @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
     void loginSuccess() throws Exception {
@@ -282,6 +319,42 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.nickname").value("gildong"));
     }
 
+    @DisplayName("프로필 이메일이 인증 도메인 정책을 위반하면 수정에 실패한다")
+    @Test
+    void updateProfileFailWhenEmailViolatesCredentialPolicy() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        String accessToken = loginAndGetResult("gildong@example.com", "password123")
+                .get("accessToken")
+                .asText();
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email", null);
+
+        mockMvc.perform(patch("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-013"));
+    }
+
+    @DisplayName("새 비밀번호가 인증 도메인 정책을 위반하면 변경에 실패한다")
+    @Test
+    void changePasswordFailWhenNewPasswordViolatesCredentialPolicy() throws Exception {
+        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        String accessToken = loginAndGetResult("gildong@example.com", "password123")
+                .get("accessToken")
+                .asText();
+        ChangePasswordRequest request = new ChangePasswordRequest("password123", "password");
+
+        mockMvc.perform(patch("/api/v1/users/me/password")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-014"));
+    }
+
     @DisplayName("유효하지 않은 refresh token이면 access token 재발급에 실패한다")
     @Test
     void reissueFailWhenRefreshTokenInvalid() throws Exception {
@@ -351,6 +424,19 @@ class AuthControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @DisplayName("이메일이 인증 도메인 정책을 위반하면 로그인에 실패한다")
+    @Test
+    void loginFailWhenEmailViolatesCredentialPolicy() throws Exception {
+        LoginRequest request = new LoginRequest("invalid-email", "password123");
+
+        mockMvc.perform(post("/api/v1/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-013"));
     }
 
 

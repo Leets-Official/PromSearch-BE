@@ -1,9 +1,7 @@
 package com.promsearch.auth.interfaces.dto;
 
-import com.promsearch.global.validation.ValidPassword;
 import com.promsearch.user.application.SignupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -21,12 +19,10 @@ public record SignupRequest(
 
         @Schema(description = "로그인 이메일", example = "gildong@example.com")
         @NotBlank(message = "이메일은 필수입니다.")
-        @Email(message = "이메일 형식이 올바르지 않습니다.")
-        @Size(max = 255, message = "이메일은 255자 이하여야 합니다.")
         String email,
 
         @Schema(description = "영문, 숫자, 특수문자 중 2가지 이상을 조합한 로그인 비밀번호", example = "password123!", minLength = 8, maxLength = 20)
-        @ValidPassword
+        @NotBlank(message = "비밀번호는 필수입니다.")
         String password
 ) {
 

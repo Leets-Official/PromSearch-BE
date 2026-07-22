@@ -1,6 +1,5 @@
 package com.promsearch.user.interfaces.dto;
 
-import com.promsearch.global.validation.ValidPassword;
 import com.promsearch.user.application.ChangePasswordCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
@@ -14,7 +13,7 @@ public record ChangePasswordRequest(
         String currentPassword,
 
         @Schema(description = "영문, 숫자, 특수문자 중 2가지 이상을 조합한 새 비밀번호", example = "newPassword123!", minLength = 8, maxLength = 20)
-        @ValidPassword
+        @NotBlank(message = "newPassword is required")
         String newPassword
 ) {
 
