@@ -20,7 +20,11 @@ class CredentialPolicyTest {
             "user.name@example.com",
             "user+tag@example.co.kr",
             "user_name@example.com",
-            "user-name@sub.example.com"
+            "user-name@sub.example.com",
+            "o'hara@example.com",
+            "customer/department=shipping@example.com",
+            "사용자@예시.한국",
+            "user@xn--9d0bm53a.xn--3e0b707e"
     })
     void acceptsValidEmail(String email) {
         assertThatCode(() -> CredentialPolicy.validateEmail(email))
@@ -37,7 +41,14 @@ class CredentialPolicyTest {
             "@example.com",
             "user@example",
             "user name@example.com",
-            "한글@example.com"
+            ".user@example.com",
+            "user.@example.com",
+            "user..name@example.com",
+            "user@@example.com",
+            "user@-example.com",
+            "user@example-.com",
+            "user@example..com",
+            "user@example_com"
     })
     void rejectsInvalidEmail(String email) {
         assertPolicyViolation(() -> CredentialPolicy.validateEmail(email), AuthErrorCode.INVALID_EMAIL_FORMAT);

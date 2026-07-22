@@ -19,4 +19,12 @@ public record ChangePasswordCommand(
     public static ChangePasswordCommand of(Long userId, String currentPassword, String newPassword) {
         return new ChangePasswordCommand(userId, currentPassword, newPassword);
     }
+
+    /**
+     * 현재/신규 평문 비밀번호 모두 로그, 트레이스, 예외 메시지에서 마스킹한다.
+     */
+    @Override
+    public String toString() {
+        return "ChangePasswordCommand[userId=" + userId + ", currentPassword=***, newPassword=***]";
+    }
 }

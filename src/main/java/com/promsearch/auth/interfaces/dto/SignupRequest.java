@@ -29,4 +29,12 @@ public record SignupRequest(
     public SignupCommand toCommand() {
         return SignupCommand.of(name, nickname, email, password);
     }
+
+    /**
+     * 요청 DTO가 로깅되더라도 평문 비밀번호는 출력하지 않는다.
+     */
+    @Override
+    public String toString() {
+        return "SignupRequest[name=" + name + ", nickname=" + nickname + ", email=" + email + ", password=***]";
+    }
 }

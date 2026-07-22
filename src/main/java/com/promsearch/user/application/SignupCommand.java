@@ -23,4 +23,12 @@ public record SignupCommand(
     public static SignupCommand of(String name, String nickname, String email, String password) {
         return new SignupCommand(name, nickname, email, password);
     }
+
+    /**
+     * 평문 비밀번호가 로그, 트레이스, 예외 메시지에 우발적으로 노출되지 않도록 마스킹한다.
+     */
+    @Override
+    public String toString() {
+        return "SignupCommand[name=" + name + ", nickname=" + nickname + ", email=" + email + ", password=***]";
+    }
 }

@@ -20,4 +20,12 @@ public record LoginRequest(
     public LoginCommand toCommand() {
         return LoginCommand.of(email, password);
     }
+
+    /**
+     * 요청 DTO가 로깅되더라도 평문 비밀번호는 출력하지 않는다.
+     */
+    @Override
+    public String toString() {
+        return "LoginRequest[email=" + email + ", password=***]";
+    }
 }
