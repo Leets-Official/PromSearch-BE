@@ -7,8 +7,8 @@ public record PromptAuthorResponse(
         @Schema(description = "작성자 ID", example = "12")
         Long userId,
 
-        @Schema(description = "작성자 이름", example = "프롬프트장인")
-        String displayName,
+        @Schema(description = "작성자 닉네임", example = "프롬프트장인")
+        String nickname,
 
         @Schema(
                 description = "작성자 프로필 이미지 URL. 등록되지 않았으면 null입니다.",

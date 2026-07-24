@@ -52,8 +52,8 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "output_type", length = 20)
     private PromptOutputType outputType;
 
-    @Column(name = "author_tip", columnDefinition = "TEXT")
-    private String authorTip;
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "content_type", length = 20)
@@ -83,21 +83,21 @@ public class PostJpaEntity extends BaseEntity {
 
     @Builder(access = AccessLevel.PRIVATE)
     private PostJpaEntity(Long userId, String title, String promptBody, String thumbnailImageUrl,
-                          PromptOutputType outputType, String authorTip, PromptContentType contentType,
+                          PromptOutputType outputType, String description, PromptContentType contentType,
                           Long pricePoint) {
         this.userId = userId;
         this.title = title;
         this.promptBody = promptBody;
         this.thumbnailImageUrl = thumbnailImageUrl;
         this.outputType = outputType;
-        this.authorTip = authorTip;
+        this.description = description;
         this.contentType = contentType;
         this.status = PromptStatus.DRAFT;
         this.pricePoint = pricePoint != null ? pricePoint : 0L;
     }
 
     public static PostJpaEntity create(Long userId, String title, String promptBody, String thumbnailImageUrl,
-                                       PromptOutputType outputType, String authorTip,
+                                       PromptOutputType outputType, String description,
                                        PromptContentType contentType, Long pricePoint) {
         return PostJpaEntity.builder()
                 .userId(userId)
@@ -105,7 +105,7 @@ public class PostJpaEntity extends BaseEntity {
                 .promptBody(promptBody)
                 .thumbnailImageUrl(thumbnailImageUrl)
                 .outputType(outputType)
-                .authorTip(authorTip)
+                .description(description)
                 .contentType(contentType)
                 .pricePoint(pricePoint)
                 .build();
@@ -119,7 +119,7 @@ public class PostJpaEntity extends BaseEntity {
                 promptBody,
                 thumbnailImageUrl,
                 outputType,
-                authorTip,
+                description,
                 contentType,
                 status,
                 pricePoint,

@@ -37,8 +37,8 @@ public record PromptDetailResponse(
         )
         String promptBody,
 
-        @Schema(description = "작성자 팁(설명)", example = "파스타의 결감을 살린 이미지 생성 프롬프트입니다. 명도를 조절해 원하시는 이미지를 완성해보세요!", nullable = true)
-        String authorTip,
+        @Schema(description = "프롬프트 설명", example = "파스타의 결감을 살린 이미지 생성 프롬프트입니다. 명도를 조절해 원하시는 이미지를 완성해보세요!", nullable = true)
+        String description,
 
         @Schema(description = "요청 사용자 기준 본문 접근 상태")
         PromptAccessResponse access,

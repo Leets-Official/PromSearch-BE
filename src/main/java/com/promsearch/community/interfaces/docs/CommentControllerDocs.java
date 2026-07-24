@@ -50,7 +50,7 @@ public interface CommentControllerDocs {
                                                     "parentCommentId": null,
                                                     "author": {
                                                       "userId": 10,
-                                                      "displayName": "이영희",
+                                                      "nickname": "이영희",
                                                       "profileImageUrl": null
                                                     },
                                                     "content": "저도 잘 사용했습니다.",
@@ -65,7 +65,7 @@ public interface CommentControllerDocs {
                                                     "parentCommentId": null,
                                                     "author": {
                                                       "userId": 8,
-                                                      "displayName": "홍길동",
+                                                      "nickname": "홍길동",
                                                       "profileImageUrl": "https://cdn.promsearch.com/profiles/8.jpg"
                                                     },
                                                     "content": "좋은 프롬프트네요.",
@@ -79,7 +79,7 @@ public interface CommentControllerDocs {
                                                         "parentCommentId": 101,
                                                         "author": {
                                                           "userId": 9,
-                                                          "displayName": "김철수",
+                                                          "nickname": "김철수",
                                                           "profileImageUrl": null
                                                         },
                                                         "content": "저도 그렇게 생각합니다.",

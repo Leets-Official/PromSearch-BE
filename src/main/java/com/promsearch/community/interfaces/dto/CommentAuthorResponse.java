@@ -7,8 +7,8 @@ public record CommentAuthorResponse(
         @Schema(description = "작성자 ID", example = "8")
         Long userId,
 
-        @Schema(description = "작성자 공개 이름", example = "홍길동")
-        String displayName,
+        @Schema(description = "작성자 닉네임", example = "홍길동")
+        String nickname,
 
         @Schema(
                 description = "작성자 프로필 이미지 URL",
