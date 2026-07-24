@@ -27,7 +27,10 @@ public interface CommentControllerDocs {
 
     @Operation(
             summary = "[COMMENT-001] 댓글 목록 조회",
-            description = "프롬프트의 댓글과 대댓글 전체를 작성 시간 내림차순으로 조회합니다. 인증 토큰은 선택 사항입니다."
+            description = """
+                    프롬프트의 댓글과 대댓글 전체를 작성 시간 내림차순으로 조회합니다. 인증 토큰은 선택 사항입니다.
+                    mine은 로그인 사용자 본인의 댓글 여부이고, promptAuthor는 프롬프트 작성자의 댓글 여부입니다.
+                    """
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -56,6 +59,7 @@ public interface CommentControllerDocs {
                                                     "content": "저도 잘 사용했습니다.",
                                                     "status": "ACTIVE",
                                                     "mine": false,
+                                                    "promptAuthor": true,
                                                     "createdAt": "2026-07-23T04:00:00Z",
                                                     "updatedAt": "2026-07-23T04:00:00Z",
                                                     "replies": []
@@ -71,6 +75,7 @@ public interface CommentControllerDocs {
                                                     "content": "좋은 프롬프트네요.",
                                                     "status": "ACTIVE",
                                                     "mine": false,
+                                                    "promptAuthor": false,
                                                     "createdAt": "2026-07-23T03:00:00Z",
                                                     "updatedAt": "2026-07-23T03:00:00Z",
                                                     "replies": [
@@ -85,6 +90,7 @@ public interface CommentControllerDocs {
                                                         "content": "저도 그렇게 생각합니다.",
                                                         "status": "ACTIVE",
                                                         "mine": true,
+                                                        "promptAuthor": false,
                                                         "createdAt": "2026-07-23T03:10:00Z",
                                                         "updatedAt": "2026-07-23T03:10:00Z"
                                                       }

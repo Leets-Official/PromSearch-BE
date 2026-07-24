@@ -24,6 +24,9 @@ public record CommentReplyResponse(
         @Schema(description = "현재 로그인 사용자가 작성한 대댓글인지 여부", example = "true")
         boolean mine,
 
+        @Schema(description = "프롬프트 작성자가 작성한 대댓글인지 여부", example = "false")
+        boolean promptAuthor,
+
         @Schema(description = "작성 시각", example = "2026-07-23T03:10:00Z")
         Instant createdAt,
 
