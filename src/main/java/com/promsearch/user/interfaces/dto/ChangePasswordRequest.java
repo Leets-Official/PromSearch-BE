@@ -12,13 +12,20 @@ public record ChangePasswordRequest(
         @Size(min = 8, max = 100, message = "currentPassword must be between 8 and 100 characters")
         String currentPassword,
 
-        @Schema(description = "새 비밀번호", example = "newPassword123!")
+        @Schema(description = "영문, 숫자, 특수문자 중 2가지 이상을 조합한 새 비밀번호", example = "newPassword123!", minLength = 8, maxLength = 20)
         @NotBlank(message = "newPassword is required")
-        @Size(min = 8, max = 100, message = "newPassword must be between 8 and 100 characters")
         String newPassword
 ) {
 
     public ChangePasswordCommand toCommand(Long userId) {
         return ChangePasswordCommand.of(userId, currentPassword, newPassword);
+    }
+
+    /**
+     * 현재/신규 평문 비밀번호 모두 요청 로깅에서 마스킹한다.
+     */
+    @Override
+    public String toString() {
+        return "ChangePasswordRequest[currentPassword=***, newPassword=***]";
     }
 }
