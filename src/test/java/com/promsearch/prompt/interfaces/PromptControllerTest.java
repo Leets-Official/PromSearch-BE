@@ -48,6 +48,13 @@ class PromptControllerTest {
         expectNotImplemented(delete("/api/v1/prompts/1"));
     }
 
+    @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @Test
+    void promptQueryEndpointsReturnNotImplemented() throws Exception {
+        expectNotImplemented(get("/api/v1/prompts/me").param("status", "ACTIVE"));
+        expectNotImplemented(get("/api/v1/prompts/me/insights"));
+    }
+
     @DisplayName("임시저장은 제목이 공백이거나 20자를 초과하면 거절한다")
     @Test
     void draftTitleValidation() throws Exception {
@@ -117,6 +124,32 @@ class PromptControllerTest {
                           }]
                         }
                         """));
+    }
+
+    @DisplayName("게시완료 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRejectsInvalidStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me").param("status", "PUBLISHED"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
+    }
+
+    @DisplayName("게시완료 목록 조회는 status 파라미터가 없으면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRequiresStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("게시완료 목록 조회는 size가 100을 초과하면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRejectsOversizedPage() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "ACTIVE")
+                        .param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
     private void expectNotImplemented(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)

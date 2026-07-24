@@ -70,6 +70,28 @@ class PromptOpenApiContractTest {
         assertThat(properties.has("updatedAt")).isTrue();
     }
 
+    @DisplayName("Swagger에 내 게시완료 목록·인사이트 조회 API를 노출한다")
+    @Test
+    void promptQueryEndpointsAreDocumented() throws Exception {
+        JsonNode document = openApiDocument();
+
+        assertThat(document.at("/paths/~1api~1v1~1prompts~1me/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1prompts~1me~1insights/get").isMissingNode()).isFalse();
+    }
+
+    @DisplayName("게시완료 목록 응답은 목록 카드 필드만 포함하고 프롬프트 본문은 노출하지 않는다")
+    @Test
+    void myPromptSummarySchemaExcludesBody() throws Exception {
+        JsonNode properties = openApiDocument().at("/components/schemas/MyPromptSummaryResponse/properties");
+
+        assertThat(properties.has("promptId")).isTrue();
+        assertThat(properties.has("title")).isTrue();
+        assertThat(properties.has("publishedAt")).isTrue();
+        assertThat(properties.has("viewCount")).isTrue();
+        assertThat(properties.has("recommendCount")).isTrue();
+        assertThat(properties.has("promptBody")).isFalse();
+    }
+
     private JsonNode openApiDocument() throws Exception {
         String response = mockMvc.perform(get("/docs-json"))
                 .andExpect(status().isOk())

@@ -2,15 +2,21 @@ package com.promsearch.prompt.interfaces;
 
 import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
 import com.promsearch.prompt.interfaces.dto.CreatePromptRequest;
+import com.promsearch.prompt.interfaces.dto.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.PromptImageUploadUrlRequest;
 import com.promsearch.prompt.interfaces.dto.PromptImageUploadUrlResponse;
+import com.promsearch.prompt.interfaces.dto.PromptInsightResponse;
 import com.promsearch.prompt.interfaces.dto.SavePromptDraftRequest;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -21,6 +27,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -76,6 +83,28 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<Void> deletePrompt(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @PathVariable Long promptId
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @GetMapping("/prompts/me")
+    @Override
+    public ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPublishedPrompts(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @RequestParam PromptStatus status,
+            @Min(value = 0, message = "page must be 0 or greater")
+            @RequestParam(defaultValue = "0") int page,
+            @Min(value = 1, message = "size must be 1 or greater")
+            @Max(value = 100, message = "size must be 100 or less")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @GetMapping("/prompts/me/insights")
+    @Override
+    public ApiResponse<PromptInsightResponse> getMyPromptInsights(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
         throw new NotImplementedException();
     }
