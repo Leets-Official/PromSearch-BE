@@ -1,8 +1,7 @@
 package com.promsearch.prompt.interfaces.docs;
 
+import com.promsearch.global.exception.constant.CommonErrorCode;
 import com.promsearch.global.response.ApiResponse;
-import com.promsearch.global.response.ApiErrorExamples;
-import com.promsearch.global.response.ApiErrorResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.interfaces.dto.PromptDetailResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,16 +33,16 @@ public interface PromptControllerDocs {
                     responseCode = "400",
                     description = "유효하지 않은 프롬프트 ID",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.BAD_REQUEST)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.BAD_REQUEST)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "프롬프트 없음 또는 조회 불가",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })

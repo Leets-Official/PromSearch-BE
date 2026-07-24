@@ -5,8 +5,7 @@ import com.promsearch.community.interfaces.dto.CommentReplyResponse;
 import com.promsearch.community.interfaces.dto.CommentResponse;
 import com.promsearch.community.interfaces.dto.CreateCommentRequest;
 import com.promsearch.community.interfaces.dto.UpdateCommentRequest;
-import com.promsearch.global.response.ApiErrorExamples;
-import com.promsearch.global.response.ApiErrorResponse;
+import com.promsearch.global.exception.constant.CommonErrorCode;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -102,16 +101,16 @@ public interface CommentControllerDocs {
                     responseCode = "400",
                     description = "유효하지 않은 프롬프트 ID",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.BAD_REQUEST)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.BAD_REQUEST)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "프롬프트 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })
@@ -131,24 +130,24 @@ public interface CommentControllerDocs {
                     responseCode = "400",
                     description = "요청 값 검증 실패",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.BAD_REQUEST)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.BAD_REQUEST)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     description = "인증 필요",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.UNAUTHORIZED)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.UNAUTHORIZED)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "프롬프트 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })
@@ -170,32 +169,32 @@ public interface CommentControllerDocs {
                     responseCode = "400",
                     description = "요청 값 검증 실패",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.BAD_REQUEST)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.BAD_REQUEST)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     description = "인증 필요",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.UNAUTHORIZED)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.UNAUTHORIZED)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403",
                     description = "수정 권한 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.FORBIDDEN)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.FORBIDDEN)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "댓글 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })
@@ -217,24 +216,24 @@ public interface CommentControllerDocs {
                     responseCode = "401",
                     description = "인증 필요",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.UNAUTHORIZED)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.UNAUTHORIZED)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "403",
                     description = "삭제 권한 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.FORBIDDEN)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.FORBIDDEN)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "댓글 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })
@@ -257,24 +256,24 @@ public interface CommentControllerDocs {
                     responseCode = "400",
                     description = "요청 값 검증 실패 또는 대댓글에 답글 작성 시도",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.BAD_REQUEST)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.BAD_REQUEST)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "401",
                     description = "인증 필요",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.UNAUTHORIZED)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.UNAUTHORIZED)
                     )
             ),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
                     responseCode = "404",
                     description = "부모 댓글 없음",
                     content = @Content(
-                            schema = @Schema(implementation = ApiErrorResponse.class),
-                            examples = @ExampleObject(value = ApiErrorExamples.NOT_FOUND)
+                            schema = @Schema(implementation = ApiResponse.class),
+                            examples = @ExampleObject(value = CommonErrorCode.Examples.NOT_FOUND)
                     )
             )
     })
