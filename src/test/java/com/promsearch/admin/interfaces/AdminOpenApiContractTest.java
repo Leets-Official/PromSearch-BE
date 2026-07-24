@@ -23,13 +23,15 @@ class AdminOpenApiContractTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @DisplayName("Swagger에 신고함 관리자 API를 노출한다")
+    @DisplayName("Swagger에 신고함·등급업 관리자 API 4개를 노출한다")
     @Test
-    void reportEndpointsAreDocumented() throws Exception {
+    void adminEndpointsAreDocumented() throws Exception {
         JsonNode document = openApiDocument();
 
         assertThat(document.at("/paths/~1api~1v1~1admin~1reports/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1admin~1reports~1{reportId}/patch").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests~1{requestId}/patch").isMissingNode()).isFalse();
     }
 
     @DisplayName("신고 생성 API 미구현 상태를 Swagger 설명에 명시한다")
@@ -39,6 +41,15 @@ class AdminOpenApiContractTest {
 
         String reportTagDescription = tagDescription(document, "Admin | 신고함");
         assertThat(reportTagDescription).contains("신고 생성 API는 이번 범위에서 미구현");
+    }
+
+    @DisplayName("등급업 신청 생성 방식 미정 상태를 Swagger 설명에 명시한다")
+    @Test
+    void gradeRequestTagDocumentsUndecidedPolicy() throws Exception {
+        JsonNode document = openApiDocument();
+
+        String gradeTagDescription = tagDescription(document, "Admin | Origin 등급업");
+        assertThat(gradeTagDescription).contains("정책 미정");
     }
 
     private String tagDescription(JsonNode document, String tagName) {
