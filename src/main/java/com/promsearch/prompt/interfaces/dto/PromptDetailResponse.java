@@ -43,6 +43,9 @@ public record PromptDetailResponse(
         @Schema(description = "요청 사용자 기준 본문 접근 상태")
         PromptAccessResponse access,
 
+        @Schema(description = "요청 사용자 기준 좋아요 및 북마크 상태. 비로그인 사용자는 모두 false입니다.")
+        PromptViewerInteractionResponse viewerInteraction,
+
         @Schema(description = "워터마크 처리가 완료된 결과 이미지 목록")
         List<PromptImageResponse> images,
 
