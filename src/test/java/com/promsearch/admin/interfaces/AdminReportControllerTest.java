@@ -1,0 +1,64 @@
+package com.promsearch.admin.interfaces;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.promsearch.auth.application.port.out.AccessTokenProvider;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+@WebMvcTest(AdminReportController.class)
+@AutoConfigureMockMvc(addFilters = false)
+class AdminReportControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private AccessTokenProvider accessTokenProvider;
+
+    @DisplayName("신고 목록 조회·처리는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @Test
+    void reportEndpointsReturnNotImplemented() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/reports"))
+                .andExpect(status().isNotImplemented())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-501"));
+
+        mockMvc.perform(patch("/api/v1/admin/reports/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"RESOLVED"}
+                                """))
+                .andExpect(status().isNotImplemented())
+                .andExpect(jsonPath("$.code").value("COMMON-501"));
+    }
+
+    @DisplayName("신고 처리 상태는 PENDING으로 되돌릴 수 없다")
+    @Test
+    void reportStatusCannotBeSetBackToPending() throws Exception {
+        mockMvc.perform(patch("/api/v1/admin/reports/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"PENDING"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @DisplayName("targetType 값이 유효하지 않으면 400을 반환한다")
+    @Test
+    void getReportsRejectsInvalidTargetType() throws Exception {
+        mockMvc.perform(get("/api/v1/admin/reports").param("targetType", "USER"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
+    }
+}
