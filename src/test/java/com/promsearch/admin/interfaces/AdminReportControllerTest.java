@@ -59,6 +59,6 @@ class AdminReportControllerTest {
     void getReportsRejectsInvalidTargetType() throws Exception {
         mockMvc.perform(get("/api/v1/admin/reports").param("targetType", "USER"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("COMMON-400"));
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 }

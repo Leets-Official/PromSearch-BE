@@ -59,6 +59,6 @@ class AdminGradeRequestControllerTest {
     void getGradeRequestsRejectsInvalidStatus() throws Exception {
         mockMvc.perform(get("/api/v1/admin/grade-requests").param("status", "DONE"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.code").value("COMMON-400"));
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 }

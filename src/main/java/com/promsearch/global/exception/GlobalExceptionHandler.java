@@ -53,7 +53,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         String message = "%s 값이 유효하지 않습니다.".formatted(e.getName());
 
         log.warn("[TYPE MISMATCH] {}", message);
-        return buildResponse(e, CommonErrorCode.BAD_REQUEST, HttpHeaders.EMPTY, request, message);
+        return buildResponse(e, CommonErrorCode.INVALID_INPUT_VALUE, HttpHeaders.EMPTY, request, message);
     }
 
     // @Valid Request Body 검증 실패를 필드별 메시지로 정리한다.

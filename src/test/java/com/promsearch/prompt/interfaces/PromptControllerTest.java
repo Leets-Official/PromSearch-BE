@@ -132,7 +132,7 @@ class PromptControllerTest {
         mockMvc.perform(get("/api/v1/prompts/me").param("status", "PUBLISHED"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("COMMON-400"));
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
     @DisplayName("게시완료 목록 조회는 status 파라미터가 없으면 400을 반환한다")

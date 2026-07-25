@@ -13,9 +13,13 @@ public enum ReportReason {
     private static final Set<ReportReason> COMMENT_DISALLOWED = EnumSet.of(COPYRIGHT, LOW_QUALITY);
 
     public boolean isAllowedFor(ReportTargetType targetType) {
-        if (targetType == ReportTargetType.COMMENT) {
-            return !COMMENT_DISALLOWED.contains(this);
+        if (targetType == null) {
+            return false;
         }
-        return true;
+
+        return switch (targetType) {
+            case COMMENT -> !COMMENT_DISALLOWED.contains(this);
+            case POST -> true;
+        };
     }
 }

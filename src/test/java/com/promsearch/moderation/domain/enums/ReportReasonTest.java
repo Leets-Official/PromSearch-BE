@@ -24,4 +24,12 @@ class ReportReasonTest {
             assertThat(reason.isAllowedFor(ReportTargetType.POST)).isTrue();
         }
     }
+
+    @DisplayName("대상 타입이 null이면 허용하지 않는다")
+    @Test
+    void nullTargetTypeIsNotAllowed() {
+        for (ReportReason reason : ReportReason.values()) {
+            assertThat(reason.isAllowedFor(null)).isFalse();
+        }
+    }
 }
