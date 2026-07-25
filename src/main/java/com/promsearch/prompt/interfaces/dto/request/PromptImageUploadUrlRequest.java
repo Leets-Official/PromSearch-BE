@@ -1,6 +1,7 @@
 package com.promsearch.prompt.interfaces.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.promsearch.prompt.application.usecase.dto.IssuePromptImageUploadUrlsCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
@@ -20,6 +21,21 @@ public record PromptImageUploadUrlRequest(
         @Size(max = 10, message = "이미지는 최대 10장까지 업로드할 수 있습니다.")
         List<@Valid ImageFile> images
 ) {
+
+    public IssuePromptImageUploadUrlsCommand toCommand(Long uploaderId) {
+        return new IssuePromptImageUploadUrlsCommand(
+                uploaderId,
+                images.stream()
+                        .map(image -> new IssuePromptImageUploadUrlsCommand.ImageFile(
+                                image.fileName(),
+                                image.contentType(),
+                                image.fileSize(),
+                                image.width(),
+                                image.height()
+                        ))
+                        .toList()
+        );
+    }
 
     @Schema(description = "업로드할 개별 이미지 메타데이터")
     public record ImageFile(

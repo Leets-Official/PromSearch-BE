@@ -7,17 +7,23 @@ import java.util.Locale;
 
 public enum PromptImageContentType {
 
-    JPEG("image/jpeg"),
-    PNG("image/png");
+    JPEG("image/jpeg", "jpg"),
+    PNG("image/png", "png");
 
     private final String mimeType;
+    private final String extension;
 
-    PromptImageContentType(String mimeType) {
+    PromptImageContentType(String mimeType, String extension) {
         this.mimeType = mimeType;
+        this.extension = extension;
     }
 
     public String getMimeType() {
         return mimeType;
+    }
+
+    public String getExtension() {
+        return extension;
     }
 
     public static PromptImageContentType fromMimeType(String mimeType) {

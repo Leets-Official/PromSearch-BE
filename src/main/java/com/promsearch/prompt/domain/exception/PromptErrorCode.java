@@ -38,7 +38,13 @@ public enum PromptErrorCode implements BaseCode {
     IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "PROMPT-031", "본인이 업로드한 이미지만 사용할 수 있습니다."),
     IMAGE_NOT_READY(HttpStatus.CONFLICT, "PROMPT-032", "워터마크 처리가 완료되지 않은 이미지입니다."),
     IMAGE_ALREADY_ATTACHED(HttpStatus.CONFLICT, "PROMPT-033", "이미 사용 중인 이미지입니다."),
-    INVALID_IMAGE_METADATA(HttpStatus.BAD_REQUEST, "PROMPT-034", "이미지 메타데이터가 유효하지 않습니다.");
+    INVALID_IMAGE_METADATA(HttpStatus.BAD_REQUEST, "PROMPT-034", "이미지 메타데이터가 유효하지 않습니다."),
+    IMAGE_NOT_FOUND(HttpStatus.NOT_FOUND, "PROMPT-035", "이미지 자산을 찾을 수 없습니다."),
+    IMAGE_UPLOAD_NOT_FOUND(HttpStatus.CONFLICT, "PROMPT-036", "S3에 업로드된 이미지가 없습니다."),
+    IMAGE_UPLOAD_METADATA_MISMATCH(HttpStatus.BAD_REQUEST, "PROMPT-037", "업로드된 이미지 정보가 요청과 일치하지 않습니다."),
+    IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PROMPT-038", "이미지 저장소를 사용할 수 없습니다."),
+    INVALID_IMAGE_UPLOAD_METADATA(HttpStatus.BAD_REQUEST, "PROMPT-039", "이미지 업로드 완료 정보가 유효하지 않습니다."),
+    INVALID_IMAGE_UPLOAD_COUNT(HttpStatus.BAD_REQUEST, "PROMPT-040", "업로드할 이미지 개수가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

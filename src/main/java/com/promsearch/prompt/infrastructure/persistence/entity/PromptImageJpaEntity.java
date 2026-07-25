@@ -14,6 +14,7 @@ import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
+import java.time.Instant;
 import java.util.UUID;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -82,6 +83,12 @@ public class PromptImageJpaEntity extends BaseEntity {
     @Column(name = "height", nullable = false, updatable = false)
     private Integer height;
 
+    @Column(name = "etag", length = 255)
+    private String etag;
+
+    @Column(name = "uploaded_at")
+    private Instant uploadedAt;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
     private PromptImageStatus status;
@@ -118,6 +125,8 @@ public class PromptImageJpaEntity extends BaseEntity {
             Long fileSize,
             Integer width,
             Integer height,
+            String etag,
+            Instant uploadedAt,
             PromptImageStatus status,
             Integer processingVersion,
             String failureCode,
@@ -134,6 +143,8 @@ public class PromptImageJpaEntity extends BaseEntity {
         this.fileSize = fileSize;
         this.width = width;
         this.height = height;
+        this.etag = etag;
+        this.uploadedAt = uploadedAt;
         this.status = status;
         this.processingVersion = processingVersion;
         this.failureCode = failureCode;
@@ -153,6 +164,8 @@ public class PromptImageJpaEntity extends BaseEntity {
                 .fileSize(image.getFileSize())
                 .width(image.getWidth())
                 .height(image.getHeight())
+                .etag(image.getEtag())
+                .uploadedAt(image.getUploadedAt())
                 .status(image.getStatus())
                 .processingVersion(image.getProcessingVersion())
                 .failureCode(image.getFailureCode())
@@ -168,6 +181,8 @@ public class PromptImageJpaEntity extends BaseEntity {
 
         promptId = image.getPromptId();
         watermarkedObjectKey = image.getWatermarkedObjectKey();
+        etag = image.getEtag();
+        uploadedAt = image.getUploadedAt();
         status = image.getStatus();
         processingVersion = image.getProcessingVersion();
         failureCode = image.getFailureCode();
@@ -188,6 +203,8 @@ public class PromptImageJpaEntity extends BaseEntity {
                 width,
                 height,
                 status,
+                etag,
+                uploadedAt,
                 processingVersion,
                 failureCode,
                 sortOrder,

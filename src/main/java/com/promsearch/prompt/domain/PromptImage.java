@@ -44,6 +44,8 @@ public class PromptImage {
     private final int width;
     private final int height;
     private PromptImageStatus status;
+    private String etag;
+    private Instant uploadedAt;
     /** 워터마크 알고리즘 버전이며 JPA의 낙관적 잠금 버전과는 별개의 값이다. */
     private int processingVersion;
     private String failureCode;
@@ -65,6 +67,8 @@ public class PromptImage {
             int width,
             int height,
             PromptImageStatus status,
+            String etag,
+            Instant uploadedAt,
             int processingVersion,
             String failureCode,
             Integer sortOrder,
@@ -83,6 +87,8 @@ public class PromptImage {
         this.width = width;
         this.height = height;
         this.status = status;
+        this.etag = etag;
+        this.uploadedAt = uploadedAt;
         this.processingVersion = processingVersion;
         this.failureCode = failureCode;
         this.sortOrder = sortOrder;
@@ -91,6 +97,7 @@ public class PromptImage {
         this.updatedAt = updatedAt;
     }
 
+    /** 예상 메타데이터 검증 및 UPLOADING 이미지 생성 */
     public static PromptImage prepareUpload(
             UUID imageId,
             Long uploaderId,
@@ -125,6 +132,7 @@ public class PromptImage {
                 .build();
     }
 
+    /** 영속 상태 불변식 검증 및 이미지 자산 복원 */
     public static PromptImage reconstruct(
             PromptImageId promptImageId,
             Long uploaderId,
@@ -137,6 +145,8 @@ public class PromptImage {
             int width,
             int height,
             PromptImageStatus status,
+            String etag,
+            Instant uploadedAt,
             int processingVersion,
             String failureCode,
             Integer sortOrder,
@@ -156,6 +166,8 @@ public class PromptImage {
                 originalObjectKey,
                 watermarkedObjectKey,
                 status,
+                etag,
+                uploadedAt,
                 processingVersion,
                 failureCode,
                 sortOrder,
@@ -177,6 +189,8 @@ public class PromptImage {
                 .width(width)
                 .height(height)
                 .status(status)
+                .etag(trimToNull(etag))
+                .uploadedAt(uploadedAt)
                 .processingVersion(processingVersion)
                 .failureCode(trimToNull(failureCode))
                 .sortOrder(sortOrder)
@@ -186,8 +200,20 @@ public class PromptImage {
                 .build();
     }
 
+    /** 업로드 증거 기록 및 UPLOADED 상태 전환 */
+    public void completeUpload(String etag, Instant uploadedAt) {
+        requireStatus(PromptImageStatus.UPLOADING);
+        validateUploadMetadata(etag, uploadedAt);
+
+        this.etag = etag.trim();
+        this.uploadedAt = uploadedAt;
+        this.status = PromptImageStatus.UPLOADED;
+        touch();
+    }
+
+    /** 워터마크 처리 시작 및 실패 처리 재시도 */
     public void startProcessing() {
-        if (status != PromptImageStatus.UPLOADING && status != PromptImageStatus.FAILED) {
+        if (status != PromptImageStatus.UPLOADED && status != PromptImageStatus.FAILED) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_STATUS_TRANSITION);
         }
 
@@ -197,6 +223,7 @@ public class PromptImage {
         touch();
     }
 
+    /** 워터마크 결과·정책 버전 기록 및 READY 상태 전환 */
     public void completeProcessing(String watermarkedObjectKey, int processingVersion) {
         /*
          * 이 메서드를 호출하기 전에 Worker가 실제 MIME 타입, 파일 크기, 이미지 크기를 검증해야 한다.
@@ -218,6 +245,7 @@ public class PromptImage {
         touch();
     }
 
+    /** 처리 실패 코드 기록 및 FAILED 상태 전환 */
     public void failProcessing(String failureCode) {
         requireStatus(PromptImageStatus.PROCESSING);
         if (failureCode == null || failureCode.isBlank() || failureCode.length() > MAX_FAILURE_CODE_LENGTH) {
@@ -229,6 +257,7 @@ public class PromptImage {
         touch();
     }
 
+    /** 소유권·READY 상태·중복 연결 검증 및 프롬프트 연결 */
     public void attachToPrompt(Long promptId, Long requesterId, int sortOrder, boolean thumbnail) {
         /*
          * 생성 API에서는 여러 이미지를 한 트랜잭션에서 연결하고, JPA lock_version 충돌을 처리해야 한다.
@@ -255,12 +284,19 @@ public class PromptImage {
         touch();
     }
 
+    /** 이미지 업로더 일치 여부 반환 */
     public boolean isOwnedBy(Long userId) {
         return userId != null && Objects.equals(uploaderId, userId);
     }
 
+    /** 프롬프트 연결 가능 상태 반환 */
     public boolean isReady() {
         return status == PromptImageStatus.READY;
+    }
+
+    /** 업로드 완료 요청 멱등 처리 여부 반환 */
+    public boolean isUploadCompleted() {
+        return status != PromptImageStatus.UPLOADING && etag != null && uploadedAt != null;
     }
 
     private void requireStatus(PromptImageStatus requiredStatus) {
@@ -336,6 +372,8 @@ public class PromptImage {
             String originalObjectKey,
             String watermarkedObjectKey,
             PromptImageStatus status,
+            String etag,
+            Instant uploadedAt,
             int processingVersion,
             String failureCode,
             Integer sortOrder,
@@ -347,6 +385,24 @@ public class PromptImage {
 
         String normalizedWatermarkedKey = trimToNull(watermarkedObjectKey);
         String normalizedFailureCode = trimToNull(failureCode);
+        String normalizedEtag = trimToNull(etag);
+
+        if ((normalizedEtag == null) != (uploadedAt == null)) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_METADATA);
+        }
+        if (normalizedEtag != null) {
+            validateUploadMetadata(normalizedEtag, uploadedAt);
+        }
+        if (status == PromptImageStatus.UPLOADING && normalizedEtag != null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_METADATA);
+        }
+        if (status == PromptImageStatus.UPLOADED
+                && (normalizedEtag == null
+                || normalizedWatermarkedKey != null
+                || normalizedFailureCode != null
+                || processingVersion != 0)) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_METADATA);
+        }
 
         if (status == PromptImageStatus.READY
                 && (normalizedWatermarkedKey == null
@@ -364,7 +420,9 @@ public class PromptImage {
                 || normalizedWatermarkedKey != null)) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_METADATA);
         }
-        if ((status == PromptImageStatus.UPLOADING || status == PromptImageStatus.PROCESSING)
+        if ((status == PromptImageStatus.UPLOADING
+                || status == PromptImageStatus.UPLOADED
+                || status == PromptImageStatus.PROCESSING)
                 && (normalizedWatermarkedKey != null || normalizedFailureCode != null || processingVersion != 0)) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_METADATA);
         }
@@ -387,6 +445,16 @@ public class PromptImage {
             return null;
         }
         return value.trim();
+    }
+
+    private static void validateUploadMetadata(String etag, Instant uploadedAt) {
+        if (etag == null
+                || etag.isBlank()
+                || etag.length() > 255
+                || etag.chars().anyMatch(Character::isISOControl)
+                || uploadedAt == null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_UPLOAD_METADATA);
+        }
     }
 
     public record PromptImageId(UUID id) {
