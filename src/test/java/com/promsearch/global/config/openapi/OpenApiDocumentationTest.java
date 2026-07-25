@@ -51,7 +51,7 @@ class OpenApiDocumentationTest {
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
                 new AuthController(null, null, null, null),
-                AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.LoginRequest.class)
+                AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
         ));
 
         assertThat(protectedOperation.getSecurity())

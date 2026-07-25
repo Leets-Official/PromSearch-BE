@@ -2,9 +2,10 @@ package com.promsearch.user.interfaces.docs;
 
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
-import com.promsearch.user.interfaces.dto.UserResponse;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
+import com.promsearch.user.interfaces.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -13,8 +14,22 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "User | 사용자", description = "내 프로필 수정, 비밀번호 변경, 회원 탈퇴 API")
+@Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 비밀번호 변경, 회원 탈퇴 API")
 public interface UserControllerDocs {
+
+    @Operation(
+            summary = "[USER-004] 내 프로필 조회",
+            description = "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+    })
+    ApiResponse<UserProfileResponse> getMyProfile(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
 
     @Operation(
             summary = "[USER-001] 내 프로필 수정",
