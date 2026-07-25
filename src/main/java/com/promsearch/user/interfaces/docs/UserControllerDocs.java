@@ -3,6 +3,7 @@ package com.promsearch.user.interfaces.docs;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.PublicUserProfileResponse;
 import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
 import com.promsearch.user.interfaces.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,21 +11,23 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "User | 사용자", description = "내 프로필 수정, 비밀번호 변경, 회원 탈퇴 API")
+@Tag(name = "User", description = "Profile update, password change, withdrawal, and public profile APIs")
 public interface UserControllerDocs {
 
     @Operation(
-            summary = "[USER-001] 내 프로필 수정",
-            description = "인증된 사용자의 이름, 닉네임, 이메일, 프로필 이미지를 부분 수정합니다."
+            summary = "[USER-001] Update my profile",
+            description = "Updates the authenticated user's name, nickname, email, and profile image."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이메일 또는 닉네임 중복")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Profile updated"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "Duplicated email or nickname")
     })
     ApiResponse<UserResponse> updateProfile(
             @Parameter(hidden = true)
@@ -34,13 +37,13 @@ public interface UserControllerDocs {
     );
 
     @Operation(
-            summary = "[USER-002] 내 비밀번호 변경",
-            description = "현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다."
+            summary = "[USER-002] Change my password",
+            description = "Verifies the current password and replaces it with a new password."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패 또는 현재 비밀번호 불일치"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Password changed"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid request or wrong current password"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required")
     })
     ApiResponse<Void> changePassword(
             @Parameter(hidden = true)
@@ -50,15 +53,29 @@ public interface UserControllerDocs {
     );
 
     @Operation(
-            summary = "[USER-003] 회원 탈퇴",
-            description = "인증된 사용자를 논리 삭제 상태로 변경합니다."
+            summary = "[USER-003] Withdraw my account",
+            description = "Soft-deletes the authenticated user and anonymizes reusable personal information."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "User withdrawn"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Authentication required")
     })
     ApiResponse<Void> delete(
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
+
+    @Operation(
+            summary = "[USER-004] Get public user profile",
+            description = "Returns only public creator profile data for the profile page opened from a prompt card."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "Public profile found"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Invalid user id"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "User not found")
+    })
+    ApiResponse<PublicUserProfileResponse> getPublicProfile(
+            @Parameter(description = "Target user id", example = "12", required = true)
+            @PathVariable @Positive Long userId
     );
 }
