@@ -1,7 +1,7 @@
 package com.promsearch.auth.interfaces.docs;
 
-import com.promsearch.auth.interfaces.dto.SwaggerTokenRequest;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenResponse;
+import com.promsearch.auth.interfaces.dto.request.SwaggerTokenRequest;
+import com.promsearch.auth.interfaces.dto.response.SwaggerTokenResponse;
 import com.promsearch.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

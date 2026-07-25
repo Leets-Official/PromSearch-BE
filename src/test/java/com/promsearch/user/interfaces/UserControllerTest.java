@@ -4,10 +4,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
-import com.promsearch.user.application.ChangePasswordUseCase;
-import com.promsearch.user.application.DeleteUserUseCase;
-import com.promsearch.user.application.UpdateUserProfileUseCase;
+import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
+import com.promsearch.user.application.usecase.ChangePasswordUseCase;
+import com.promsearch.user.application.usecase.DeleteUserUseCase;
+import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,7 +24,7 @@ class UserControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AccessTokenProvider accessTokenProvider;
+    private AuthenticateAccessTokenUseCase authenticateAccessTokenUseCase;
 
     @MockitoBean
     private UpdateUserProfileUseCase updateUserProfileUseCase;

@@ -5,7 +5,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
+import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,7 +23,7 @@ class AdminReportControllerTest {
     private MockMvc mockMvc;
 
     @MockitoBean
-    private AccessTokenProvider accessTokenProvider;
+    private AuthenticateAccessTokenUseCase authenticateAccessTokenUseCase;
 
     @DisplayName("신고 목록 조회·처리는 가짜 성공 대신 구현 중 응답을 반환한다")
     @Test

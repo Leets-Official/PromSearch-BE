@@ -2,10 +2,10 @@ package com.promsearch.user.interfaces.docs;
 
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
-import com.promsearch.user.interfaces.dto.UserProfileResponse;
-import com.promsearch.user.interfaces.dto.UserResponse;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
+import com.promsearch.user.interfaces.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
