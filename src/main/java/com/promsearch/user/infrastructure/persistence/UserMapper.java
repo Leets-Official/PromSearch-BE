@@ -1,5 +1,6 @@
 package com.promsearch.user.infrastructure.persistence;
 
+import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import com.promsearch.user.domain.User;
 
 public final class UserMapper {

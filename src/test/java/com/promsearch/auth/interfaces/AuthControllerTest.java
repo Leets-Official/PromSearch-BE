@@ -10,20 +10,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promsearch.auth.application.port.out.SocialLoginClient.SocialUserInfo;
+import com.promsearch.auth.application.port.out.oauth.SocialLoginResult;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
-import com.promsearch.auth.infrastructure.oauth.GoogleSocialLoginClient;
-import com.promsearch.auth.infrastructure.oauth.KakaoSocialLoginClient;
-import com.promsearch.auth.interfaces.dto.LoginRequest;
-import com.promsearch.auth.interfaces.dto.ReissueRequest;
-import com.promsearch.auth.interfaces.dto.SignupRequest;
-import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
-import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
-import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
+import com.promsearch.auth.infrastructure.external.oauth.GoogleOAuthAdapter;
+import com.promsearch.auth.infrastructure.external.oauth.KakaoOAuthAdapter;
+import com.promsearch.auth.interfaces.dto.request.LoginRequest;
+import com.promsearch.auth.interfaces.dto.request.ReissueRequest;
+import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.infrastructure.persistence.UserRepository;
+import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class AuthControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserJpaRepository userJpaRepository;
+    private UserRepository userJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -62,10 +62,10 @@ class AuthControllerTest {
     private EntityManager entityManager;
 
     @MockitoBean
-    private KakaoSocialLoginClient kakaoSocialLoginClient;
+    private KakaoOAuthAdapter kakaoOAuthAdapter;
 
     @MockitoBean
-    private GoogleSocialLoginClient googleSocialLoginClient;
+    private GoogleOAuthAdapter googleOAuthAdapter;
 
     @DisplayName("회원가입에 성공한다")
     @Test
@@ -443,9 +443,9 @@ class AuthControllerTest {
     @DisplayName("신규 카카오 계정으로 소셜 로그인하면 자동 회원가입 후 로그인에 성공한다")
     @Test
     void socialLoginSuccessWithNewKakaoAccount() throws Exception {
-        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialUserInfo("kakao-1", "kakao-user@example.com", "카카오유저", null));
+        given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialLoginResult("kakao-1", "kakao-user@example.com", "카카오유저", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -467,9 +467,9 @@ class AuthControllerTest {
     @DisplayName("이미 연동된 카카오 계정으로 다시 로그인하면 회원을 새로 만들지 않는다")
     @Test
     void socialLoginReusesLinkedAccount() throws Exception {
-        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialUserInfo("kakao-2", "kakao-user2@example.com", "카카오유저2", null));
+        given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialLoginResult("kakao-2", "kakao-user2@example.com", "카카오유저2", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -495,9 +495,9 @@ class AuthControllerTest {
     @DisplayName("신규 구글 계정으로 소셜 로그인하면 자동 회원가입 후 로그인에 성공한다")
     @Test
     void socialLoginSuccessWithNewGoogleAccount() throws Exception {
-        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
-        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialUserInfo("google-1", "google-user@example.com", "구글유저", null));
+        given(googleOAuthAdapter.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialLoginResult("google-1", "google-user@example.com", "구글유저", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -519,9 +519,9 @@ class AuthControllerTest {
     @DisplayName("이미 연동된 구글 계정으로 다시 로그인하면 회원을 새로 만들지 않는다")
     @Test
     void socialLoginReusesLinkedGoogleAccount() throws Exception {
-        given(googleSocialLoginClient.provider()).willReturn(SocialProvider.GOOGLE);
-        given(googleSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialUserInfo("google-2", "google-user2@example.com", "구글유저2", null));
+        given(googleOAuthAdapter.provider()).willReturn(SocialProvider.GOOGLE);
+        given(googleOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+                .willReturn(new SocialLoginResult("google-2", "google-user2@example.com", "구글유저2", null));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -560,8 +560,8 @@ class AuthControllerTest {
     @DisplayName("소셜 계정에서 이메일을 가져올 수 없으면 소셜 로그인에 실패한다")
     @Test
     void socialLoginFailWhenEmailNotAvailable() throws Exception {
-        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_EMAIL_NOT_AVAILABLE));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
@@ -577,8 +577,8 @@ class AuthControllerTest {
     @DisplayName("소셜 제공자 서버 장애로 사용자 정보 조회에 실패하면 소셜 로그인에 실패한다")
     @Test
     void socialLoginFailWhenProviderUnavailable() throws Exception {
-        given(kakaoSocialLoginClient.provider()).willReturn(SocialProvider.KAKAO);
-        given(kakaoSocialLoginClient.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
+        given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
+        given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
                 .willThrow(new AuthDomainException(AuthErrorCode.OAUTH_PROVIDER_UNAVAILABLE));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");

@@ -1,9 +1,10 @@
 package com.promsearch.auth.interfaces;
 
-import com.promsearch.auth.application.AuthenticatedUserInfo;
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenRequest;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenResponse;
+import com.promsearch.auth.application.usecase.dto.AuthenticatedUserInfo;
+import com.promsearch.auth.application.usecase.IssueLocalSwaggerTokenUseCase;
+import com.promsearch.auth.application.usecase.dto.LocalSwaggerTokenInfo;
+import com.promsearch.auth.interfaces.dto.request.SwaggerTokenRequest;
+import com.promsearch.auth.interfaces.dto.response.SwaggerTokenResponse;
 import com.promsearch.auth.interfaces.docs.LocalSwaggerAuthControllerDocs;
 import com.promsearch.global.response.ApiResponse;
 import jakarta.validation.Valid;
@@ -22,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/auth")
 public class LocalSwaggerAuthController implements LocalSwaggerAuthControllerDocs {
 
-    private final AccessTokenProvider accessTokenProvider;
+    private final IssueLocalSwaggerTokenUseCase issueLocalSwaggerTokenUseCase;
 
     @PostMapping("/swagger-token")
     @Override
@@ -30,12 +31,7 @@ public class LocalSwaggerAuthController implements LocalSwaggerAuthControllerDoc
             @Valid @RequestBody(required = false) SwaggerTokenRequest request
     ) {
         AuthenticatedUserInfo user = SwaggerTokenRequest.toAuthenticatedUser(request);
-        String accessToken = accessTokenProvider.createAccessToken(user);
-
-        return ApiResponse.onSuccess(SwaggerTokenResponse.of(
-                accessToken,
-                accessTokenProvider.getAccessTokenExpirationSeconds(),
-                user
-        ));
+        LocalSwaggerTokenInfo tokenInfo = issueLocalSwaggerTokenUseCase.issue(user);
+        return ApiResponse.onSuccess(SwaggerTokenResponse.from(tokenInfo));
     }
 }

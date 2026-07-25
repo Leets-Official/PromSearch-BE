@@ -53,30 +53,50 @@ Each main domain should use this internal structure as it grows:
 ├── interfaces
 │   ├── {Domain}Controller.java
 │   └── dto
+│       ├── request
+│       └── response
 ├── application
-│   ├── {Action}{Domain}UseCase.java
-│   ├── {Domain}Service.java
+│   ├── usecase
+│   │   ├── {Action}{Domain}UseCase.java
+│   │   └── dto
+│   ├── service
+│   │   ├── command
+│   │   └── query
 │   └── port
 │       └── out
+│           └── {aggregate}
 ├── domain
+│   ├── enums
+│   └── exception
 └── infrastructure
     └── persistence
+        └── entity
 ```
 
 Layer responsibilities:
 
-- `interfaces`: Controller, request/response DTO, API input/output conversion
-- `application`: UseCase, service, transaction boundary, orchestration, authorization flow
-- `application.port.out`: output ports hiding repositories/external systems from application services
+- `interfaces`: Controller and API input/output conversion
+- `interfaces.dto.request`: HTTP request DTOs and request validation
+- `interfaces.dto.response`: HTTP response DTOs; must not depend on request DTOs
+- `application.usecase`: inbound UseCase interfaces only
+- `application.usecase.dto`: Command, Query, Info objects crossing the UseCase boundary
+- `application.service.command`: state-changing UseCase implementations and transaction boundaries
+- `application.service.query`: read-only UseCase implementations
+- `application.port.out.{aggregate}`: output ports grouped by aggregate; split load and save responsibilities
 - `domain`: entity, value object, enum, domain service, business rules
 - `domain.enums`: domain enum values
-- `infrastructure`: JPA entity, Spring Data repository, QueryDSL, external API, file storage, Redis
+- `infrastructure.persistence`: persistence adapter, Spring Data repository, QueryDSL repository, mapper
+- `infrastructure.persistence.entity`: JPA entities and embedded/composite persistence IDs
+- `infrastructure`: persistence, JWT, OAuth, crypto, configuration, and other technical integrations
 
 ## Dependency Rules
 
 - `interfaces` may depend on `application`.
 - `application` may depend on `domain` and `application.port.out`.
-- `infrastructure` may depend on `domain` and implement `application.port.out`.
+- `infrastructure.persistence` may depend on `domain` and implement `application.port.out`.
+- One persistence adapter may implement multiple load/save output ports for the same aggregate.
+- Spring Data and QueryDSL repositories stay inside `infrastructure.persistence`; application services must not inject them.
+- `infrastructure` may implement non-persistence `application.port.out` integrations.
 - `domain` must not depend on Spring, JPA, `application`, `interfaces`, or `infrastructure`.
 - `application` must not depend on controllers, request DTOs, or Spring Data repositories.
 - Controllers must call UseCases, not repositories.
@@ -117,11 +137,12 @@ Factory method names:
 - JPA entity: `{Domain}JpaEntity`
 - UseCase: `{Action}{Domain}UseCase`
 - Service: `{Domain}Service`, or `{Domain}CommandService` / `{Domain}QueryService`
-- Outbound port: `{Domain}Repository`, `{Domain}Reader`, `{Domain}Writer`, or `{Action}{Domain}Port`
+- Outbound persistence port: `Load{Domain}Port`, `Save{Domain}Port`, or `{Action}{Domain}Port`
 - Controller: `{Domain}Controller`
 - Request/response DTO: suffix with `Request` or `Response`
 - Application result: suffix with `Info`
-- Spring Data repository: suffix with `JpaRepository`
+- Spring Data repository: `{Domain}Repository`
+- QueryDSL repository: `{Domain}QueryRepository`
 - Persistence adapter: `{Domain}PersistenceAdapter`
 
 ## Read Method Semantics

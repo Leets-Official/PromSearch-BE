@@ -2,12 +2,12 @@ package com.promsearch.prompt.interfaces.docs;
 
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.prompt.interfaces.dto.CreatePromptRequest;
-import com.promsearch.prompt.interfaces.dto.PromptCommandResponse;
-import com.promsearch.prompt.interfaces.dto.PromptDraftResponse;
-import com.promsearch.prompt.interfaces.dto.PromptImageUploadUrlRequest;
-import com.promsearch.prompt.interfaces.dto.PromptImageUploadUrlResponse;
-import com.promsearch.prompt.interfaces.dto.SavePromptDraftRequest;
+import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
+import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
+import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
+import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadUrlResponse;
+import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

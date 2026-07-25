@@ -1,12 +1,12 @@
 package com.promsearch.auth.interfaces.docs;
 
-import com.promsearch.auth.interfaces.dto.LoginRequest;
-import com.promsearch.auth.interfaces.dto.LoginResponse;
-import com.promsearch.auth.interfaces.dto.ReissueRequest;
-import com.promsearch.auth.interfaces.dto.ReissueResponse;
-import com.promsearch.auth.interfaces.dto.SignupRequest;
-import com.promsearch.auth.interfaces.dto.SignupResponse;
-import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
+import com.promsearch.auth.interfaces.dto.request.LoginRequest;
+import com.promsearch.auth.interfaces.dto.response.LoginResponse;
+import com.promsearch.auth.interfaces.dto.request.ReissueRequest;
+import com.promsearch.auth.interfaces.dto.response.ReissueResponse;
+import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.auth.interfaces.dto.response.SignupResponse;
+import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
