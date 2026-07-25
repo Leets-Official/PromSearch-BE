@@ -1,8 +1,8 @@
 package com.promsearch.auth.infrastructure.persistence;
 
 import com.promsearch.auth.infrastructure.persistence.entity.RefreshTokenSessionJpaEntity;
-import com.promsearch.auth.application.port.out.refresh.LoadRefreshTokenSessionPort;
-import com.promsearch.auth.application.port.out.refresh.SaveRefreshTokenSessionPort;
+import com.promsearch.auth.application.port.out.persistence.refresh.LoadRefreshTokenSessionPort;
+import com.promsearch.auth.application.port.out.persistence.refresh.SaveRefreshTokenSessionPort;
 import com.promsearch.auth.domain.RefreshTokenSession;
 import java.time.Instant;
 import java.util.Optional;

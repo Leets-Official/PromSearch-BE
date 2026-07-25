@@ -1,8 +1,8 @@
 package com.promsearch.auth.infrastructure.persistence;
 
 import com.promsearch.auth.infrastructure.persistence.entity.SocialAccountJpaEntity;
-import com.promsearch.auth.application.port.out.social.LoadSocialAccountPort;
-import com.promsearch.auth.application.port.out.social.SaveSocialAccountPort;
+import com.promsearch.auth.application.port.out.persistence.social.LoadSocialAccountPort;
+import com.promsearch.auth.application.port.out.persistence.social.SaveSocialAccountPort;
 import com.promsearch.auth.domain.SocialAccount;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;

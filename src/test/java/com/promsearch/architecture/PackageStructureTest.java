@@ -100,6 +100,61 @@ class PackageStructureTest {
         }
     }
 
+    @Test
+    void authBoundariesUsePortsAdaptersAndInboundUseCasesConsistently() throws IOException {
+        List<Path> authFiles = javaFiles().stream()
+                .filter(path -> path.toString().contains("/auth/"))
+                .toList();
+
+        List<Path> authControllers = authFiles.stream()
+                .filter(path -> path.toString().contains("/interfaces/"))
+                .filter(path -> path.getFileName().toString().endsWith("Controller.java"))
+                .toList();
+        for (Path controller : authControllers) {
+            assertThat(Files.readString(controller))
+                    .doesNotContain(".application.port.out.");
+        }
+
+        Path authenticationFilter = SOURCE_ROOT.resolve("global/security/JwtAuthenticationFilter.java");
+        assertThat(Files.readString(authenticationFilter))
+                .contains(".application.usecase.AuthenticateAccessTokenUseCase")
+                .doesNotContain(".application.port.out.");
+
+        List<Path> outboundInterfaces = authFiles.stream()
+                .filter(path -> path.toString().contains("/application/port/out/"))
+                .filter(path -> {
+                    try {
+                        return Files.readString(path).contains("public interface ");
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .toList();
+        assertThat(outboundInterfaces)
+                .isNotEmpty()
+                .allMatch(path -> path.getFileName().toString().endsWith("Port.java"));
+
+        assertThat(authFiles)
+                .filteredOn(path -> {
+                    try {
+                        String source = Files.readString(path);
+                        return source.contains("import io.jsonwebtoken")
+                                || source.contains("import org.springframework.web.client.RestClient");
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .allMatch(path -> path.toString().contains("/infrastructure/security/jwt/")
+                        || path.toString().contains("/infrastructure/external/oauth/"));
+
+        assertThat(authFiles)
+                .noneMatch(path -> path.toString().contains("/infrastructure/jwt/")
+                        || path.toString().contains("/infrastructure/oauth/")
+                        || path.toString().contains("/infrastructure/crypto/")
+                        || path.toString().contains("/application/port/out/refresh/")
+                        || path.toString().contains("/application/port/out/social/"));
+    }
+
     private List<Path> javaFiles() throws IOException {
         try (Stream<Path> paths = Files.walk(SOURCE_ROOT)) {
             return paths

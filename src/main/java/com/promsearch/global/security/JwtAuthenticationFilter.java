@@ -1,8 +1,8 @@
 package com.promsearch.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promsearch.auth.application.port.out.token.AccessTokenProvider;
-import com.promsearch.auth.application.port.out.token.AccessTokenProvider.AccessTokenClaims;
+import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
+import com.promsearch.auth.application.usecase.dto.AuthenticatedAccessTokenInfo;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
 import com.promsearch.global.config.logging.RequestLoggingFilter;
@@ -26,7 +26,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String BEARER_PREFIX = "Bearer ";
 
-    private final AccessTokenProvider accessTokenProvider;
+    private final AuthenticateAccessTokenUseCase authenticateAccessTokenUseCase;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -53,12 +53,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         try {
-            AccessTokenClaims claims = accessTokenProvider.parseAccessToken(accessToken);
-            AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(claims.userId(), claims.role());
+            AuthenticatedAccessTokenInfo authenticated =
+                    authenticateAccessTokenUseCase.authenticate(accessToken);
+            AuthenticatedUserPrincipal principal =
+                    new AuthenticatedUserPrincipal(authenticated.userId(), authenticated.role());
             UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                     principal,
                     null,
-                    List.of(new SimpleGrantedAuthority("ROLE_" + claims.role()))
+                    List.of(new SimpleGrantedAuthority("ROLE_" + authenticated.role()))
             );
             SecurityContextHolder.getContext().setAuthentication(authentication);
             RequestLoggingFilter.putAuthenticatedUserContext(request, principal.userId(), principal.role());

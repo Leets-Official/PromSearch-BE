@@ -1,6 +1,6 @@
 package com.promsearch.auth.interfaces.dto.response;
 
-import com.promsearch.auth.application.usecase.dto.AuthenticatedUserInfo;
+import com.promsearch.auth.application.usecase.dto.LocalSwaggerTokenInfo;
 
 public record SwaggerTokenResponse(
         String accessToken,
@@ -12,16 +12,16 @@ public record SwaggerTokenResponse(
         String role
 ) {
 
-    public static SwaggerTokenResponse of(String accessToken, Long expiresIn, AuthenticatedUserInfo user) {
+    public static SwaggerTokenResponse from(LocalSwaggerTokenInfo tokenInfo) {
         String tokenType = "Bearer";
         return new SwaggerTokenResponse(
-                accessToken,
+                tokenInfo.accessToken(),
                 tokenType,
-                tokenType + " " + accessToken,
-                expiresIn,
-                user.userId(),
-                user.email(),
-                user.role()
+                tokenType + " " + tokenInfo.accessToken(),
+                tokenInfo.expiresInSeconds(),
+                tokenInfo.user().userId(),
+                tokenInfo.user().email(),
+                tokenInfo.user().role()
         );
     }
 }
