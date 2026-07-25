@@ -1,7 +1,7 @@
 package com.promsearch.admin.interfaces.docs;
 
-import com.promsearch.admin.interfaces.dto.GradeRequestSummaryResponse;
-import com.promsearch.admin.interfaces.dto.ProcessGradeRequestRequest;
+import com.promsearch.admin.interfaces.dto.request.ProcessGradeRequestRequest;
+import com.promsearch.admin.interfaces.dto.response.GradeRequestSummaryResponse;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.user.domain.enums.GradeRequestStatus;

@@ -1,4 +1,4 @@
-package com.promsearch.admin.interfaces.dto;
+package com.promsearch.admin.interfaces.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.promsearch.moderation.domain.enums.ReportStatus;

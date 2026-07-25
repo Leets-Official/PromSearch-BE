@@ -1,4 +1,4 @@
-package com.promsearch.admin.interfaces.dto;
+package com.promsearch.admin.interfaces.dto.response;
 
 import com.promsearch.moderation.domain.enums.ReportReason;
 import com.promsearch.moderation.domain.enums.ReportStatus;

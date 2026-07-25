@@ -1,7 +1,7 @@
 package com.promsearch.admin.interfaces.docs;
 
-import com.promsearch.admin.interfaces.dto.ReportSummaryResponse;
-import com.promsearch.admin.interfaces.dto.UpdateReportStatusRequest;
+import com.promsearch.admin.interfaces.dto.request.UpdateReportStatusRequest;
+import com.promsearch.admin.interfaces.dto.response.ReportSummaryResponse;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.moderation.domain.enums.ReportStatus;

@@ -1,8 +1,8 @@
 package com.promsearch.admin.interfaces;
 
 import com.promsearch.admin.interfaces.docs.AdminReportControllerDocs;
-import com.promsearch.admin.interfaces.dto.ReportSummaryResponse;
-import com.promsearch.admin.interfaces.dto.UpdateReportStatusRequest;
+import com.promsearch.admin.interfaces.dto.request.UpdateReportStatusRequest;
+import com.promsearch.admin.interfaces.dto.response.ReportSummaryResponse;
 import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;

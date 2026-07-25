@@ -1,4 +1,4 @@
-package com.promsearch.admin.interfaces.dto;
+package com.promsearch.admin.interfaces.dto.response;
 
 import com.promsearch.user.domain.enums.GradeRequestStatus;
 import com.promsearch.user.domain.enums.UserGrade;

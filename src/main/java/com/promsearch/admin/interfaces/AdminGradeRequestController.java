@@ -1,8 +1,8 @@
 package com.promsearch.admin.interfaces;
 
 import com.promsearch.admin.interfaces.docs.AdminGradeRequestControllerDocs;
-import com.promsearch.admin.interfaces.dto.GradeRequestSummaryResponse;
-import com.promsearch.admin.interfaces.dto.ProcessGradeRequestRequest;
+import com.promsearch.admin.interfaces.dto.request.ProcessGradeRequestRequest;
+import com.promsearch.admin.interfaces.dto.response.GradeRequestSummaryResponse;
 import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
