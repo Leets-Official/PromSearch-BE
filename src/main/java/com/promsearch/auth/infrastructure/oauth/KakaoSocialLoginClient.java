@@ -1,7 +1,7 @@
 package com.promsearch.auth.infrastructure.oauth;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.promsearch.auth.application.port.out.SocialLoginClient;
+import com.promsearch.auth.application.port.out.social.SocialLoginClient;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;

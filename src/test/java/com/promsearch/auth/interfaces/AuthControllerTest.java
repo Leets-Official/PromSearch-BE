@@ -10,20 +10,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promsearch.auth.application.port.out.SocialLoginClient.SocialUserInfo;
+import com.promsearch.auth.application.port.out.social.SocialLoginClient.SocialUserInfo;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
 import com.promsearch.auth.infrastructure.oauth.GoogleSocialLoginClient;
 import com.promsearch.auth.infrastructure.oauth.KakaoSocialLoginClient;
-import com.promsearch.auth.interfaces.dto.LoginRequest;
-import com.promsearch.auth.interfaces.dto.ReissueRequest;
-import com.promsearch.auth.interfaces.dto.SignupRequest;
-import com.promsearch.auth.interfaces.dto.SocialLoginRequest;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
-import com.promsearch.user.infrastructure.persistence.UserJpaEntity;
-import com.promsearch.user.infrastructure.persistence.UserJpaRepository;
+import com.promsearch.auth.interfaces.dto.request.LoginRequest;
+import com.promsearch.auth.interfaces.dto.request.ReissueRequest;
+import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.infrastructure.persistence.UserRepository;
+import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -50,7 +50,7 @@ class AuthControllerTest {
     private ObjectMapper objectMapper;
 
     @Autowired
-    private UserJpaRepository userJpaRepository;
+    private UserRepository userJpaRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;

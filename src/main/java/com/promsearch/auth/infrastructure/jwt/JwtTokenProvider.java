@@ -1,9 +1,9 @@
 package com.promsearch.auth.infrastructure.jwt;
 
-import com.promsearch.auth.application.AuthenticatedUserInfo;
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
-import com.promsearch.auth.application.port.out.AccessTokenProvider.AccessTokenClaims;
-import com.promsearch.auth.application.port.out.RefreshTokenProvider;
+import com.promsearch.auth.application.usecase.dto.AuthenticatedUserInfo;
+import com.promsearch.auth.application.port.out.token.AccessTokenProvider;
+import com.promsearch.auth.application.port.out.token.AccessTokenProvider.AccessTokenClaims;
+import com.promsearch.auth.application.port.out.token.RefreshTokenProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
 import io.jsonwebtoken.Claims;

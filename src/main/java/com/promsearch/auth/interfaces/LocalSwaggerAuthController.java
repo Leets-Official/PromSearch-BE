@@ -1,9 +1,9 @@
 package com.promsearch.auth.interfaces;
 
-import com.promsearch.auth.application.AuthenticatedUserInfo;
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenRequest;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenResponse;
+import com.promsearch.auth.application.usecase.dto.AuthenticatedUserInfo;
+import com.promsearch.auth.application.port.out.token.AccessTokenProvider;
+import com.promsearch.auth.interfaces.dto.request.SwaggerTokenRequest;
+import com.promsearch.auth.interfaces.dto.response.SwaggerTokenResponse;
 import com.promsearch.auth.interfaces.docs.LocalSwaggerAuthControllerDocs;
 import com.promsearch.global.response.ApiResponse;
 import jakarta.validation.Valid;

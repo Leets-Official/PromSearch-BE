@@ -1,16 +1,20 @@
 package com.promsearch.auth.infrastructure.persistence;
 
-import com.promsearch.auth.application.port.out.RefreshTokenSessionRepository;
+import com.promsearch.auth.infrastructure.persistence.entity.RefreshTokenSessionJpaEntity;
+import com.promsearch.auth.application.port.out.refresh.LoadRefreshTokenSessionPort;
+import com.promsearch.auth.application.port.out.refresh.SaveRefreshTokenSessionPort;
 import com.promsearch.auth.domain.RefreshTokenSession;
 import java.time.Instant;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@Repository
+@Component
 @RequiredArgsConstructor
-public class RefreshTokenSessionPersistenceAdapter implements RefreshTokenSessionRepository {
-    private final RefreshTokenSessionJpaRepository repository;
+public class RefreshTokenSessionPersistenceAdapter
+        implements LoadRefreshTokenSessionPort, SaveRefreshTokenSessionPort {
+
+    private final RefreshTokenSessionRepository repository;
 
     @Override
     public RefreshTokenSession save(RefreshTokenSession session) {

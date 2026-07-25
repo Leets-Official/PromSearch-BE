@@ -3,9 +3,9 @@ package com.promsearch.auth.infrastructure.jwt;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.promsearch.auth.application.AuthenticatedUserInfo;
-import com.promsearch.auth.application.port.out.RefreshTokenProvider.RefreshToken;
-import com.promsearch.auth.application.port.out.RefreshTokenProvider.RefreshTokenClaims;
+import com.promsearch.auth.application.usecase.dto.AuthenticatedUserInfo;
+import com.promsearch.auth.application.port.out.token.RefreshTokenProvider.RefreshToken;
+import com.promsearch.auth.application.port.out.token.RefreshTokenProvider.RefreshTokenClaims;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import java.time.Clock;
 import java.time.Instant;

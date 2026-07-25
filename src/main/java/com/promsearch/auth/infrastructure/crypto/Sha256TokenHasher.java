@@ -1,6 +1,6 @@
 package com.promsearch.auth.infrastructure.crypto;
 
-import com.promsearch.auth.application.port.out.TokenHasher;
+import com.promsearch.auth.application.port.out.token.TokenHasher;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;

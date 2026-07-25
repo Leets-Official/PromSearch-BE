@@ -1,8 +1,8 @@
 package com.promsearch.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promsearch.auth.application.port.out.AccessTokenProvider;
-import com.promsearch.auth.application.port.out.AccessTokenProvider.AccessTokenClaims;
+import com.promsearch.auth.application.port.out.token.AccessTokenProvider;
+import com.promsearch.auth.application.port.out.token.AccessTokenProvider.AccessTokenClaims;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
 import com.promsearch.global.config.logging.RequestLoggingFilter;

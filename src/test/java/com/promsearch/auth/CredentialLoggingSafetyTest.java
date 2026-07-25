@@ -2,12 +2,12 @@ package com.promsearch.auth;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.promsearch.auth.application.LoginCommand;
-import com.promsearch.auth.interfaces.dto.LoginRequest;
-import com.promsearch.auth.interfaces.dto.SignupRequest;
-import com.promsearch.user.application.ChangePasswordCommand;
-import com.promsearch.user.application.SignupCommand;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
+import com.promsearch.auth.application.usecase.dto.LoginCommand;
+import com.promsearch.auth.interfaces.dto.request.LoginRequest;
+import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
+import com.promsearch.user.application.usecase.dto.SignupCommand;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.params.ParameterizedTest;
