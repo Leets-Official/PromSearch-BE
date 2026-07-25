@@ -1,10 +1,10 @@
 package com.promsearch.community.interfaces.docs;
 
-import com.promsearch.community.interfaces.dto.CommentListResponse;
-import com.promsearch.community.interfaces.dto.CommentReplyResponse;
-import com.promsearch.community.interfaces.dto.CommentResponse;
-import com.promsearch.community.interfaces.dto.CreateCommentRequest;
-import com.promsearch.community.interfaces.dto.UpdateCommentRequest;
+import com.promsearch.community.interfaces.dto.request.CreateCommentRequest;
+import com.promsearch.community.interfaces.dto.request.UpdateCommentRequest;
+import com.promsearch.community.interfaces.dto.response.CommentListResponse;
+import com.promsearch.community.interfaces.dto.response.CommentReplyResponse;
+import com.promsearch.community.interfaces.dto.response.CommentResponse;
 import com.promsearch.global.exception.constant.CommonErrorCode;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
