@@ -29,7 +29,7 @@ public class Prompt {
     private final Instant createdAt;
     private final Instant updatedAt;
     private final Instant deletedAt;
-    private final List<PostImage> images;
+    private final List<PromptImage> images;
     private final PostStatistics statistics;
     private final List<PostTag> postTags;
 
@@ -50,7 +50,7 @@ public class Prompt {
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt,
-            List<PostImage> images,
+            List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
     ) {
@@ -120,7 +120,7 @@ public class Prompt {
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt,
-            List<PostImage> images,
+            List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
     ) {

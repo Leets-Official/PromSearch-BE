@@ -119,6 +119,28 @@ class PromptControllerTest {
                         """));
     }
 
+    @DisplayName("WebP 업로드는 지원 범위에서 제외한다")
+    @Test
+    void webpUploadIsRejected() throws Exception {
+        mockMvc.perform(post("/api/v1/prompt-images/upload-urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "images":[{
+                                    "fileName":"result.webp",
+                                    "contentType":"image/webp",
+                                    "fileSize":1024,
+                                    "width":1920,
+                                    "height":1080
+                                  }]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"))
+                .andExpect(jsonPath("$.result['images[0].contentType']")
+                        .value("이미지 형식은 JPEG 또는 PNG만 지원합니다."));
+    }
+
     private void expectNotImplemented(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)
             throws Exception {
         mockMvc.perform(request)
@@ -139,8 +161,8 @@ class PromptControllerTest {
         return """
                 {
                   "images":[{
-                    "fileName":"prompt-result.webp",
-                    "contentType":"image/webp",
+                    "fileName":"prompt-result.jpg",
+                    "contentType":"image/jpeg",
                     "fileSize":5242880,
                     "width":1920,
                     "height":1080

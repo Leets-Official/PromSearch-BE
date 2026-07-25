@@ -1,0 +1,121 @@
+package com.promsearch.prompt.infrastructure.persistence;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+import com.promsearch.global.config.JpaConfig;
+import com.promsearch.prompt.domain.PromptImage;
+import com.promsearch.prompt.domain.enums.PromptImageContentType;
+import com.promsearch.prompt.domain.enums.PromptImageStatus;
+import com.promsearch.prompt.infrastructure.persistence.entity.PromptImageJpaEntity;
+import jakarta.persistence.EntityManager;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.Import;
+
+@DataJpaTest
+@Import(JpaConfig.class)
+class PromptImageRepositoryTest {
+
+    @Autowired
+    private PromptImageRepository promptImageRepository;
+
+    @Autowired
+    private EntityManager entityManager;
+
+    @DisplayName("UUID 이미지 자산과 처리 상태를 저장하고 다시 도메인으로 복원한다")
+    @Test
+    void saveAndReconstructPromptImage() {
+        PromptImage image = prepareImage(1L, "first.jpg");
+        PromptImageJpaEntity entity = promptImageRepository.saveAndFlush(PromptImageJpaEntity.from(image));
+        image.startProcessing();
+        image.completeProcessing("watermarked/1/" + image.getPromptImageId().id() + ".jpg", 1);
+        entity.updateFrom(image);
+        promptImageRepository.flush();
+        entityManager.clear();
+
+        PromptImage savedImage = promptImageRepository.findById(image.getPromptImageId().id())
+                .orElseThrow()
+                .toDomain();
+
+        assertThat(savedImage.getPromptImageId()).isEqualTo(image.getPromptImageId());
+        assertThat(savedImage.getUploaderId()).isEqualTo(1L);
+        assertThat(savedImage.getOriginalObjectKey()).isEqualTo(image.getOriginalObjectKey());
+        assertThat(savedImage.getStatus()).isEqualTo(PromptImageStatus.READY);
+        assertThat(savedImage.getProcessingVersion()).isEqualTo(1);
+        assertThat(entity.getLockVersion()).isNotNull();
+    }
+
+    @DisplayName("프롬프트에 연결된 이미지는 정렬 순서대로 조회한다")
+    @Test
+    void findAttachedImagesInSortOrder() {
+        PromptImage second = readyImage(1L, "second.jpg");
+        second.attachToPrompt(10L, 1L, 1, false);
+        PromptImage first = readyImage(1L, "first.jpg");
+        first.attachToPrompt(10L, 1L, 0, true);
+
+        promptImageRepository.saveAll(List.of(
+                PromptImageJpaEntity.from(second),
+                PromptImageJpaEntity.from(first)
+        ));
+        promptImageRepository.flush();
+        entityManager.clear();
+
+        List<PromptImageJpaEntity> images =
+                promptImageRepository.findAllByPromptIdOrderBySortOrderAsc(10L);
+
+        assertThat(images)
+                .extracting(PromptImageJpaEntity::getSortOrder)
+                .containsExactly(0, 1);
+        assertThat(images.getFirst().getOriginalFileName()).isEqualTo("first.jpg");
+        assertThat(images.getFirst().getThumbnail()).isTrue();
+    }
+
+    @DisplayName("업로더와 처리 상태로 이미지 자산을 조회한다")
+    @Test
+    void findImagesByUploaderAndStatus() {
+        PromptImage uploading = prepareImage(1L, "uploading.jpg");
+        PromptImage ready = readyImage(1L, "ready.jpg");
+
+        promptImageRepository.saveAll(List.of(
+                PromptImageJpaEntity.from(uploading),
+                PromptImageJpaEntity.from(ready)
+        ));
+        promptImageRepository.flush();
+
+        List<PromptImageJpaEntity> images =
+                promptImageRepository.findAllByIdInAndUploaderIdAndStatus(
+                        List.of(uploading.getPromptImageId().id(), ready.getPromptImageId().id()),
+                        1L,
+                        PromptImageStatus.READY
+                );
+
+        assertThat(images)
+                .extracting(PromptImageJpaEntity::getId)
+                .containsExactly(ready.getPromptImageId().id());
+    }
+
+    private PromptImage readyImage(Long uploaderId, String fileName) {
+        PromptImage image = prepareImage(uploaderId, fileName);
+        image.startProcessing();
+        image.completeProcessing("watermarked/" + uploaderId + "/" + image.getPromptImageId().id() + ".jpg", 1);
+        return image;
+    }
+
+    private PromptImage prepareImage(Long uploaderId, String fileName) {
+        UUID imageId = UUID.randomUUID();
+        return PromptImage.prepareUpload(
+                imageId,
+                uploaderId,
+                "originals/" + uploaderId + "/" + imageId + ".jpg",
+                fileName,
+                PromptImageContentType.JPEG,
+                1_024,
+                1_920,
+                1_080
+        );
+    }
+}
