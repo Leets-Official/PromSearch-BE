@@ -52,7 +52,7 @@ public record PromptDraftResponse(
         @Schema(description = "서버에서 결정한 가격", example = "0", accessMode = Schema.AccessMode.READ_ONLY)
         Long pricePoint,
 
-        @Schema(description = "마지막 임시저장 시각", example = "2026-07-23T12:00:00Z")
+        @Schema(description = "마지막 임시저장 시각", example = "2026-07-23T21:00:00+09:00")
         Instant updatedAt
 ) {
 }

@@ -1,6 +1,8 @@
 spring:
   application:
     name: promsearch
+  jackson:
+    time-zone: ${RESPONSE_TIME_ZONE:Asia/Seoul}
   datasource:
     # TODO: API 인스턴스 수 × Hikari maximum-pool-size가 PostgreSQL max_connections의
     # 70~80% 이내가 되도록 부하 테스트 후 아래 항목을 활성화
@@ -28,6 +30,10 @@ springdoc:
     path: /docs
     persist-authorization: true
     try-it-out-enabled: true
+
+prompt:
+  pricing:
+    premium-price-point: ${PROMPT_PREMIUM_PRICE_POINT:100}
 
 auth:
   jwt:

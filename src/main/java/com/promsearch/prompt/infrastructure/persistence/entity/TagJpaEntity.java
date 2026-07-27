@@ -23,7 +23,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "tags",
-        uniqueConstraints = @UniqueConstraint(name = "uk_tags_type_name", columnNames = {"tag_type", "tag_name"})
+        uniqueConstraints = {
+                @UniqueConstraint(name = "uk_tags_type_name", columnNames = {"tag_type", "tag_name"}),
+                @UniqueConstraint(
+                        name = "uk_tags_type_normalized_name",
+                        columnNames = {"tag_type", "normalized_name"}
+                )
+        }
 )
 public class TagJpaEntity extends BaseEntity {
 
@@ -60,6 +66,15 @@ public class TagJpaEntity extends BaseEntity {
                 .normalizedName(normalizedName)
                 .custom(custom)
                 .build();
+    }
+
+    public static TagJpaEntity from(Tag tag) {
+        return create(
+                tag.getTagType(),
+                tag.getTagName(),
+                tag.getNormalizedName(),
+                tag.isCustom()
+        );
     }
 
     public Tag toDomain() {

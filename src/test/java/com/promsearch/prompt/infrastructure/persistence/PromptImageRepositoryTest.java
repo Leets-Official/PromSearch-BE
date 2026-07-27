@@ -18,11 +18,14 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
 @DataJpaTest
-@Import(JpaConfig.class)
+@Import({JpaConfig.class, PromptImagePersistenceAdapter.class})
 class PromptImageRepositoryTest {
 
     @Autowired
     private PromptImageRepository promptImageRepository;
+
+    @Autowired
+    private PromptImagePersistenceAdapter promptImagePersistenceAdapter;
 
     @Autowired
     private EntityManager entityManager;
@@ -100,6 +103,37 @@ class PromptImageRepositoryTest {
         assertThat(images)
                 .extracting(PromptImageJpaEntity::getId)
                 .containsExactly(ready.getPromptImageId().id());
+    }
+
+    @DisplayName("프롬프트 생성은 요청 이미지 전체를 잠금 조회하고 누락을 구분한다")
+    @Test
+    void batchGetImagesForUpdate() {
+        PromptImage first = readyImage(1L, "first.jpg");
+        PromptImage second = readyImage(1L, "second.jpg");
+        promptImageRepository.saveAllAndFlush(List.of(
+                PromptImageJpaEntity.from(first),
+                PromptImageJpaEntity.from(second)
+        ));
+
+        List<PromptImage> images = promptImagePersistenceAdapter.batchGetByIdsForUpdate(List.of(
+                first.getPromptImageId().id(),
+                second.getPromptImageId().id()
+        ));
+
+        assertThat(images)
+                .extracting(image -> image.getPromptImageId().id())
+                .containsExactlyInAnyOrder(
+                        first.getPromptImageId().id(),
+                        second.getPromptImageId().id()
+                );
+        org.assertj.core.api.Assertions.assertThatThrownBy(
+                        () -> promptImagePersistenceAdapter.batchGetByIdsForUpdate(
+                                List.of(UUID.randomUUID())
+                        )
+                )
+                .isInstanceOf(com.promsearch.prompt.domain.exception.PromptDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(com.promsearch.prompt.domain.exception.PromptErrorCode.IMAGE_NOT_FOUND);
     }
 
     private PromptImage readyImage(Long uploaderId, String fileName) {

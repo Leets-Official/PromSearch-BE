@@ -11,4 +11,7 @@ public interface SavePromptImagePort {
 
     /** 상태 전이 이미지 갱신 */
     PromptImage update(PromptImage image);
+
+    /** 프롬프트 연결 정보를 이미지 전체에 일괄 반영 */
+    void updateAll(List<PromptImage> images);
 }

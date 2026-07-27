@@ -7,6 +7,9 @@ import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
 import com.promsearch.prompt.infrastructure.persistence.entity.PromptImageJpaEntity;
 import java.util.List;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -27,6 +30,21 @@ public class PromptImagePersistenceAdapter implements LoadPromptImagePort, SaveP
         return getEntity(imageId).toDomain();
     }
 
+    @Override
+    public List<PromptImage> batchGetByIdsForUpdate(Collection<UUID> imageIds) {
+        if (imageIds == null || imageIds.isEmpty()) {
+            return List.of();
+        }
+
+        List<PromptImageJpaEntity> entities = promptImageRepository.findAllByIdInForUpdate(imageIds);
+        if (entities.size() != imageIds.size()) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_FOUND);
+        }
+        return entities.stream()
+                .map(PromptImageJpaEntity::toDomain)
+                .toList();
+    }
+
     /** 업로드 준비 이미지 일괄 저장 및 DB 제약 확인 */
     @Override
     public void createAll(List<PromptImage> images) {
@@ -43,6 +61,27 @@ public class PromptImagePersistenceAdapter implements LoadPromptImagePort, SaveP
         entity.updateFrom(image);
         promptImageRepository.flush();
         return entity.toDomain();
+    }
+
+    @Override
+    public void updateAll(List<PromptImage> images) {
+        if (images == null || images.isEmpty()) {
+            return;
+        }
+
+        Map<UUID, PromptImageJpaEntity> entitiesById = new HashMap<>();
+        promptImageRepository.findAllById(images.stream()
+                        .map(image -> image.getPromptImageId().id())
+                        .toList())
+                .forEach(entity -> entitiesById.put(entity.getId(), entity));
+        if (entitiesById.size() != images.size()) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        for (PromptImage image : images) {
+            entitiesById.get(image.getPromptImageId().id()).updateFrom(image);
+        }
+        promptImageRepository.flush();
     }
 
     /** 필수 이미지 엔티티를 조회하고 누락 시 prompt 도메인 오류로 변환 */

@@ -55,10 +55,10 @@ public record PromptDetailResponse(
         @Schema(description = "공개 통계")
         PromptStatisticsResponse statistics,
 
-        @Schema(description = "생성 시각", example = "2026-07-23T01:30:00Z")
+        @Schema(description = "생성 시각", example = "2026-07-23T10:30:00+09:00")
         Instant createdAt,
 
-        @Schema(description = "수정 시각", example = "2026-07-23T02:00:00Z")
+        @Schema(description = "수정 시각", example = "2026-07-23T11:00:00+09:00")
         Instant updatedAt
 ) {
 }

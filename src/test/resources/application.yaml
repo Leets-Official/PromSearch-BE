@@ -1,3 +1,7 @@
+spring:
+  jackson:
+    time-zone: Asia/Seoul
+
 springdoc:
   api-docs:
     enabled: ${SWAGGER_ENABLE:false}
@@ -7,6 +11,10 @@ springdoc:
     path: /docs
     persist-authorization: true
     try-it-out-enabled: true
+
+prompt:
+  pricing:
+    premium-price-point: 100
 
 auth:
   jwt:

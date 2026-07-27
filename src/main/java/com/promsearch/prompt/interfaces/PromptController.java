@@ -2,8 +2,10 @@ package com.promsearch.prompt.interfaces;
 
 import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
+import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
@@ -38,6 +40,7 @@ public class PromptController implements PromptControllerDocs {
 
     private final IssuePromptImageUploadUrlsUseCase issuePromptImageUploadUrlsUseCase;
     private final CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
+    private final CreatePromptUseCase createPromptUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -105,7 +108,12 @@ public class PromptController implements PromptControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @Valid @RequestBody CreatePromptRequest request
     ) {
-        throw new NotImplementedException();
+        PromptCommandResponse response = PromptCommandResponse.from(
+                createPromptUseCase.create(request.toCommand(user.userId()))
+        );
+        return ResponseEntity
+                .status(SuccessCode.CREATED.getHttpStatus())
+                .body(ApiResponse.onSuccess(SuccessCode.CREATED, response));
     }
 
     @DeleteMapping("/prompts/{promptId}")

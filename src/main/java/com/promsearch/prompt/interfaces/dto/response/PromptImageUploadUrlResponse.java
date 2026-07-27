@@ -33,7 +33,7 @@ public record PromptImageUploadUrlResponse(
             @Schema(description = "S3 임시 영역 업로드용 Presigned URL", example = "https://example-bucket.s3.amazonaws.com/temp/image.jpg?signature=...")
             URI uploadUrl,
 
-            @Schema(description = "업로드 URL 만료 시각", example = "2026-07-23T12:10:00Z")
+            @Schema(description = "업로드 URL 만료 시각", example = "2026-07-23T21:10:00+09:00")
             Instant expiresAt
     ) {
     }

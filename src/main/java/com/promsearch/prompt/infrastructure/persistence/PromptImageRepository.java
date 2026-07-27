@@ -6,7 +6,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntity, UUID> {
 
@@ -23,4 +27,8 @@ public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntit
     );
 
     List<PromptImageJpaEntity> findAllByPromptIdOrderBySortOrderAsc(Long promptId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select image from PromptImageJpaEntity image where image.id in :ids order by image.id")
+    List<PromptImageJpaEntity> findAllByIdInForUpdate(@Param("ids") Collection<UUID> ids);
 }

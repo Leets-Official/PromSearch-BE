@@ -28,10 +28,10 @@ public record CommentResponse(
         @Schema(description = "프롬프트 작성자가 작성한 댓글인지 여부", example = "false")
         boolean promptAuthor,
 
-        @Schema(description = "작성 시각", example = "2026-07-23T01:30:00Z")
+        @Schema(description = "작성 시각", example = "2026-07-23T10:30:00+09:00")
         Instant createdAt,
 
-        @Schema(description = "수정 시각", example = "2026-07-23T01:30:00Z")
+        @Schema(description = "수정 시각", example = "2026-07-23T10:30:00+09:00")
         Instant updatedAt,
 
         @Schema(description = "작성 시간 내림차순으로 정렬된 대댓글 목록")

@@ -6,6 +6,7 @@ import com.promsearch.prompt.domain.Prompt.PromptId;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -39,7 +40,7 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "title", nullable = false, length = 255)
+    @Column(name = "title", nullable = false, length = 20)
     private String title;
 
     @Column(name = "prompt_body", columnDefinition = "TEXT")
@@ -67,6 +68,10 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private PromptStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private PromptVisibility visibility;
+
     @Column(name = "price_point")
     private Long pricePoint;
 
@@ -85,7 +90,7 @@ public class PostJpaEntity extends BaseEntity {
     @Builder(access = AccessLevel.PRIVATE)
     private PostJpaEntity(Long userId, String title, String promptBody, String thumbnailImageUrl,
                           PromptOutputType outputType, String description, PromptContentType contentType,
-                          Long pricePoint) {
+                          PromptStatus status, PromptVisibility visibility, Long pricePoint) {
         this.userId = userId;
         this.title = title;
         this.promptBody = promptBody;
@@ -93,22 +98,23 @@ public class PostJpaEntity extends BaseEntity {
         this.outputType = outputType;
         this.description = description;
         this.contentType = contentType;
-        this.status = PromptStatus.DRAFT;
+        this.status = status;
+        this.visibility = visibility;
         this.pricePoint = pricePoint != null ? pricePoint : 0L;
     }
 
-    public static PostJpaEntity create(Long userId, String title, String promptBody, String thumbnailImageUrl,
-                                       PromptOutputType outputType, String description,
-                                       PromptContentType contentType, Long pricePoint) {
+    public static PostJpaEntity from(Prompt prompt) {
         return PostJpaEntity.builder()
-                .userId(userId)
-                .title(title)
-                .promptBody(promptBody)
-                .thumbnailImageUrl(thumbnailImageUrl)
-                .outputType(outputType)
-                .description(description)
-                .contentType(contentType)
-                .pricePoint(pricePoint)
+                .userId(prompt.getUserId())
+                .title(prompt.getTitle())
+                .promptBody(prompt.getPromptBody())
+                .thumbnailImageUrl(null)
+                .outputType(prompt.getOutputType())
+                .description(prompt.getDescription())
+                .contentType(prompt.getContentType())
+                .status(prompt.getStatus())
+                .visibility(prompt.getVisibility())
+                .pricePoint(prompt.getPricePoint())
                 .build();
     }
 
@@ -123,6 +129,7 @@ public class PostJpaEntity extends BaseEntity {
                 description,
                 contentType,
                 status,
+                visibility,
                 pricePoint,
                 hiddenReason,
                 hiddenAt,

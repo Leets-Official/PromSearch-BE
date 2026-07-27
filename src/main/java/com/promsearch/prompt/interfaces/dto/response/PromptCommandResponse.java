@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -19,7 +20,17 @@ public record PromptCommandResponse(
         @Schema(description = "서버에서 결정한 가격. FREE는 0이며 PREMIUM 실제 가격은 추후 설정합니다.", example = "0", accessMode = Schema.AccessMode.READ_ONLY)
         Long pricePoint,
 
-        @Schema(description = "마지막 저장 시각", example = "2026-07-23T12:00:00Z")
+        @Schema(description = "마지막 저장 시각", example = "2026-07-23T21:00:00+09:00")
         Instant updatedAt
 ) {
+
+    public static PromptCommandResponse from(PromptCommandInfo info) {
+        return new PromptCommandResponse(
+                info.promptId(),
+                info.status(),
+                info.visibility(),
+                info.pricePoint(),
+                info.updatedAt()
+        );
+    }
 }
