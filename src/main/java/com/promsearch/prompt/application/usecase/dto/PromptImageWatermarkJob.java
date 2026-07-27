@@ -22,6 +22,7 @@ public record PromptImageWatermarkJob(
 ) {
 
     public static final int CURRENT_EVENT_VERSION = 1;
+    public static final String EVENT_TYPE = "PROMPT_IMAGE_WATERMARK_REQUESTED";
 
     public PromptImageWatermarkJob {
         if (eventVersion != CURRENT_EVENT_VERSION) {

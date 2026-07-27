@@ -2,6 +2,7 @@ package com.promsearch.prompt.application.service.command;
 
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
+import com.promsearch.prompt.application.port.out.promptimage.SavePromptImageWatermarkJobPort;
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.GeneratePromptImageObjectKeyPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
@@ -15,11 +16,13 @@ import com.promsearch.prompt.application.usecase.dto.IssuePromptImageUploadUrlsC
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo.UploadTarget;
+import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,7 @@ public class PromptImageUploadCommandService implements
         CompletePromptImageUploadUseCase {
 
     private static final int MAX_IMAGE_COUNT = 10;
+    private static final int CURRENT_WATERMARK_PROCESSING_VERSION = 1;
 
     private final LoadPromptImagePort loadPromptImagePort;
     private final SavePromptImagePort savePromptImagePort;
@@ -50,6 +54,7 @@ public class PromptImageUploadCommandService implements
     private final PresignPromptImageUploadPort presignPromptImageUploadPort;
     private final LoadPromptImageObjectMetadataPort loadPromptImageObjectMetadataPort;
     private final DeletePromptImageObjectPort deletePromptImageObjectPort;
+    private final SavePromptImageWatermarkJobPort savePromptImageWatermarkJobPort;
 
     /**
      * 이미지 자산 준비 → Object Key 생성 → Presigned PUT URL 발급 → 이미지 일괄 저장
@@ -129,10 +134,28 @@ public class PromptImageUploadCommandService implements
 
         image.completeUpload(metadata.etag(), metadata.lastModified());
         PromptImage updatedImage = savePromptImagePort.update(image);
-        // TODO: 워터마크 단계 구현 시 커밋 이후 Outbox·SQS 이벤트를 발행하고 Worker에서 PROCESSING → READY 처리
+        savePromptImageWatermarkJobPort.save(createWatermarkJob(updatedImage));
+        // TODO: Outbox 발행기를 추가해 커밋된 PENDING 작업만 SQS로 보내고 Worker에서 PROCESSING → READY 처리
         log.info("prompt_image_upload_completed uploaderId={} imageId={}",
                 command.uploaderId(), command.imageId());
         return PromptImageUploadInfo.from(updatedImage);
+    }
+
+    private PromptImageWatermarkJob createWatermarkJob(PromptImage image) {
+        return new PromptImageWatermarkJob(
+                PromptImageWatermarkJob.CURRENT_EVENT_VERSION,
+                UUID.randomUUID(),
+                image.getPromptImageId().id(),
+                image.getOriginalObjectKey(),
+                generatePromptImageObjectKeyPort.generateWatermarked(
+                        image.getUploaderId(),
+                        image.getPromptImageId().id(),
+                        image.getContentType()
+                ),
+                image.getContentType().getMimeType(),
+                CURRENT_WATERMARK_PROCESSING_VERSION,
+                Instant.now()
+        );
     }
 
     private boolean matchesExpectedMetadata(PromptImage image, StoredObjectMetadata metadata) {

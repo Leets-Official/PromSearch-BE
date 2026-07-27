@@ -10,6 +10,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
@@ -17,7 +18,8 @@ class PromptImageMigrationTest {
 
     private static final String[] MIGRATION_PATHS = {
             "db/migration/V3__create_prompt_images.sql",
-            "db/migration/V4__add_prompt_image_upload_completion.sql"
+            "db/migration/V4__add_prompt_image_upload_completion.sql",
+            "db/migration/V5__create_prompt_image_watermark_outbox.sql"
     };
 
     @DisplayName("이미지 자산 마이그레이션은 PostgreSQL 호환 모드의 빈 DB에 적용된다")
@@ -35,9 +37,13 @@ class PromptImageMigrationTest {
             }
 
             execute(connection, validInsertSql());
-            execute(connection, validUploadedInsertSql());
+            String uploadedImageId = UUID.randomUUID().toString();
+            execute(connection, validUploadedInsertSql(uploadedImageId));
+            execute(connection, validOutboxInsertSql(uploadedImageId));
 
             assertThatThrownBy(() -> execute(connection, invalidWebpInsertSql()))
+                    .isInstanceOf(SQLException.class);
+            assertThatThrownBy(() -> execute(connection, validOutboxInsertSql(uploadedImageId)))
                     .isInstanceOf(SQLException.class);
         }
     }
@@ -90,17 +96,31 @@ class PromptImageMigrationTest {
                 """;
     }
 
-    private String validUploadedInsertSql() {
+    private String validUploadedInsertSql(String imageId) {
         return """
                 insert into prompt_images (
                     prompt_image_id, uploader_id, original_object_key, original_file_name,
                     content_type, file_size, width, height, status, etag, uploaded_at,
                     processing_version, is_thumbnail, lock_version, created_at, updated_at
                 ) values (
-                    random_uuid(), 1, 'prompt-images/original/1/uploaded.jpg', 'uploaded.jpg',
+                    '%s', 1, 'prompt-images/original/1/uploaded.jpg', 'uploaded.jpg',
                     'JPEG', 1024, 1920, 1080, 'UPLOADED', '"etag"', current_timestamp,
                     0, false, 0, current_timestamp, current_timestamp
                 )
-                """;
+                """.formatted(imageId);
+    }
+
+    private String validOutboxInsertSql(String imageId) {
+        return """
+                insert into prompt_image_watermark_outbox (
+                    event_id, image_id, event_type, event_version, processing_version,
+                    payload, status, attempt_count, available_at, lock_version,
+                    created_at, updated_at
+                ) values (
+                    random_uuid(), '%s', 'PROMPT_IMAGE_WATERMARK_REQUESTED', 1, 1,
+                    '{}', 'PENDING', 0, current_timestamp, 0,
+                    current_timestamp, current_timestamp
+                )
+                """.formatted(imageId);
     }
 }
