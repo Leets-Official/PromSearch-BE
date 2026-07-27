@@ -31,17 +31,8 @@ public class PromptImageWatermarkSqsPublicationConfig {
     @Bean
     SqsClient watermarkPublisherSqsClient(S3StorageProperties storageProperties) {
         // TODO: 발행 동시성을 높일 때 Apache HTTP 커넥션 풀로 전환하고
-        // maxConnections를 Outbox 전송 동시성 이상으로 설정한 뒤 timeout·재시도 지표 검증
-        /*
-         * 전환 형태 예시:
-         * build.gradle:
-         * implementation 'software.amazon.awssdk:apache-client'
-         *
-         * .httpClientBuilder(ApacheHttpClient.builder()
-         *         .maxConnections(50)
-         *         .connectionTimeout(Duration.ofSeconds(2))
-         *         .socketTimeout(Duration.ofSeconds(25)))
-         */
+        // 인스턴스별 maxConnections를 Outbox 전송 동시성 이상으로 설정한 뒤 timeout·재시도 지표 검증
+        // 다중 인스턴스의 작업 선점은 HTTP 풀이 아닌 DB 잠금·선점 임대로 조정
         return SqsClient.builder()
                 .region(Region.of(storageProperties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder()

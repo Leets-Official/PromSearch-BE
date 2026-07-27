@@ -55,16 +55,6 @@ public class SqsPromptImageWatermarkJobConsumer {
     private List<Message> receiveMessages() {
         // TODO: Worker 병렬 처리 도입 시 maxNumberOfMessages와 실행 풀 크기를 함께 늘리고,
         // heap 사용량·GC pause·S3 대역폭·DB 풀 포화도를 기준으로 상한 결정
-        /*
-         * 병렬 처리 형태 예시:
-         * List<Message> messages = receiveMessages(concurrency);
-         * messages.forEach(message -> watermarkExecutor.execute(
-         *         () -> processMessage(message)
-         * ));
-         *
-         * 이때 executor queue가 가득 찬 메시지는 처리하지 말고 Visibility Timeout 이후
-         * 다시 받을 수 있도록 두어야 하며, maxNumberOfMessages는 10 이하로 설정한다.
-         */
         return sqsClient.receiveMessage(ReceiveMessageRequest.builder()
                         .queueUrl(properties.queueUrl())
                         .maxNumberOfMessages(1)

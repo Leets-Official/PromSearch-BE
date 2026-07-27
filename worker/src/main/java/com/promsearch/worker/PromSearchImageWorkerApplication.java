@@ -30,20 +30,9 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 })
 public class PromSearchImageWorkerApplication {
 
-    /*
-     * TODO: 작업량이 간헐적이고 유휴 Worker 비용이 더 커지는 시점에는 Lambda 전환을 비교
-     *
-     * 전환 형태 예시:
-     * public SQSBatchResponse handleRequest(SQSEvent event, Context context) {
-     *     // PromptImageWatermarkJob 역직렬화
-     *     // processPromptImageWatermarkUseCase.process(job)
-     *     // 실패한 messageId만 batchItemFailures로 반환
-     * }
-     *
-     * 현재의 버전 메시지 계약과 ProcessPromptImageWatermarkUseCase는 유지하고
-     * SQS 소비 어댑터만 Lambda Handler로 교체한다. 메모리·임시 스토리지·제한 시간,
-     * 동시 실행 수, Java cold start, 이미지 처리 p95 비용을 Worker 방식과 비교해 결정한다.
-     */
+    // TODO: 작업량이 간헐적이고 유휴 Worker 비용이 더 커지는 시점에는 Lambda 전환 비교
+    // 버전 메시지 계약과 처리 UseCase는 유지하고 SQS 소비 어댑터만 Handler로 교체
+    // 메모리·임시 스토리지·제한 시간·동시 실행 수·cold start·이미지 처리 p95 비용 검증
 
     /** Worker 전용 설정과 비웹 모드로 별도 JVM 실행 */
     public static void main(String[] args) {

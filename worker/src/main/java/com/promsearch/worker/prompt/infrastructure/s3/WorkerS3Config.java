@@ -16,13 +16,6 @@ public class WorkerS3Config {
     S3Client workerS3Client(S3StorageProperties properties) {
         // TODO: 동시 처리량을 높일 때 Apache HTTP 커넥션 풀로 전환하고
         // maxConnections를 다운로드 + 업로드 동시 요청 수 이상으로 설정한 뒤 타임아웃 검증
-        /*
-         * 전환 형태 예시:
-         * .httpClientBuilder(ApacheHttpClient.builder()
-         *         .maxConnections(workerConcurrency * 2)
-         *         .connectionTimeout(Duration.ofSeconds(2))
-         *         .socketTimeout(Duration.ofSeconds(30)))
-         */
         return S3Client.builder()
                 .region(Region.of(properties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder())

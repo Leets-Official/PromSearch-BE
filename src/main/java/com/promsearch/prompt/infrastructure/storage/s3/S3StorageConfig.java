@@ -15,16 +15,6 @@ public class S3StorageConfig {
     @Bean
     public S3Client s3Client(S3StorageProperties properties) {
         // TODO: 부하 테스트에서 병목 확인 시 Apache HTTP 커넥션 풀과 연결·응답 타임아웃 설정 추가
-        /*
-         * 전환 형태 예시:
-         * build.gradle:
-         * implementation 'software.amazon.awssdk:apache-client'
-         *
-         * .httpClientBuilder(ApacheHttpClient.builder()
-         *         .maxConnections(50)
-         *         .connectionTimeout(Duration.ofSeconds(2))
-         *         .socketTimeout(Duration.ofSeconds(5)))
-         */
         return S3Client.builder()
                 .region(Region.of(properties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder())

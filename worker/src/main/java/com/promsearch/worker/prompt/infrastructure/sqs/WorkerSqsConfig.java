@@ -26,13 +26,6 @@ public class WorkerSqsConfig {
     SqsClient workerSqsClient(S3StorageProperties storageProperties) {
         // TODO: 소비 동시성을 높일 때 Apache HTTP 커넥션 풀로 전환하고
         // maxConnections를 Long Polling 수 + 삭제 요청 동시성 이상으로 설정
-        /*
-         * 전환 형태 예시:
-         * .httpClientBuilder(ApacheHttpClient.builder()
-         *         .maxConnections(workerConcurrency * 2)
-         *         .connectionTimeout(Duration.ofSeconds(2))
-         *         .socketTimeout(Duration.ofSeconds(25)))
-         */
         return SqsClient.builder()
                 .region(Region.of(storageProperties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder()
