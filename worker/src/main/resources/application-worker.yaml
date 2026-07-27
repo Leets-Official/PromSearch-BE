@@ -1,0 +1,9 @@
+spring:
+  application:
+    name: promsearch-image-worker
+  main:
+    web-application-type: none
+
+worker:
+  watermark:
+    concurrency: ${WATERMARK_WORKER_CONCURRENCY:1}

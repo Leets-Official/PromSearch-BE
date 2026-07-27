@@ -24,6 +24,17 @@ http://localhost:8080/test/health-check
 → OK
 ```
 
+### 이미지 Worker 실행
+
+이미지 Worker는 API와 별도 JVM으로 실행되며 HTTP 포트를 열지 않습니다.
+
+```bash
+./gradlew :worker:bootRun
+```
+
+현재 단계에서는 Worker 실행 구조만 준비되어 있어 처리할 SQS 메시지가 없으면 기동 후 종료됩니다.
+SQS Listener가 추가되면 메시지 long polling을 유지하며 계속 실행됩니다.
+
 ## Docker로 로컬 실행
 
 ```bash
