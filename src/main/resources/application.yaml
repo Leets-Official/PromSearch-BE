@@ -35,4 +35,5 @@ storage:
     bucket: ${AWS_S3_BUCKET}
     region: ${AWS_REGION:ap-northeast-2}
     original-prefix: ${AWS_S3_ORIGINAL_PREFIX:prompt-images/original}
+    watermarked-prefix: ${AWS_S3_WATERMARKED_PREFIX:prompt-images/watermarked}
     upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}

@@ -16,12 +16,31 @@ public class PromptImageObjectKeyGenerator implements GeneratePromptImageObjectK
     /** 서버 UUID·허용 확장자 기반 원본 Object Key 반환 */
     @Override
     public String generateOriginal(Long uploaderId, UUID imageId, PromptImageContentType contentType) {
-        String prefix = normalizePrefix(properties.originalPrefix());
-        return "%s/%d/%s.%s".formatted(
-                prefix,
+        return generate(
+                properties.originalPrefix(),
                 uploaderId,
                 imageId,
                 contentType.getExtension()
+        );
+    }
+
+    /** 서버 UUID·허용 확장자 기반 워터마크 결과 Object Key 반환 */
+    @Override
+    public String generateWatermarked(Long uploaderId, UUID imageId, PromptImageContentType contentType) {
+        return generate(
+                properties.watermarkedPrefix(),
+                uploaderId,
+                imageId,
+                contentType.getExtension()
+        );
+    }
+
+    private String generate(String prefix, Long uploaderId, UUID imageId, String extension) {
+        return "%s/%d/%s.%s".formatted(
+                normalizePrefix(prefix),
+                uploaderId,
+                imageId,
+                extension
         );
     }
 
