@@ -1,5 +1,6 @@
 package com.promsearch.user.interfaces;
 
+import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
@@ -8,6 +9,7 @@ import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.UserInfo;
 import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
 import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserResponse;
 import com.promsearch.user.interfaces.docs.UserControllerDocs;
 import jakarta.validation.Valid;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,6 +32,14 @@ public class UserController implements UserControllerDocs {
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
     private final ChangePasswordUseCase changePasswordUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
+
+    @GetMapping("/me")
+    @Override
+    public ApiResponse<UserProfileResponse> getMyProfile(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    ) {
+        throw new NotImplementedException();
+    }
 
     @PatchMapping("/me")
     @Override
