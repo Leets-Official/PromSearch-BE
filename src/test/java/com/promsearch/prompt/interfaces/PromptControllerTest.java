@@ -146,6 +146,8 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"))
                 .andExpect(jsonPath("$.result['images[0].contentType']")
                         .value("이미지 형식은 JPEG 또는 PNG만 지원합니다."));
+    }
+
     @DisplayName("게시완료 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
     @Test
     void getMyPublishedPromptsRejectsInvalidStatus() throws Exception {
