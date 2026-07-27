@@ -1,6 +1,7 @@
 package com.promsearch.global.config.security;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import org.junit.jupiter.api.DisplayName;
@@ -29,5 +30,14 @@ class SwaggerDisabledMockMvcTest {
     void ordinaryApiIsNotGloballyProtectedByBasicAuth() throws Exception {
         mockMvc.perform(get("/test/health-check"))
                 .andExpect(status().isOk());
+    }
+
+    @DisplayName("닉네임 중복 확인 API는 회원가입 전에 인증 없이 호출할 수 있다")
+    @Test
+    void nicknameAvailabilityIsPublic() throws Exception {
+        mockMvc.perform(get("/api/v1/users/nicknames/availability")
+                        .param("nickname", "new-user"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.available").value(true));
     }
 }

@@ -3,6 +3,7 @@ package com.promsearch.global.config.openapi;
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
 import com.promsearch.test.interfaces.TestController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -38,7 +39,8 @@ public class OpenApiConfig {
             Class<?> beanType = handlerMethod.getBeanType();
             if (AuthController.class.isAssignableFrom(beanType)
                     || LocalSwaggerAuthController.class.isAssignableFrom(beanType)
-                    || TestController.class.isAssignableFrom(beanType)) {
+                    || TestController.class.isAssignableFrom(beanType)
+                    || handlerMethod.hasMethodAnnotation(SecurityRequirements.class)) {
                 return operation;
             }
             return operation.addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));

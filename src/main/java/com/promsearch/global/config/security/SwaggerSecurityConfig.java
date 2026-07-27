@@ -78,6 +78,7 @@ public class SwaggerSecurityConfig {
                                 "/api/v1/auth/reissue",
                                 "/api/v1/auth/oauth/**",
                                 "/api/v1/auth/swagger-token",
+                                "/api/v1/users/nicknames/availability",
                                 "/error"
                         ).permitAll()
                         .anyRequest().authenticated())
