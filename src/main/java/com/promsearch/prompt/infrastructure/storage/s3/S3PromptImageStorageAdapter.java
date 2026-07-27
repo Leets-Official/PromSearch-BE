@@ -30,6 +30,18 @@ public class S3PromptImageStorageAdapter implements
         LoadPromptImageObjectMetadataPort,
         DeletePromptImageObjectPort {
 
+    /*
+     * TODO: READY 이미지 조회 경로에는 이 S3 어댑터를 재사용하지 않고 별도 배포 URL 포트 추가
+     *
+     * 형태 예시:
+     * public interface GeneratePromptImageDeliveryUrlPort {
+     *     URI generate(String watermarkedObjectKey);
+     * }
+     *
+     * CloudFront 구현은 "https://" + distributionDomain + "/" + objectKey를 만들고,
+     * 비공개 이미지가 필요하면 CloudFront Signed URL 또는 Signed Cookie를 적용한다.
+     */
+
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3StorageProperties properties;

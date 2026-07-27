@@ -55,6 +55,14 @@ storage:
     watermarked-prefix: ${AWS_S3_WATERMARKED_PREFIX:prompt-images/watermarked}
     upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}
 
+# TODO: 이미지 조회 API 구현 시 S3 URL을 직접 노출하지 않고 CloudFront OAC를 통해
+# READY 상태의 watermarkedObjectKey만 전달하도록 아래 설정과 URL 생성 포트 추가
+# delivery:
+#   cloudfront:
+#     enabled: ${AWS_CLOUDFRONT_ENABLED:false}
+#     domain: ${AWS_CLOUDFRONT_DOMAIN:}
+#     signed-url-expiration: ${AWS_CLOUDFRONT_SIGNED_URL_EXPIRATION:10m}
+
 messaging:
   sqs:
     watermark:
