@@ -27,13 +27,19 @@ http://localhost:8080/test/health-check
 ### 이미지 Worker 실행
 
 이미지 Worker는 API와 별도 JVM으로 실행되며 HTTP 포트를 열지 않습니다.
+두 JVM은 같은 이미지 상태를 봐야 하므로 `SPRING_DATASOURCE_URL`에 동일한 외부 DB를 지정해야 합니다.
+인메모리 H2는 프로세스 사이에 공유되지 않습니다.
 
 ```bash
 ./gradlew :worker:bootRun
 ```
 
-현재 단계에서는 Worker 실행 구조만 준비되어 있어 처리할 SQS 메시지가 없으면 기동 후 종료됩니다.
-SQS Listener가 추가되면 메시지 long polling을 유지하며 계속 실행됩니다.
+현재는 S3 다운로드, 반복 wordmark 합성, 결과 업로드, `PROCESSING → READY/FAILED`
+처리 코어까지 구현되어 있습니다. SQS Listener가 아직 없으므로 기동 후 처리할 메시지가 없으면 종료됩니다.
+SQS 연결 후에는 long polling을 유지하며 계속 실행됩니다.
+
+워터마크의 투명도·로고 크기·간격·여백은 `WATERMARK_*` 환경변수로 조정할 수 있습니다.
+기본값은 1280×720 기준 짝수 행 5개, 홀수 행 4개가 반 칸씩 교차하는 시안을 따릅니다.
 
 ## Docker로 로컬 실행
 

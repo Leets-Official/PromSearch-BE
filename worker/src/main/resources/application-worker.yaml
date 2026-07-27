@@ -3,7 +3,35 @@ spring:
     name: promsearch-image-worker
   main:
     web-application-type: none
+  datasource:
+    # 별도 JVM인 API와 Worker는 같은 외부 DB를 사용해야 한다. 인메모리 H2는 프로세스 간 공유되지 않는다.
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+
+storage:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
+    original-prefix: ${AWS_S3_ORIGINAL_PREFIX:prompt-images/original}
+    watermarked-prefix: ${AWS_S3_WATERMARKED_PREFIX:prompt-images/watermarked}
+    upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}
 
 worker:
   watermark:
     concurrency: ${WATERMARK_WORKER_CONCURRENCY:1}
+    logo: classpath:watermark/wordmark.png
+    opacity: ${WATERMARK_OPACITY:0.26}
+    logo-width-ratio: ${WATERMARK_LOGO_WIDTH_RATIO:0.095}
+    minimum-logo-width: ${WATERMARK_MINIMUM_LOGO_WIDTH:80}
+    maximum-logo-width: ${WATERMARK_MAXIMUM_LOGO_WIDTH:240}
+    horizontal-gap-ratio: ${WATERMARK_HORIZONTAL_GAP_RATIO:0.123}
+    vertical-gap-ratio: ${WATERMARK_VERTICAL_GAP_RATIO:0.21}
+    horizontal-margin-ratio: ${WATERMARK_HORIZONTAL_MARGIN_RATIO:0.018}
+    vertical-margin-ratio: ${WATERMARK_VERTICAL_MARGIN_RATIO:0.028}
+    jpeg-quality: ${WATERMARK_JPEG_QUALITY:0.92}
+    maximum-output-bytes: ${WATERMARK_MAXIMUM_OUTPUT_BYTES:10485760}

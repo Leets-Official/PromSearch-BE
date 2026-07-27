@@ -21,7 +21,12 @@ class PromSearchImageWorkerApplicationTest {
                                      "spring.config.name=application-worker",
                                      "spring.main.banner-mode=off"
                              )
-                             .run()) {
+                             .run(
+                                     "--spring.datasource.url=jdbc:h2:mem:worker_context;MODE=PostgreSQL",
+                                     "--spring.jpa.hibernate.ddl-auto=create-drop",
+                                     "--storage.s3.bucket=promsearch-worker-test",
+                                     "--storage.s3.region=ap-northeast-2"
+                             )) {
             assertThat(context).isInstanceOf(AnnotationConfigApplicationContext.class);
             assertThat(context.getEnvironment().getProperty("spring.application.name"))
                     .isEqualTo("promsearch-image-worker");
