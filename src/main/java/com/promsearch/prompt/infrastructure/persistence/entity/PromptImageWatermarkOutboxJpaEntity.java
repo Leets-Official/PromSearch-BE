@@ -126,4 +126,44 @@ public class PromptImageWatermarkOutboxJpaEntity extends BaseEntity {
                 job.occurredAt()
         );
     }
+
+    /** 발행기가 외부 호출을 수행하는 동안 다른 인스턴스가 선택하지 않도록 임대 */
+    public void claimUntil(Instant claimedUntil) {
+        requirePending();
+        if (claimedUntil == null) {
+            throw new IllegalArgumentException("Outbox 선점 만료 시각은 필수입니다.");
+        }
+        availableAt = claimedUntil;
+    }
+
+    /** 메시지 대기열 전송 성공을 멱등하게 반영 */
+    public void markPublished(Instant publishedAt) {
+        if (status == Status.PUBLISHED) {
+            return;
+        }
+        if (publishedAt == null) {
+            throw new IllegalArgumentException("Outbox 발행 시각은 필수입니다.");
+        }
+        status = Status.PUBLISHED;
+        this.publishedAt = publishedAt;
+        lastError = null;
+    }
+
+    /** 전송 실패 횟수와 오류를 저장하고 다음 발행 가능 시각으로 이동 */
+    public void reschedule(Instant nextAvailableAt, String error) {
+        requirePending();
+        if (nextAvailableAt == null || error == null || error.isBlank()) {
+            throw new IllegalArgumentException("Outbox 재시도 정보가 유효하지 않습니다.");
+        }
+        attemptCount++;
+        availableAt = nextAvailableAt;
+        lastError = error;
+    }
+
+    /** 발행 완료 작업이 다시 선점되거나 재예약되는 잘못된 상태 전이를 차단 */
+    private void requirePending() {
+        if (status != Status.PENDING) {
+            throw new IllegalStateException("PENDING 상태의 Outbox 작업만 변경할 수 있습니다.");
+        }
+    }
 }

@@ -45,6 +45,7 @@ public class PromptImagePersistenceAdapter implements LoadPromptImagePort, SaveP
         return entity.toDomain();
     }
 
+    /** 필수 이미지 엔티티를 조회하고 누락 시 prompt 도메인 오류로 변환 */
     private PromptImageJpaEntity getEntity(UUID imageId) {
         return promptImageRepository.findById(imageId)
                 .orElseThrow(() -> new PromptDomainException(PromptErrorCode.IMAGE_NOT_FOUND));

@@ -14,7 +14,15 @@ public class WorkerS3Config {
     /** AWS 기본 자격 증명 체인을 사용하는 동기 S3 클라이언트 */
     @Bean
     S3Client workerS3Client(S3StorageProperties properties) {
-        // TODO: 동시 처리량을 높일 때 Apache HTTP 커넥션 풀과 작업 시간 기반 타임아웃 적용
+        // TODO: 동시 처리량을 높일 때 Apache HTTP 커넥션 풀로 전환하고
+        // maxConnections를 다운로드 + 업로드 동시 요청 수 이상으로 설정한 뒤 타임아웃 검증
+        /*
+         * 전환 형태 예시:
+         * .httpClientBuilder(ApacheHttpClient.builder()
+         *         .maxConnections(workerConcurrency * 2)
+         *         .connectionTimeout(Duration.ofSeconds(2))
+         *         .socketTimeout(Duration.ofSeconds(30)))
+         */
         return S3Client.builder()
                 .region(Region.of(properties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder())

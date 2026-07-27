@@ -71,6 +71,7 @@ public class PromptImageProcessingStateService {
         savePromptImagePort.update(image);
     }
 
+    /** 작업 메시지가 가리키는 이미지와 원본 Key·형식이 DB 자산과 일치하는지 검증 */
     private PromptImage loadAndValidate(PromptImageWatermarkJob job) {
         if (job == null) {
             throw new PromptDomainException(
@@ -90,17 +91,20 @@ public class PromptImageProcessingStateService {
         return image;
     }
 
+    /** 동일 처리 버전과 결과 Key로 이미 READY가 된 중복 메시지인지 확인 */
     private boolean isCompletedBy(PromptImage image, PromptImageWatermarkJob job) {
         return image.getStatus() == PromptImageStatus.READY
                 && image.getProcessingVersion() == job.processingVersion()
                 && job.watermarkedObjectKey().equals(image.getWatermarkedObjectKey());
     }
 
+    /** 더 최신 결과가 저장된 뒤 도착한 오래된 메시지인지 확인 */
     private boolean isOlderThanCurrentResult(PromptImage image, PromptImageWatermarkJob job) {
         return image.getStatus() == PromptImageStatus.READY
                 && image.getProcessingVersion() > job.processingVersion();
     }
 
+    /** 현재 상태를 포함한 일관된 워터마크 상태 전이 오류 생성 */
     private PromptDomainException invalidState(PromptImage image) {
         return new PromptDomainException(
                 PromptErrorCode.INVALID_IMAGE_STATUS_TRANSITION,
@@ -115,10 +119,12 @@ public class PromptImageProcessingStateService {
             int expectedHeight
     ) {
 
+        /** 네트워크·렌더링 단계를 생략하는 멱등 처리 결과 생성 */
         private static ProcessingContext skip() {
             return new ProcessingContext(false, 0, 0, 0);
         }
 
+        /** Worker가 실제 원본을 검증할 예상 메타데이터와 처리 필요 상태 생성 */
         private static ProcessingContext process(long fileSize, int width, int height) {
             return new ProcessingContext(true, fileSize, width, height);
         }

@@ -135,12 +135,12 @@ public class PromptImageUploadCommandService implements
         image.completeUpload(metadata.etag(), metadata.lastModified());
         PromptImage updatedImage = savePromptImagePort.update(image);
         savePromptImageWatermarkJobPort.save(createWatermarkJob(updatedImage));
-        // TODO: Outbox 발행기를 추가해 커밋된 PENDING 작업만 SQS로 보내고 Worker에서 PROCESSING → READY 처리
         log.info("prompt_image_upload_completed uploaderId={} imageId={}",
                 command.uploaderId(), command.imageId());
         return PromptImageUploadInfo.from(updatedImage);
     }
 
+    /** 업로드 완료 이미지의 원본·결과 Key와 처리 버전을 담은 Outbox 작업 생성 */
     private PromptImageWatermarkJob createWatermarkJob(PromptImage image) {
         return new PromptImageWatermarkJob(
                 PromptImageWatermarkJob.CURRENT_EVENT_VERSION,
@@ -158,6 +158,7 @@ public class PromptImageUploadCommandService implements
         );
     }
 
+    /** S3 HeadObject 결과가 URL 발급 당시 선언한 이미지 메타데이터와 일치하는지 확인 */
     private boolean matchesExpectedMetadata(PromptImage image, StoredObjectMetadata metadata) {
         return metadata != null
                 && metadata.contentLength() == image.getFileSize()
@@ -169,6 +170,7 @@ public class PromptImageUploadCommandService implements
                 .equals(image.getContentType().getMimeType());
     }
 
+    /** HTTP 검증을 우회한 호출에서도 업로더와 이미지 개수 정책을 보장 */
     private void validateIssueCommand(IssuePromptImageUploadUrlsCommand command) {
         if (command == null
                 || command.images() == null

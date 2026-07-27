@@ -84,6 +84,7 @@ public class S3PromptImageBinaryStorageAdapter
         }
     }
 
+    /** S3 원본의 형식·크기 불일치를 Worker가 처리할 수 있는 도메인 오류로 변환 */
     private PromptDomainException invalidSource(String objectKey) {
         log.warn("prompt_image_worker_s3_source_too_large objectKey={}", objectKey);
         return new PromptDomainException(

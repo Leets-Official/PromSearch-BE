@@ -28,6 +28,7 @@ class Java2dPromptImageWatermarkRendererTest {
         WatermarkRenderingProperties properties = new WatermarkRenderingProperties(
                 1,
                 new ClassPathResource("watermark/wordmark.png"),
+                "#6B7280",
                 0.26,
                 0.095,
                 80,
@@ -72,6 +73,30 @@ class Java2dPromptImageWatermarkRendererTest {
         assertThat(decoded.getColorModel().hasAlpha()).isFalse();
     }
 
+    @DisplayName("흰 배경에서도 회색 wordmark를 식별할 수 있다")
+    @Test
+    void renderGrayWatermarkOnWhiteBackground() throws Exception {
+        byte[] source = createImage("png", 640, 360, false, Color.WHITE);
+
+        RenderedImage rendered = renderer.render(source, "image/png", 640, 360);
+        BufferedImage decoded = ImageIO.read(new ByteArrayInputStream(rendered.bytes()));
+
+        boolean containsVisibleWatermark = false;
+        for (int y = 0; y < decoded.getHeight() && !containsVisibleWatermark; y++) {
+            for (int x = 0; x < decoded.getWidth(); x++) {
+                Color pixel = new Color(decoded.getRGB(x, y), true);
+                if (pixel.getRed() < 250
+                        && pixel.getGreen() < 250
+                        && pixel.getBlue() < 250) {
+                    containsVisibleWatermark = true;
+                    break;
+                }
+            }
+        }
+
+        assertThat(containsVisibleWatermark).isTrue();
+    }
+
     @DisplayName("디코딩한 이미지 크기가 DB 예상값과 다르면 처리를 거절한다")
     @Test
     void rejectUnexpectedDimensions() throws Exception {
@@ -101,6 +126,16 @@ class Java2dPromptImageWatermarkRendererTest {
             int height,
             boolean alpha
     ) throws Exception {
+        return createImage(format, width, height, alpha, new Color(20, 60, 100, alpha ? 120 : 255));
+    }
+
+    private byte[] createImage(
+            String format,
+            int width,
+            int height,
+            boolean alpha,
+            Color color
+    ) throws Exception {
         BufferedImage image = new BufferedImage(
                 width,
                 height,
@@ -108,11 +143,7 @@ class Java2dPromptImageWatermarkRendererTest {
         );
         Graphics2D graphics = image.createGraphics();
         try {
-            if (alpha) {
-                graphics.setColor(new Color(20, 60, 100, 120));
-            } else {
-                graphics.setColor(new Color(20, 60, 100));
-            }
+            graphics.setColor(color);
             graphics.fillRect(0, 0, width, height);
         } finally {
             graphics.dispose();

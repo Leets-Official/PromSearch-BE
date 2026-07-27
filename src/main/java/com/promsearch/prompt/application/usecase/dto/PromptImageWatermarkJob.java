@@ -46,6 +46,7 @@ public record PromptImageWatermarkJob(
         contentType = PromptImageContentType.fromMimeType(contentType).getMimeType();
     }
 
+    /** 필수 Object Key의 공백을 정리하고 누락된 메시지를 생성 단계에서 차단 */
     private static String normalizeObjectKey(String objectKey, String message) {
         if (objectKey == null || objectKey.isBlank()) {
             throw new IllegalArgumentException(message);

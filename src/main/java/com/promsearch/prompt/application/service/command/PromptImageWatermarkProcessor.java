@@ -58,6 +58,7 @@ public class PromptImageWatermarkProcessor implements ProcessPromptImageWatermar
         }
     }
 
+    /** 다운로드한 S3 바이너리의 크기와 형식이 작업 메시지·DB 정보와 일치하는지 확인 */
     private void validateSource(
             PromptImageWatermarkJob job,
             ProcessingContext context,
@@ -73,6 +74,7 @@ public class PromptImageWatermarkProcessor implements ProcessPromptImageWatermar
         }
     }
 
+    /** 알려진 처리 오류는 유지하고 예상하지 못한 오류는 공통 처리 실패로 정규화 */
     private PromptErrorCode failureCode(RuntimeException exception) {
         if (exception instanceof PromptDomainException domainException
                 && domainException.getBaseCode() instanceof PromptErrorCode promptErrorCode
@@ -82,6 +84,7 @@ public class PromptImageWatermarkProcessor implements ProcessPromptImageWatermar
         return PromptErrorCode.IMAGE_PROCESSING_FAILED;
     }
 
+    /** 이미지 상태에 기록해 Worker 재시도 판단에 사용할 수 있는 실패 코드인지 확인 */
     private boolean isProcessingFailure(PromptErrorCode errorCode) {
         return switch (errorCode) {
             case IMAGE_ORIGINAL_DOWNLOAD_FAILED,
@@ -93,6 +96,7 @@ public class PromptImageWatermarkProcessor implements ProcessPromptImageWatermar
         };
     }
 
+    /** 원래 처리 예외를 보존하면서 FAILED 상태 기록 실패는 suppressed 예외로 첨부 */
     private void recordFailure(
             PromptImageWatermarkJob job,
             PromptErrorCode failureCode,

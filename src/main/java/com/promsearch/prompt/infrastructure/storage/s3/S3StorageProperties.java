@@ -28,6 +28,7 @@ public record S3StorageProperties(
         }
     }
 
+    /** 원본·결과 접두사 비교를 위해 앞뒤 슬래시를 제거 */
     private static String normalizePrefix(String prefix) {
         return prefix.trim()
                 .replaceAll("^/+", "")

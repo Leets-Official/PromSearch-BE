@@ -25,6 +25,7 @@ public class PromptImageWatermarkOutboxPersistenceAdapter
         );
     }
 
+    /** Worker가 그대로 역직렬화할 수 있도록 버전이 포함된 작업 메시지를 JSON으로 변환 */
     private String serialize(PromptImageWatermarkJob job) {
         try {
             return objectMapper.writeValueAsString(job);

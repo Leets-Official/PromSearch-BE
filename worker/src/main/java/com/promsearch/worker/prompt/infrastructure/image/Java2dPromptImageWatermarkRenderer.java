@@ -39,13 +39,30 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
     @PostConstruct
     void loadLogo() {
         try (var inputStream = properties.logo().getInputStream()) {
-            logo = ImageIO.read(inputStream);
-            if (logo == null || logo.getWidth() <= 0 || logo.getHeight() <= 0) {
+            BufferedImage sourceLogo = ImageIO.read(inputStream);
+            if (sourceLogo == null
+                    || sourceLogo.getWidth() <= 0
+                    || sourceLogo.getHeight() <= 0) {
                 throw new IllegalStateException("워터마크 로고 이미지를 읽을 수 없습니다.");
             }
+            logo = tintLogo(sourceLogo, Color.decode(properties.logoColor()));
         } catch (IOException exception) {
             throw new IllegalStateException("워터마크 로고 이미지를 불러올 수 없습니다.", exception);
         }
+    }
+
+    /** 원본 wordmark의 안티앨리어싱 알파는 유지하고 설정된 단색으로 변환 */
+    private BufferedImage tintLogo(BufferedImage source, Color color) {
+        BufferedImage tinted =
+                new BufferedImage(source.getWidth(), source.getHeight(), BufferedImage.TYPE_INT_ARGB);
+        int rgb = color.getRGB() & 0x00FFFFFF;
+        for (int y = 0; y < source.getHeight(); y++) {
+            for (int x = 0; x < source.getWidth(); x++) {
+                int alpha = (source.getRGB(x, y) >>> 24) & 0xFF;
+                tinted.setRGB(x, y, (alpha << 24) | rgb);
+            }
+        }
+        return tinted;
     }
 
     /** 디코딩 전 크기 제한 확인 후 원본과 같은 JPEG 또는 PNG로 출력 */
@@ -76,6 +93,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         );
     }
 
+    /** 디코딩 전에 실제 크기를 읽어 제한을 검사하고 원본 픽셀을 복원 */
     private BufferedImage readAndValidate(byte[] source, int expectedWidth, int expectedHeight) {
         if (source == null || source.length == 0) {
             throw invalidSource("원본 이미지 데이터가 없습니다.", null);
@@ -110,6 +128,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         }
     }
 
+    /** 업로드 시 선언한 크기와 실제 이미지 크기·최대 픽셀 정책을 함께 검증 */
     private void validateDimensions(
             int width,
             int height,
@@ -127,6 +146,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         }
     }
 
+    /** 원본 포맷에 맞는 출력 캔버스에 원본과 반복 wordmark를 순서대로 합성 */
     private BufferedImage overlay(
             BufferedImage original,
             PromptImageContentType contentType
@@ -157,6 +177,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         }
     }
 
+    /** 계산된 모든 좌표에 동일한 투명도로 wordmark를 반복 출력 */
     private void drawRepeatedLogo(Graphics2D graphics, int width, int height) {
         List<WatermarkPlacement> placements = calculatePlacements(width, height);
         graphics.setComposite(AlphaComposite.getInstance(
@@ -206,6 +227,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         return List.copyOf(placements);
     }
 
+    /** 이미지 너비 비율을 최소·최대 로고 폭 범위 안으로 제한 */
     private int calculateLogoWidth(int imageWidth) {
         int ratioWidth = (int) Math.round(imageWidth * properties.logoWidthRatio());
         int configuredWidth = Math.max(
@@ -215,6 +237,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         return Math.max(1, Math.min(configuredWidth, imageWidth));
     }
 
+    /** 축소된 로고 가장자리와 원본 합성 품질을 위한 Java2D 렌더링 옵션 설정 */
     private void configureQuality(Graphics2D graphics) {
         graphics.setRenderingHint(
                 RenderingHints.KEY_INTERPOLATION,
@@ -230,6 +253,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         );
     }
 
+    /** 합성 결과를 원본과 동일한 PNG 또는 JPEG 바이트로 인코딩 */
     private byte[] encode(
             BufferedImage image,
             PromptImageContentType contentType
@@ -252,6 +276,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         }
     }
 
+    /** 설정된 JPEG 품질을 명시해 합성 결과를 출력 스트림에 기록 */
     private void writeJpeg(BufferedImage image, ByteArrayOutputStream output) throws IOException {
         Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpeg");
         if (!writers.hasNext()) {
@@ -270,6 +295,7 @@ public class Java2dPromptImageWatermarkRenderer implements RenderPromptImageWate
         }
     }
 
+    /** 이미지 디코딩·검증 실패를 일관된 도메인 오류로 변환 */
     private PromptDomainException invalidSource(String message, Throwable cause) {
         return new PromptDomainException(
                 PromptErrorCode.INVALID_IMAGE_SOURCE,

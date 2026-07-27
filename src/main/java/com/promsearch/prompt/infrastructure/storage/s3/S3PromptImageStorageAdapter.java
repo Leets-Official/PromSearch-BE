@@ -102,7 +102,12 @@ public class S3PromptImageStorageAdapter implements
         }
     }
 
-    private PromptDomainException storageUnavailable(String operation, String objectKey, SdkException cause) {
+    /** AWS SDK 세부 오류는 로그로 남기고 상위 계층에는 공통 저장소 오류만 노출 */
+    private PromptDomainException storageUnavailable(
+            String operation,
+            String objectKey,
+            SdkException cause
+    ) {
         log.warn("prompt_image_storage_failed operation={} objectKey={} errorType={}",
                 operation, objectKey, cause.getClass().getSimpleName());
         return new PromptDomainException(PromptErrorCode.IMAGE_STORAGE_UNAVAILABLE);

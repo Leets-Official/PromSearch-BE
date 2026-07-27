@@ -299,28 +299,33 @@ public class PromptImage {
         return status != PromptImageStatus.UPLOADING && etag != null && uploadedAt != null;
     }
 
+    /** 도메인 동작이 허용되는 선행 상태인지 확인 */
     private void requireStatus(PromptImageStatus requiredStatus) {
         if (status != requiredStatus) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_STATUS_TRANSITION);
         }
     }
 
+    /** 명시적인 상태 변경 시각을 현재 시각으로 갱신 */
     private void touch() {
         updatedAt = Instant.now();
     }
 
+    /** 이미지 소유자를 나타내는 양수 사용자 식별자인지 확인 */
     private static void validateUploaderId(Long uploaderId) {
         if (uploaderId == null || uploaderId <= 0) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_UPLOADER_ID);
         }
     }
 
+    /** 연결 대상 프롬프트가 유효한 양수 식별자인지 확인 */
     private static void validatePromptId(Long promptId) {
         if (promptId == null || promptId <= 0) {
             throw new PromptDomainException(PromptErrorCode.INVALID_ID);
         }
     }
 
+    /** S3 URL이 아닌 안전한 상대 Object Key 형식인지 확인 */
     private static void validateObjectKey(String objectKey) {
         if (objectKey == null || objectKey.isBlank()) {
             throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_OBJECT_KEY);
@@ -336,6 +341,7 @@ public class PromptImage {
         }
     }
 
+    /** 경로 문자가 포함되지 않은 표시용 원본 파일명인지 확인 */
     private static void validateOriginalFileName(String originalFileName) {
         if (originalFileName == null
                 || originalFileName.isBlank()
@@ -347,6 +353,7 @@ public class PromptImage {
         }
     }
 
+    /** 허용 형식·파일 크기·해상도·전체 픽셀 수 정책을 함께 검증 */
     private static void validateMetadata(
             PromptImageContentType contentType,
             long fileSize,
@@ -367,6 +374,7 @@ public class PromptImage {
         }
     }
 
+    /** DB에서 복원한 필드 조합이 이미지 상태별 불변식을 만족하는지 검증 */
     private static void validateReconstructedState(
             Long promptId,
             String originalObjectKey,
@@ -440,6 +448,7 @@ public class PromptImage {
         }
     }
 
+    /** 선택 문자열의 앞뒤 공백을 제거하고 빈 값은 null로 정규화 */
     private static String trimToNull(String value) {
         if (value == null || value.isBlank()) {
             return null;
@@ -447,6 +456,7 @@ public class PromptImage {
         return value.trim();
     }
 
+    /** 업로드 완료를 증명하는 ETag와 S3 수정 시각의 일관성을 검증 */
     private static void validateUploadMetadata(String etag, Instant uploadedAt) {
         if (etag == null
                 || etag.isBlank()

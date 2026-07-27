@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 public record WatermarkRenderingProperties(
         int concurrency,
         @NotNull Resource logo,
+        String logoColor,
         double opacity,
         double logoWidthRatio,
         int minimumLogoWidth,
@@ -25,6 +26,7 @@ public record WatermarkRenderingProperties(
 
     public WatermarkRenderingProperties {
         if (concurrency <= 0
+                || !isRgbHex(logoColor)
                 || !isUnitRatio(opacity)
                 || !isUnitRatio(logoWidthRatio)
                 || minimumLogoWidth <= 0
@@ -39,10 +41,17 @@ public record WatermarkRenderingProperties(
         }
     }
 
+    /** 설정 문자열이 Java2D에서 사용할 수 있는 RGB HEX 형식인지 확인 */
+    private static boolean isRgbHex(String value) {
+        return value != null && value.matches("^#[0-9a-fA-F]{6}$");
+    }
+
+    /** 투명도·품질처럼 0 초과 1 이하인 비율인지 확인 */
     private static boolean isUnitRatio(double value) {
         return value > 0 && value <= 1;
     }
 
+    /** 간격·여백처럼 0 이상 1 이하인 비율인지 확인 */
     private static boolean isNonNegativeRatio(double value) {
         return value >= 0 && value <= 1;
     }

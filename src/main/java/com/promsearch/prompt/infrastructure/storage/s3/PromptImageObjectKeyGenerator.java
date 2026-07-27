@@ -35,6 +35,7 @@ public class PromptImageObjectKeyGenerator implements GeneratePromptImageObjectK
         );
     }
 
+    /** 접두사·업로더·서버 UUID·허용 확장자를 조합해 충돌 없는 Object Key 생성 */
     private String generate(String prefix, Long uploaderId, UUID imageId, String extension) {
         return "%s/%d/%s.%s".formatted(
                 normalizePrefix(prefix),
@@ -44,6 +45,7 @@ public class PromptImageObjectKeyGenerator implements GeneratePromptImageObjectK
         );
     }
 
+    /** 설정 접두사의 앞뒤 슬래시를 제거해 Object Key 중복 구분자를 방지 */
     private String normalizePrefix(String prefix) {
         return prefix.trim()
                 .replaceAll("^/+", "")
