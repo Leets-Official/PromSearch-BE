@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.dto.response;
 
+import com.promsearch.community.application.usecase.dto.CommentListInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -8,4 +9,11 @@ public record CommentListResponse(
         @Schema(description = "작성 시간 내림차순으로 정렬된 최상위 댓글 목록")
         List<CommentResponse> comments
 ) {
+    public static CommentListResponse from(CommentListInfo info) {
+        return new CommentListResponse(
+                info.comments().stream()
+                        .map(CommentResponse::from)
+                        .toList()
+        );
+    }
 }

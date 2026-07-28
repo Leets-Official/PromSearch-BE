@@ -1,15 +1,22 @@
 package com.promsearch.community.interfaces;
 
+import com.promsearch.community.application.usecase.CreateCommentReplyUseCase;
+import com.promsearch.community.application.usecase.CreateCommentUseCase;
+import com.promsearch.community.application.usecase.DeleteCommentUseCase;
+import com.promsearch.community.application.usecase.GetCommentsUseCase;
+import com.promsearch.community.application.usecase.UpdateCommentUseCase;
+import com.promsearch.community.application.usecase.dto.DeleteCommentCommand;
+import com.promsearch.community.application.usecase.dto.GetCommentsQuery;
 import com.promsearch.community.interfaces.docs.CommentControllerDocs;
 import com.promsearch.community.interfaces.dto.request.CreateCommentRequest;
 import com.promsearch.community.interfaces.dto.request.UpdateCommentRequest;
 import com.promsearch.community.interfaces.dto.response.CommentListResponse;
 import com.promsearch.community.interfaces.dto.response.CommentReplyResponse;
 import com.promsearch.community.interfaces.dto.response.CommentResponse;
-import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -24,8 +31,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1")
 public class CommentController implements CommentControllerDocs {
+
+    private final GetCommentsUseCase getCommentsUseCase;
+    private final CreateCommentUseCase createCommentUseCase;
+    private final UpdateCommentUseCase updateCommentUseCase;
+    private final DeleteCommentUseCase deleteCommentUseCase;
+    private final CreateCommentReplyUseCase createCommentReplyUseCase;
 
     @GetMapping("/prompts/{promptId}/comments")
     @Override
@@ -33,7 +47,10 @@ public class CommentController implements CommentControllerDocs {
             @PathVariable Long promptId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException("댓글 목록 조회 기능은 아직 구현되지 않았습니다.");
+        Long viewerId = user == null ? null : user.userId();
+        return ApiResponse.onSuccess(CommentListResponse.from(
+                getCommentsUseCase.getComments(GetCommentsQuery.of(promptId, viewerId))
+        ));
     }
 
     @PostMapping("/prompts/{promptId}/comments")
@@ -41,9 +58,15 @@ public class CommentController implements CommentControllerDocs {
     public ResponseEntity<ApiResponse<CommentResponse>> createComment(
             @PathVariable Long promptId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @Valid @RequestBody CreateCommentRequest request
+            @RequestBody CreateCommentRequest request
     ) {
-        throw new NotImplementedException("댓글 작성 기능은 아직 구현되지 않았습니다.");
+        ApiResponse<CommentResponse> response = ApiResponse.onSuccess(
+                SuccessCode.CREATED,
+                CommentResponse.from(createCommentUseCase.createComment(
+                        request.toCommentCommand(promptId, user.userId())
+                ))
+        );
+        return ResponseEntity.status(SuccessCode.CREATED.getHttpStatus()).body(response);
     }
 
     @PatchMapping("/comments/{commentId}")
@@ -51,9 +74,11 @@ public class CommentController implements CommentControllerDocs {
     public ApiResponse<CommentResponse> updateComment(
             @PathVariable Long commentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @Valid @RequestBody UpdateCommentRequest request
+            @RequestBody UpdateCommentRequest request
     ) {
-        throw new NotImplementedException("댓글 수정 기능은 아직 구현되지 않았습니다.");
+        return ApiResponse.onSuccess(CommentResponse.from(
+                updateCommentUseCase.updateComment(request.toCommand(commentId, user.userId()))
+        ));
     }
 
     @DeleteMapping("/comments/{commentId}")
@@ -62,7 +87,8 @@ public class CommentController implements CommentControllerDocs {
             @PathVariable Long commentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException("댓글 삭제 기능은 아직 구현되지 않았습니다.");
+        deleteCommentUseCase.deleteComment(DeleteCommentCommand.of(commentId, user.userId()));
+        return ApiResponse.onSuccess(null);
     }
 
     @PostMapping("/comments/{commentId}/replies")
@@ -70,8 +96,14 @@ public class CommentController implements CommentControllerDocs {
     public ResponseEntity<ApiResponse<CommentReplyResponse>> createReply(
             @PathVariable Long commentId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @Valid @RequestBody CreateCommentRequest request
+            @RequestBody CreateCommentRequest request
     ) {
-        throw new NotImplementedException("대댓글 작성 기능은 아직 구현되지 않았습니다.");
+        ApiResponse<CommentReplyResponse> response = ApiResponse.onSuccess(
+                SuccessCode.CREATED,
+                CommentReplyResponse.from(createCommentReplyUseCase.createReply(
+                        request.toReplyCommand(commentId, user.userId())
+                ))
+        );
+        return ResponseEntity.status(SuccessCode.CREATED.getHttpStatus()).body(response);
     }
 }

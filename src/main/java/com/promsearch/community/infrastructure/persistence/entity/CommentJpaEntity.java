@@ -60,6 +60,14 @@ public class CommentJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public void updateFrom(Comment comment) {
+        this.content = comment.getContent();
+        this.status = comment.getStatus();
+        if (comment.isDeleted() && getDeletedAt() == null) {
+            markDeleted();
+        }
+    }
+
     public Comment toDomain() {
         return Comment.reconstruct(
                 new CommentId(id),

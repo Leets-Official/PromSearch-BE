@@ -1,5 +1,7 @@
 package com.promsearch.community.interfaces.dto.request;
 
+import com.promsearch.community.application.usecase.dto.CreateCommentCommand;
+import com.promsearch.community.application.usecase.dto.CreateCommentReplyCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
@@ -9,4 +11,11 @@ public record CreateCommentRequest(
         @NotBlank(message = "content must not be blank")
         String content
 ) {
+    public CreateCommentCommand toCommentCommand(Long postId, Long userId) {
+        return CreateCommentCommand.of(postId, userId, content);
+    }
+
+    public CreateCommentReplyCommand toReplyCommand(Long parentCommentId, Long userId) {
+        return CreateCommentReplyCommand.of(parentCommentId, userId, content);
+    }
 }

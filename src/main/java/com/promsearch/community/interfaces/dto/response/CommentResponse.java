@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.dto.response;
 
+import com.promsearch.community.application.usecase.dto.CommentInfo;
 import com.promsearch.community.domain.enums.CommentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -13,7 +14,7 @@ public record CommentResponse(
         @Schema(description = "부모 댓글 ID. 최상위 댓글이면 null입니다.", example = "100", nullable = true)
         Long parentCommentId,
 
-        @Schema(description = "작성자 정보")
+        @Schema(description = "작성자 정보. 삭제된 댓글이면 null입니다.", nullable = true)
         CommentAuthorResponse author,
 
         @Schema(description = "댓글 내용", example = "좋은 프롬프트네요.")
@@ -37,4 +38,20 @@ public record CommentResponse(
         @Schema(description = "작성 시간 내림차순으로 정렬된 대댓글 목록")
         List<CommentReplyResponse> replies
 ) {
+    public static CommentResponse from(CommentInfo info) {
+        return new CommentResponse(
+                info.commentId(),
+                info.parentCommentId(),
+                info.author() == null ? null : CommentAuthorResponse.from(info.author()),
+                info.content(),
+                info.status(),
+                info.mine(),
+                info.promptAuthor(),
+                info.createdAt(),
+                info.updatedAt(),
+                info.replies().stream()
+                        .map(CommentReplyResponse::from)
+                        .toList()
+        );
+    }
 }

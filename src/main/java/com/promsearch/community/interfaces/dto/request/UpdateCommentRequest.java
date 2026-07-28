@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.dto.request;
 
+import com.promsearch.community.application.usecase.dto.UpdateCommentCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
@@ -9,4 +10,7 @@ public record UpdateCommentRequest(
         @NotBlank(message = "content must not be blank")
         String content
 ) {
+    public UpdateCommentCommand toCommand(Long commentId, Long userId) {
+        return UpdateCommentCommand.of(commentId, userId, content);
+    }
 }
