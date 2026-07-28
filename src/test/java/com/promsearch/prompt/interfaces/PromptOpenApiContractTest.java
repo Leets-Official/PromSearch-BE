@@ -71,6 +71,31 @@ class PromptOpenApiContractTest {
         assertThat(properties.has("updatedAt")).isTrue();
     }
 
+    @DisplayName("상세 조회 응답은 추천 여부와 전체 추천 수를 분리한다")
+    @Test
+    void promptDetailUsesRecommendationNaming() throws Exception {
+        JsonNode document = openApiDocument();
+        JsonNode interaction = document.at(
+                "/components/schemas/PromptViewerInteractionResponse/properties");
+        JsonNode statistics = document.at(
+                "/components/schemas/PromptStatisticsResponse/properties");
+
+        assertThat(interaction.has("recommended")).isTrue();
+        assertThat(interaction.has("liked")).isFalse();
+        assertThat(statistics.has("recommendCount")).isTrue();
+        assertThat(statistics.has("likeCount")).isFalse();
+    }
+
+    @DisplayName("상세 조회 접근 사유는 잠금과 해제 원인을 모두 구분한다")
+    @Test
+    void promptAccessReasonIncludesUnlockedStates() throws Exception {
+        JsonNode values = openApiDocument()
+                .at("/components/schemas/PromptAccessResponse/properties/reason/enum");
+
+        assertThat(values).extracting(JsonNode::asText)
+                .containsExactly("ANONYMOUS", "PREMIUM", "FREE", "AUTHOR", "UNLOCKED");
+    }
+
     private JsonNode openApiDocument() throws Exception {
         String response = mockMvc.perform(get("/docs-json"))
                 .andExpect(status().isOk())

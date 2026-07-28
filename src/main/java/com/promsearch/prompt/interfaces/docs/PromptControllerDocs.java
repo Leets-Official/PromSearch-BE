@@ -42,7 +42,9 @@ public interface PromptControllerDocs {
                     프롬프트 상세 정보를 조회합니다. 인증 토큰은 선택 사항입니다.
                     비회원에게는 promptBody를 빈 문자열로 반환합니다.
                     PREMIUM 미결제 회원에게는 원문 앞부분 10% 이내이면서 최대 200자만 반환합니다.
-                    로그인 사용자의 좋아요 및 북마크 여부를 viewerInteraction으로 반환합니다.
+                    access.reason은 ANONYMOUS, PREMIUM, FREE, AUTHOR, UNLOCKED 중 하나로
+                    현재 본문 접근 상태가 결정된 이유를 반환합니다.
+                    로그인 사용자의 추천 및 북마크 여부를 viewerInteraction으로 반환합니다.
                     비로그인 사용자의 viewerInteraction 값은 모두 false입니다.
                     이미지 URL은 워터마크 결과물의 Presigned URL만 제공합니다.
                     """

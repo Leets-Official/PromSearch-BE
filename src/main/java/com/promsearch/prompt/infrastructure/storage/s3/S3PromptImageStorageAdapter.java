@@ -2,6 +2,7 @@ package com.promsearch.prompt.infrastructure.storage.s3;
 
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
+import com.promsearch.prompt.application.port.out.storage.PresignPromptImageDownloadPort;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageUploadPort;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
@@ -13,11 +14,14 @@ import org.springframework.stereotype.Component;
 import software.amazon.awssdk.core.exception.SdkException;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectRequest;
 import software.amazon.awssdk.services.s3.model.HeadObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Exception;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
+import software.amazon.awssdk.services.s3.presigner.model.PresignedGetObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PutObjectPresignRequest;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
@@ -27,6 +31,7 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 @RequiredArgsConstructor
 public class S3PromptImageStorageAdapter implements
         PresignPromptImageUploadPort,
+        PresignPromptImageDownloadPort,
         LoadPromptImageObjectMetadataPort,
         DeletePromptImageObjectPort {
 
@@ -59,6 +64,25 @@ public class S3PromptImageStorageAdapter implements
             );
         } catch (SdkException e) {
             throw storageUnavailable("presignPut", objectKey, e);
+        }
+    }
+
+    /** 워터마크 결과물 조회에만 사용할 짧은 수명의 Presigned GET URL을 반환한다. */
+    @Override
+    public String presignGet(String objectKey) {
+        GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+                .bucket(properties.bucket())
+                .key(objectKey)
+                .build();
+        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                .signatureDuration(properties.uploadUrlExpiration())
+                .getObjectRequest(getObjectRequest)
+                .build();
+        try {
+            PresignedGetObjectRequest presigned = s3Presigner.presignGetObject(presignRequest);
+            return presigned.url().toString();
+        } catch (SdkException e) {
+            throw storageUnavailable("presignGet", objectKey, e);
         }
     }
 
