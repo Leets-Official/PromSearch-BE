@@ -48,7 +48,7 @@ class PromptTest {
         assertThat(create(PromptContentType.PREMIUM, 100L).getPricePoint()).isEqualTo(100L);
     }
 
-    @DisplayName("게시 프롬프트는 설명, 본문과 20자 이하 제목이 필요하다")
+    @DisplayName("게시 프롬프트는 설명, 본문과 500자 이하 제목이 필요하다")
     @Test
     void validatePublishedContent() {
         assertPromptError(
@@ -67,7 +67,7 @@ class PromptTest {
         assertPromptError(
                 () -> Prompt.createActive(
                         1L,
-                        "123456789012345678901",
+                        "가".repeat(Prompt.MAX_TITLE_LENGTH + 1),
                         "본문",
                         PromptOutputType.TEXT,
                         "설명",
@@ -90,6 +90,17 @@ class PromptTest {
                 ),
                 PromptErrorCode.INVALID_PROMPT_DESCRIPTION
         );
+
+        assertThat(Prompt.createActive(
+                1L,
+                "가".repeat(Prompt.MAX_TITLE_LENGTH),
+                "본문",
+                PromptOutputType.TEXT,
+                "설명",
+                PromptContentType.FREE,
+                PromptVisibility.PUBLIC,
+                0L
+        ).getTitle()).hasSize(Prompt.MAX_TITLE_LENGTH);
     }
 
     private Prompt create(PromptContentType contentType, Long pricePoint) {

@@ -3,6 +3,7 @@ package com.promsearch.prompt.interfaces.dto.request;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -18,9 +19,9 @@ import java.util.Objects;
 
 @Schema(description = "프롬프트 게시물 생성 요청.")
 public record CreatePromptRequest(
-        @Schema(description = "제목", example = "금융 앱 온보딩 UI", maxLength = 20)
+        @Schema(description = "제목", example = "금융 앱 온보딩 UI", maxLength = Prompt.MAX_TITLE_LENGTH)
         @NotBlank(message = "title must not be blank")
-        @Size(max = 20, message = "title must be 20 characters or less")
+        @Size(max = Prompt.MAX_TITLE_LENGTH, message = "title must be 500 characters or less")
         String title,
 
         @Schema(description = "프롬프트 설명. 필수이며 별도 최대 글자 수 제한이 없는 TEXT 값입니다.", example = "신규 사용자를 위한 금융 앱 온보딩 화면을 설계합니다.")

@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.promsearch.prompt.domain.Prompt;
 import java.util.stream.StreamSupport;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -45,7 +46,7 @@ class PromptOpenApiContractTest {
                 .contains("작업자: 한하람", "상태: 구현 중");
     }
 
-    @DisplayName("생성 요청 스키마는 가격 입력과 MASTER를 노출하지 않고 제목을 20자로 제한한다")
+    @DisplayName("생성 요청 스키마는 가격 입력과 MASTER를 노출하지 않고 제목을 500자로 제한한다")
     @Test
     void createPromptSchemaReflectsConfirmedPolicy() throws Exception {
         JsonNode document = openApiDocument();
@@ -54,7 +55,8 @@ class PromptOpenApiContractTest {
         JsonNode contentTypeValues = resolveSchema(document, contentTypeSchema).path("enum");
 
         assertThat(requestProperties.has("pricePoint")).isFalse();
-        assertThat(requestProperties.path("title").path("maxLength").asInt()).isEqualTo(20);
+        assertThat(requestProperties.path("title").path("maxLength").asInt())
+                .isEqualTo(Prompt.MAX_TITLE_LENGTH);
         assertThat(contentTypeValues).extracting(JsonNode::asText)
                 .containsExactly("FREE", "PREMIUM");
     }

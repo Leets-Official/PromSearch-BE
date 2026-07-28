@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
@@ -13,7 +14,7 @@ public record PromptDraftResponse(
         @Schema(description = "프롬프트 식별자", example = "1")
         Long promptId,
 
-        @Schema(description = "제목", example = "회의록 자동 정리", maxLength = 20)
+        @Schema(description = "제목", example = "회의록 자동 정리", maxLength = Prompt.MAX_TITLE_LENGTH)
         String title,
 
         @Schema(description = "프롬프트 설명")

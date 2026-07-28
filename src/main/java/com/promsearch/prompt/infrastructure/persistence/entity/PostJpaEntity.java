@@ -40,7 +40,7 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "user_id", nullable = false)
     private Long userId;
 
-    @Column(name = "title", nullable = false, length = 20)
+    @Column(name = "title", nullable = false, length = Prompt.MAX_TITLE_LENGTH)
     private String title;
 
     @Column(name = "prompt_body", columnDefinition = "TEXT")

@@ -17,6 +17,7 @@ import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -96,7 +97,10 @@ class PromptControllerTest {
                             return request;
                         })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validCreateRequest()))
+                        .content(validCreateRequest().replace(
+                                "회의록 자동 정리",
+                                "가".repeat(Prompt.MAX_TITLE_LENGTH)
+                        )))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
@@ -110,6 +114,8 @@ class PromptControllerTest {
         ArgumentCaptor<CreatePromptCommand> captor = ArgumentCaptor.forClass(CreatePromptCommand.class);
         Mockito.verify(createPromptUseCase).create(captor.capture());
         org.assertj.core.api.Assertions.assertThat(captor.getValue().userId()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().title())
+                .hasSize(Prompt.MAX_TITLE_LENGTH);
         org.assertj.core.api.Assertions.assertThat(captor.getValue().visibility())
                 .isEqualTo(PromptVisibility.PUBLIC);
     }
@@ -162,9 +168,13 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.result.status").value("UPLOADED"));
     }
 
-    @DisplayName("임시저장은 제목이 공백이거나 20자를 초과하면 거절한다")
+    @DisplayName("생성과 임시저장은 500자 제목을 허용하고 공백이거나 500자를 초과하면 거절한다")
     @Test
-    void draftTitleValidation() throws Exception {
+    void promptTitleValidation() throws Exception {
+        expectNotImplemented(put("/api/v1/prompts/draft")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "\"}"));
+
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -173,9 +183,14 @@ class PromptControllerTest {
 
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"title":"123456789012345678901"}
-                        """));
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH + 1) + "\"}"));
+
+        expectBadRequest(post("/api/v1/prompts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validCreateRequest().replace(
+                        "회의록 자동 정리",
+                        "가".repeat(Prompt.MAX_TITLE_LENGTH + 1)
+                )));
     }
 
     @DisplayName("MASTER 콘텐츠 타입은 생성 요청에서 허용하지 않는다")
