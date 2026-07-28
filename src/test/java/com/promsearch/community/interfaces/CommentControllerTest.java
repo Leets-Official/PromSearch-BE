@@ -105,6 +105,18 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.success").value(false));
     }
 
+    @DisplayName("댓글 내용이 500자를 초과하면 요청 검증에서 거절한다")
+    @Test
+    void createCommentRejectsContentOver500Characters() throws Exception {
+        authenticate();
+
+        mockMvc.perform(post("/api/v1/prompts/10/comments")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"" + "가".repeat(501) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
     @DisplayName("댓글 수정과 삭제 API가 유스케이스 결과를 반환한다")
     @Test
     void updateAndDeleteComment() throws Exception {
@@ -124,6 +136,18 @@ class CommentControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-200"));
     }
 
+    @DisplayName("댓글 수정 내용이 500자를 초과하면 요청 검증에서 거절한다")
+    @Test
+    void updateCommentRejectsContentOver500Characters() throws Exception {
+        authenticate();
+
+        mockMvc.perform(patch("/api/v1/comments/100")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"" + "가".repeat(501) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
+    }
+
     @DisplayName("답글을 생성하면 201 응답을 반환한다")
     @Test
     void createReply() throws Exception {
@@ -138,6 +162,18 @@ class CommentControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
                 .andExpect(jsonPath("$.result.parentCommentId").value(100));
+    }
+
+    @DisplayName("답글 내용이 500자를 초과하면 요청 검증에서 거절한다")
+    @Test
+    void createReplyRejectsContentOver500Characters() throws Exception {
+        authenticate();
+
+        mockMvc.perform(post("/api/v1/comments/100/replies")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"content\":\"" + "가".repeat(501) + "\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false));
     }
 
     private void authenticate() {

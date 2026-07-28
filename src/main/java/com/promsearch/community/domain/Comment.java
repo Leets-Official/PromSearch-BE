@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public class Comment {
 
+    private static final int MAX_CONTENT_LENGTH = 500;
+
     private final CommentId commentId;
     private final Long postId;
     private final Long userId;
@@ -128,10 +130,18 @@ public class Comment {
         if (content == null || content.isBlank()) {
             throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
         }
+        validateContentLength(content);
     }
 
     private static void validateContent(String content) {
         if (content == null || content.isBlank()) {
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
+        }
+        validateContentLength(content);
+    }
+
+    private static void validateContentLength(String content) {
+        if (content.length() > MAX_CONTENT_LENGTH) {
             throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
         }
     }
