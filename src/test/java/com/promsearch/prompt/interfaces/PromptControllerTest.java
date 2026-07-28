@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -8,12 +9,25 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
+import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
+import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
+import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
+import com.promsearch.prompt.domain.enums.PromptStatus;
+import java.time.Instant;
+import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -26,6 +40,24 @@ class PromptControllerTest {
 
     @MockitoBean
     private AuthenticateAccessTokenUseCase authenticateAccessTokenUseCase;
+
+    @MockitoBean
+    private ListMyPromptsUseCase listMyPromptsUseCase;
+
+    @BeforeEach
+    void setUpAuthentication() {
+        AuthenticatedUserPrincipal principal = new AuthenticatedUserPrincipal(1L, "USER");
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+        ));
+    }
+
+    @AfterEach
+    void clearAuthentication() {
+        SecurityContextHolder.clearContext();
+    }
 
     @DisplayName("프롬프트 인터페이스 6개는 가짜 성공 대신 구현 중 응답을 반환한다")
     @Test
@@ -48,11 +80,30 @@ class PromptControllerTest {
         expectNotImplemented(delete("/api/v1/prompts/1"));
     }
 
-    @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @DisplayName("내 게시글 인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
     @Test
-    void promptQueryEndpointsReturnNotImplemented() throws Exception {
-        expectNotImplemented(get("/api/v1/prompts/me").param("status", "ACTIVE"));
+    void promptInsightsReturnsNotImplemented() throws Exception {
         expectNotImplemented(get("/api/v1/prompts/me/insights"));
+    }
+
+    @DisplayName("내 게시완료 목록 조회는 목록 카드 필드를 반환한다")
+    @Test
+    void getMyPublishedPromptsReturnsSummaries() throws Exception {
+        Instant publishedAt = Instant.parse("2026-07-23T12:00:00Z");
+        given(listMyPromptsUseCase.listMyPublishedPrompts(ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, 0, 20)))
+                .willReturn(new MyPromptPageInfo(
+                        List.of(new MyPromptSummaryInfo(1L, "금융 앱 온보딩 UI", publishedAt, 128L, 12L)),
+                        1L
+                ));
+
+        mockMvc.perform(get("/api/v1/prompts/me").param("status", "ACTIVE"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.content[0].promptId").value(1))
+                .andExpect(jsonPath("$.result.content[0].title").value("금융 앱 온보딩 UI"))
+                .andExpect(jsonPath("$.result.content[0].viewCount").value(128))
+                .andExpect(jsonPath("$.result.content[0].recommendCount").value(12))
+                .andExpect(jsonPath("$.result.totalElements").value(1));
     }
 
     @DisplayName("임시저장은 제목이 공백이거나 20자를 초과하면 거절한다")

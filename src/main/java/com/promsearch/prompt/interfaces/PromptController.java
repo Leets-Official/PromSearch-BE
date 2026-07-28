@@ -4,6 +4,9 @@ import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
+import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
+import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
@@ -18,6 +21,8 @@ import com.promsearch.prompt.interfaces.dto.response.PromptInsightResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -33,8 +38,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 @Validated
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1")
 public class PromptController implements PromptControllerDocs {
+
+    private final ListMyPromptsUseCase listMyPromptsUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -108,7 +116,13 @@ public class PromptController implements PromptControllerDocs {
             @Max(value = 100, message = "size must be 100 or less")
             @RequestParam(defaultValue = "20") int size
     ) {
-        throw new NotImplementedException();
+        MyPromptPageInfo pageInfo = listMyPromptsUseCase.listMyPublishedPrompts(
+                ListMyPromptsQuery.of(user.userId(), status, page, size)
+        );
+        List<MyPromptSummaryResponse> content = pageInfo.content().stream()
+                .map(MyPromptSummaryResponse::from)
+                .toList();
+        return ApiResponse.onSuccess(PageResponse.of(content, page, size, pageInfo.totalElements()));
     }
 
     @GetMapping("/prompts/me/insights")
