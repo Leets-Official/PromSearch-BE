@@ -72,6 +72,9 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "hidden_at")
     private Instant hiddenAt;
 
+    @Column(name = "published_at")
+    private Instant publishedAt;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostImageJpaEntity> images = new ArrayList<>();
 
@@ -128,6 +131,7 @@ public class PostJpaEntity extends BaseEntity {
                 getCreatedAt(),
                 getUpdatedAt(),
                 getDeletedAt(),
+                publishedAt,
                 images.stream()
                         .map(PostImageJpaEntity::toDomain)
                         .toList(),
