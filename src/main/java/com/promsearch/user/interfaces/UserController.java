@@ -1,10 +1,10 @@
 package com.promsearch.user.interfaces;
 
-import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
+import com.promsearch.user.application.usecase.GetUserProfileUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.UserInfo;
 import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/users")
 public class UserController implements UserControllerDocs {
 
+    private final GetUserProfileUseCase getUserProfileUseCase;
     private final UpdateUserProfileUseCase updateUserProfileUseCase;
     private final ChangePasswordUseCase changePasswordUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
@@ -38,7 +39,7 @@ public class UserController implements UserControllerDocs {
     public ApiResponse<UserProfileResponse> getMyProfile(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException();
+        return ApiResponse.onSuccess(UserProfileResponse.from(getUserProfileUseCase.getMyProfile(user.userId())));
     }
 
     @PatchMapping("/me")
