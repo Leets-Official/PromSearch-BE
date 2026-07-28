@@ -1,6 +1,7 @@
 package com.promsearch.admin.interfaces.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.promsearch.moderation.application.usecase.dto.UpdateReportStatusCommand;
 import com.promsearch.moderation.domain.enums.ReportStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.AssertTrue;
@@ -18,5 +19,9 @@ public record UpdateReportStatusRequest(
     @AssertTrue(message = "status must be RESOLVED or REJECTED")
     public boolean isProcessableStatus() {
         return status == null || status == ReportStatus.RESOLVED || status == ReportStatus.REJECTED;
+    }
+
+    public UpdateReportStatusCommand toCommand(Long reportId) {
+        return UpdateReportStatusCommand.of(reportId, status);
     }
 }
