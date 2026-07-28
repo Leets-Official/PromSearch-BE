@@ -10,10 +10,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
 import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import java.time.Instant;
 import java.util.List;
@@ -43,6 +45,9 @@ class PromptControllerTest {
 
     @MockitoBean
     private ListMyPromptsUseCase listMyPromptsUseCase;
+
+    @MockitoBean
+    private GetMyPromptInsightsUseCase getMyPromptInsightsUseCase;
 
     @BeforeEach
     void setUpAuthentication() {
@@ -80,10 +85,18 @@ class PromptControllerTest {
         expectNotImplemented(delete("/api/v1/prompts/1"));
     }
 
-    @DisplayName("내 게시글 인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @DisplayName("내 게시글 인사이트 조회는 누적 조회수·추천수·복사수를 반환한다")
     @Test
-    void promptInsightsReturnsNotImplemented() throws Exception {
-        expectNotImplemented(get("/api/v1/prompts/me/insights"));
+    void getMyPromptInsightsReturnsTotals() throws Exception {
+        given(getMyPromptInsightsUseCase.getMyPromptInsights(1L))
+                .willReturn(new PromptInsightInfo(1024L, 88L, 42L));
+
+        mockMvc.perform(get("/api/v1/prompts/me/insights"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalViews").value(1024))
+                .andExpect(jsonPath("$.result.totalRecommends").value(88))
+                .andExpect(jsonPath("$.result.totalCopies").value(42));
     }
 
     @DisplayName("내 게시완료 목록 조회는 목록 카드 필드를 반환한다")

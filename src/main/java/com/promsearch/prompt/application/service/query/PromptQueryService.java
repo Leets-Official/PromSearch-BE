@@ -2,10 +2,12 @@ package com.promsearch.prompt.application.service.query;
 
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptPort;
 import com.promsearch.prompt.application.port.out.prompt.PromptPageResult;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
 import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
@@ -16,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PromptQueryService implements ListMyPromptsUseCase {
+public class PromptQueryService implements ListMyPromptsUseCase, GetMyPromptInsightsUseCase {
 
     private final LoadPromptPort loadPromptPort;
 
@@ -37,5 +39,10 @@ public class PromptQueryService implements ListMyPromptsUseCase {
                 result.content().stream().map(MyPromptSummaryInfo::from).toList(),
                 result.totalElements()
         );
+    }
+
+    @Override
+    public PromptInsightInfo getMyPromptInsights(Long userId) {
+        return PromptInsightInfo.from(loadPromptPort.sumInsightsByUserId(userId));
     }
 }

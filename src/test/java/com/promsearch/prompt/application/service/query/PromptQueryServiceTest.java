@@ -4,9 +4,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptPort;
+import com.promsearch.prompt.application.port.out.prompt.PromptInsightTotals;
 import com.promsearch.prompt.application.port.out.prompt.PromptPageResult;
 import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
 import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import com.promsearch.prompt.domain.PostStatistics;
 import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.Prompt.PromptId;
@@ -52,6 +54,17 @@ class PromptQueryServiceTest {
                 .isEqualTo(PromptErrorCode.INVALID_PROMPT_STATUS);
     }
 
+    @Test
+    void getMyPromptInsightsReturnsSummedTotals() {
+        loadPromptPort.insightTotals = new PromptInsightTotals(1024L, 88L, 42L);
+
+        PromptInsightInfo insightInfo = promptQueryService.getMyPromptInsights(1L);
+
+        assertThat(insightInfo.totalViews()).isEqualTo(1024L);
+        assertThat(insightInfo.totalRecommends()).isEqualTo(88L);
+        assertThat(insightInfo.totalCopies()).isEqualTo(42L);
+    }
+
     private Prompt testPrompt(Long promptId, String title, Instant publishedAt) {
         Instant now = Instant.now();
         return Prompt.reconstruct(
@@ -80,10 +93,16 @@ class PromptQueryServiceTest {
     private static class FakeLoadPromptPort implements LoadPromptPort {
 
         private PromptPageResult result = new PromptPageResult(List.of(), 0L);
+        private PromptInsightTotals insightTotals = new PromptInsightTotals(0L, 0L, 0L);
 
         @Override
         public PromptPageResult listByUserIdAndStatus(Long userId, PromptStatus status, int page, int size) {
             return result;
+        }
+
+        @Override
+        public PromptInsightTotals sumInsightsByUserId(Long userId) {
+            return insightTotals;
         }
     }
 }

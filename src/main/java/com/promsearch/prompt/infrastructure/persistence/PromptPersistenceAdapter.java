@@ -1,6 +1,7 @@
 package com.promsearch.prompt.infrastructure.persistence;
 
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptPort;
+import com.promsearch.prompt.application.port.out.prompt.PromptInsightTotals;
 import com.promsearch.prompt.application.port.out.prompt.PromptPageResult;
 import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptStatus;
@@ -30,5 +31,16 @@ public class PromptPersistenceAdapter implements LoadPromptPort {
                 .toList();
 
         return new PromptPageResult(content, result.getTotalElements());
+    }
+
+    @Override
+    public PromptInsightTotals sumInsightsByUserId(Long userId) {
+        PromptInsightProjection projection = postRepository.sumInsightsByUserId(userId);
+
+        return new PromptInsightTotals(
+                projection.getTotalViews(),
+                projection.getTotalRecommends(),
+                projection.getTotalCopies()
+        );
     }
 }

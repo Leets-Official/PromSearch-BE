@@ -5,4 +5,6 @@ import com.promsearch.prompt.domain.enums.PromptStatus;
 public interface LoadPromptPort {
 
     PromptPageResult listByUserIdAndStatus(Long userId, PromptStatus status, int page, int size);
+
+    PromptInsightTotals sumInsightsByUserId(Long userId);
 }

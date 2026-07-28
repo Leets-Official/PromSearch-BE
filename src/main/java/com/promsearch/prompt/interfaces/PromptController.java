@@ -4,6 +4,7 @@ import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
 import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class PromptController implements PromptControllerDocs {
 
     private final ListMyPromptsUseCase listMyPromptsUseCase;
+    private final GetMyPromptInsightsUseCase getMyPromptInsightsUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -130,6 +132,8 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<PromptInsightResponse> getMyPromptInsights(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException();
+        return ApiResponse.onSuccess(
+                PromptInsightResponse.from(getMyPromptInsightsUseCase.getMyPromptInsights(user.userId()))
+        );
     }
 }
