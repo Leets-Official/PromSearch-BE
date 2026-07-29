@@ -6,8 +6,10 @@ import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
+import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
@@ -15,9 +17,12 @@ import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptImageStatusesResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadUrlResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -30,6 +35,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -41,6 +47,7 @@ public class PromptController implements PromptControllerDocs {
     private final IssuePromptImageUploadUrlsUseCase issuePromptImageUploadUrlsUseCase;
     private final CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
     private final CreatePromptUseCase createPromptUseCase;
+    private final GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -73,6 +80,21 @@ public class PromptController implements PromptControllerDocs {
         return ApiResponse.onSuccess(PromptImageUploadCompleteResponse.from(
                 completePromptImageUploadUseCase.complete(
                         new CompletePromptImageUploadCommand(user.userId(), imageId)
+                )
+        ));
+    }
+
+    /** 인증 사용자 이미지 처리 상태를 요청 순서대로 일괄 조회 */
+    @GetMapping("/prompt-images/statuses")
+    @Override
+    public ApiResponse<PromptImageStatusesResponse> getImageStatuses(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @RequestParam("imageIds") @Size(min = 1, max = 10, message = "imageIds size must be between 1 and 10")
+            List<UUID> imageIds
+    ) {
+        return ApiResponse.onSuccess(PromptImageStatusesResponse.from(
+                getPromptImageStatusesUseCase.getStatuses(
+                        new GetPromptImageStatusesQuery(user.userId(), imageIds)
                 )
         ));
     }

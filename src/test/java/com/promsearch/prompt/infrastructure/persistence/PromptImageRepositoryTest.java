@@ -136,6 +136,31 @@ class PromptImageRepositoryTest {
                 .isEqualTo(com.promsearch.prompt.domain.exception.PromptErrorCode.IMAGE_NOT_FOUND);
     }
 
+    @DisplayName("이미지 상태 조회 대상 식별자만 일괄 조회한다")
+    @Test
+    void findAllByIdIn() {
+        PromptImage first = prepareImage(1L, "first.jpg");
+        PromptImage second = readyImage(1L, "second.jpg");
+        PromptImage excluded = readyImage(1L, "excluded.jpg");
+
+        promptImageRepository.saveAll(List.of(
+                PromptImageJpaEntity.from(first),
+                PromptImageJpaEntity.from(second),
+                PromptImageJpaEntity.from(excluded)
+        ));
+        promptImageRepository.flush();
+        entityManager.clear();
+
+        List<PromptImageJpaEntity> images = promptImageRepository.findAllByIdIn(List.of(
+                first.getPromptImageId().id(),
+                second.getPromptImageId().id()
+        ));
+
+        assertThat(images)
+                .extracting(PromptImageJpaEntity::getId)
+                .containsExactlyInAnyOrder(first.getPromptImageId().id(), second.getPromptImageId().id());
+    }
+
     private PromptImage readyImage(Long uploaderId, String fileName) {
         PromptImage image = prepareImage(uploaderId, fileName);
         image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));

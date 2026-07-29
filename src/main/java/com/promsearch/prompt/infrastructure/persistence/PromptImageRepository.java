@@ -16,6 +16,8 @@ public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntit
 
     Optional<PromptImageJpaEntity> findByIdAndUploaderId(UUID id, Long uploaderId);
 
+    List<PromptImageJpaEntity> findAllByIdIn(Collection<UUID> ids);
+
     /*
      * 프롬프트 생성 시 전달된 imageId(최대 10개)만 한 번에 검증한다.
      * 사용자 전체 이미지를 무제한 조회하는 메서드는 두지 않는다.

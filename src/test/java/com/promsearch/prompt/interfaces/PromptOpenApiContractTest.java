@@ -32,6 +32,8 @@ class PromptOpenApiContractTest {
 
         assertThat(document.at("/paths/~1api~1v1~1prompt-images~1upload-urls/post").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompt-images~1{imageId}~1complete/post").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1prompt-images~1statuses/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1prompts~1{promptId}/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/put").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/delete").isMissingNode()).isFalse();
@@ -43,7 +45,17 @@ class PromptOpenApiContractTest {
                 .findFirst()
                 .orElseThrow();
         assertThat(promptTag.path("description").asText())
-                .contains("작업자: 한하람", "상태: 구현 중");
+                .contains("API별 작업자·구현 상태");
+
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/get", "PROMPT-001", "이건희", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1upload-urls/post", "PROMPT-002", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1{imageId}~1complete/post", "PROMPT-003", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1statuses/get", "PROMPT-004", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/put", "PROMPT-005", "한하람", "구현중");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/get", "PROMPT-006", "한하람", "구현중");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/delete", "PROMPT-007", "한하람", "구현중");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts/post", "PROMPT-008", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "한하람", "구현중");
     }
 
     @DisplayName("생성 요청 스키마는 가격 입력과 MASTER를 노출하지 않고 제목을 500자로 제한한다")
@@ -88,5 +100,18 @@ class PromptOpenApiContractTest {
             return schema;
         }
         return document.at(reference.substring(1));
+    }
+
+    private void assertOperationMetadata(
+            JsonNode document,
+            String pointer,
+            String operationNumber,
+            String worker,
+            String status
+    ) {
+        JsonNode operation = document.at(pointer);
+        assertThat(operation.path("summary").asText()).contains("[" + operationNumber + "]");
+        assertThat(operation.path("description").asText())
+                .contains("작업자: " + worker, "구현 상태: " + status);
     }
 }

@@ -6,8 +6,8 @@ import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
 import com.promsearch.prompt.infrastructure.persistence.entity.PromptImageJpaEntity;
-import java.util.List;
 import java.util.Collection;
+import java.util.List;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -41,6 +41,17 @@ public class PromptImagePersistenceAdapter implements LoadPromptImagePort, SaveP
             throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_FOUND);
         }
         return entities.stream()
+                .map(PromptImageJpaEntity::toDomain)
+                .toList();
+    }
+
+    /** 이미지 식별자 목록 기반 JPA 엔티티 일괄 조회 */
+    @Override
+    public List<PromptImage> listByIds(Collection<UUID> imageIds) {
+        if (imageIds == null || imageIds.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_ID);
+        }
+        return promptImageRepository.findAllByIdIn(imageIds).stream()
                 .map(PromptImageJpaEntity::toDomain)
                 .toList();
     }
