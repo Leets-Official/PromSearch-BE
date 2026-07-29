@@ -1,6 +1,7 @@
 package com.promsearch.community.application.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.community.application.service.command.CommentCommandService;
 import com.promsearch.community.application.service.query.CommentQueryService;
@@ -13,6 +14,8 @@ import com.promsearch.community.application.usecase.dto.DeleteCommentCommand;
 import com.promsearch.community.application.usecase.dto.GetCommentsQuery;
 import com.promsearch.community.application.usecase.dto.UpdateCommentCommand;
 import com.promsearch.community.domain.enums.CommentStatus;
+import com.promsearch.community.domain.exception.CommunityDomainException;
+import com.promsearch.community.domain.exception.CommunityErrorCode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -47,9 +50,13 @@ class CommentCrudIntegrationTest {
                 """);
         jdbcTemplate.update("""
                 insert into posts (
-                    post_id, user_id, title, status, price_point, created_at, updated_at
+                    post_id, user_id, title, status, visibility, price_point, created_at, updated_at
                 ) values (
-                    10, 1, '댓글 테스트 프롬프트', 'ACTIVE', 0, current_timestamp, current_timestamp
+                    10, 1, '댓글 테스트 프롬프트', 'ACTIVE', 'PUBLIC', 0,
+                    current_timestamp, current_timestamp
+                ), (
+                    11, 1, '비공개 프롬프트', 'ACTIVE', 'PRIVATE', 0,
+                    current_timestamp, current_timestamp
                 )
                 """);
         jdbcTemplate.update("""
@@ -106,6 +113,15 @@ class CommentCrudIntegrationTest {
 
         assertThat(commentQueryService.getComments(GetCommentsQuery.of(10L, null)).comments()).isEmpty();
         assertThat(commentCount()).isZero();
+    }
+
+    @DisplayName("비공개 프롬프트의 댓글 목록은 조회할 수 없다")
+    @Test
+    void privatePromptCommentsAreNotPublic() {
+        assertThatThrownBy(() -> commentQueryService.getComments(GetCommentsQuery.of(11L, null)))
+                .isInstanceOf(CommunityDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(CommunityErrorCode.COMMENT_TARGET_PROMPT_NOT_FOUND);
     }
 
     private Long commentCount() {

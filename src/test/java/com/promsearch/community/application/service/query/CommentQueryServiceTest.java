@@ -56,7 +56,7 @@ class CommentQueryServiceTest {
         Comment replyOfDeletedParent = comment(11L, 1L, 2L, 10L, "남아 있는 답글", CommentStatus.ACTIVE, 2);
         Comment deletedLeaf = comment(5L, 1L, 2L, null, "답글 없는 삭제 댓글", CommentStatus.DELETED, 1);
 
-        given(loadCommentTargetPort.getActiveById(1L))
+        given(loadCommentTargetPort.getActivePublicById(1L))
                 .willReturn(new CommentTargetSnapshot(1L, 1L));
         given(loadCommentPort.listByPostId(1L))
                 .willReturn(List.of(activeParent, activeReply, deletedParent, replyOfDeletedParent, deletedLeaf));
@@ -90,7 +90,7 @@ class CommentQueryServiceTest {
     @Test
     void getCommentsForAnonymousViewer() {
         Comment parent = comment(1L, 1L, 2L, null, "댓글", CommentStatus.ACTIVE, 1);
-        given(loadCommentTargetPort.getActiveById(1L))
+        given(loadCommentTargetPort.getActivePublicById(1L))
                 .willReturn(new CommentTargetSnapshot(1L, 1L));
         given(loadCommentPort.listByPostId(1L)).willReturn(List.of(parent));
         given(loadCommentAuthorPort.batchGetByIds(Set.of(2L)))

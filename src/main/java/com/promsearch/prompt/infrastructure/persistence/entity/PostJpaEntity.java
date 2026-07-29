@@ -6,6 +6,7 @@ import com.promsearch.prompt.domain.Prompt.PromptId;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -63,6 +64,10 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private PromptStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private PromptVisibility visibility;
+
     @Column(name = "price_point")
     private Long pricePoint;
 
@@ -93,6 +98,7 @@ public class PostJpaEntity extends BaseEntity {
         this.description = description;
         this.contentType = contentType;
         this.status = PromptStatus.DRAFT;
+        this.visibility = PromptVisibility.PUBLIC;
         this.pricePoint = pricePoint != null ? pricePoint : 0L;
     }
 

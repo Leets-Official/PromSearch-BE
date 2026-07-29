@@ -30,6 +30,25 @@ class CommentSecurityTest {
                 .andExpect(jsonPath("$.code").value("COMMUNITY-015"));
     }
 
+    @DisplayName("0 또는 음수 프롬프트 ID는 인증 오류 대신 유효성 오류로 처리한다")
+    @Test
+    void invalidPromptIdIsHandledByApplication() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/0/comments"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMUNITY-011"));
+
+        mockMvc.perform(get("/api/v1/prompts/-1/comments"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMUNITY-011"));
+    }
+
+    @DisplayName("숫자가 아닌 프롬프트 ID는 인증 오류 대신 잘못된 요청으로 처리한다")
+    @Test
+    void nonNumericPromptIdIsHandledByMvc() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/not-a-number/comments"))
+                .andExpect(status().isBadRequest());
+    }
+
     @DisplayName("댓글 작성은 인증 없이 접근할 수 없다")
     @Test
     void anonymousUserCannotCreateComment() throws Exception {

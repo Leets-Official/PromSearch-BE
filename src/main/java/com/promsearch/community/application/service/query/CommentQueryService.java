@@ -37,7 +37,7 @@ public class CommentQueryService implements GetCommentsUseCase {
 
     @Override
     public CommentListInfo getComments(GetCommentsQuery query) {
-        CommentTargetSnapshot target = loadCommentTargetPort.getActiveById(query.postId());
+        CommentTargetSnapshot target = loadCommentTargetPort.getActivePublicById(query.postId());
         List<Comment> allComments = loadCommentPort.listByPostId(query.postId());
 
         Map<Long, List<Comment>> activeRepliesByParentId = groupActiveReplies(allComments);

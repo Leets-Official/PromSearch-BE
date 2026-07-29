@@ -75,7 +75,7 @@ public class SwaggerSecurityConfig {
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         .requestMatchers(RegexRequestMatcher.regexMatcher(
                                 HttpMethod.GET,
-                                "^/api/v1/prompts/[1-9][0-9]*/comments$"
+                                "^/api/v1/prompts/[^/]+/comments$"
                         )).permitAll()
                         .requestMatchers(
                                 "/test/health-check",
