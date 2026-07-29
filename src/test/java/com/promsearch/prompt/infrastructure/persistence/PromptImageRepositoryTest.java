@@ -161,6 +161,29 @@ class PromptImageRepositoryTest {
                 .containsExactlyInAnyOrder(first.getPromptImageId().id(), second.getPromptImageId().id());
     }
 
+    @DisplayName("초안 이미지 순서 교체는 기존 정렬을 먼저 비운 뒤 유니크 제약 충돌 없이 저장한다")
+    @Test
+    void reorderDraftImagesAfterDetachFlush() {
+        PromptImage first = readyImage(1L, "first.jpg");
+        first.attachToDraft(20L, 1L, 0, true);
+        PromptImage second = readyImage(1L, "second.jpg");
+        second.attachToDraft(20L, 1L, 1, false);
+        promptImagePersistenceAdapter.createAll(List.of(first, second));
+
+        first.detachFromPrompt(1L, 20L);
+        second.detachFromPrompt(1L, 20L);
+        promptImagePersistenceAdapter.updateAll(List.of(first, second));
+
+        first.attachToDraft(20L, 1L, 1, false);
+        second.attachToDraft(20L, 1L, 0, true);
+        promptImagePersistenceAdapter.updateAll(List.of(first, second));
+        entityManager.clear();
+
+        assertThat(promptImageRepository.findAllByPromptIdOrderBySortOrderAsc(20L))
+                .extracting(PromptImageJpaEntity::getId)
+                .containsExactly(second.getPromptImageId().id(), first.getPromptImageId().id());
+    }
+
     private PromptImage readyImage(Long uploaderId, String fileName) {
         PromptImage image = prepareImage(uploaderId, fileName);
         image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));

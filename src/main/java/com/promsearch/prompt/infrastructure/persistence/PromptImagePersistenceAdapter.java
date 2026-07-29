@@ -56,6 +56,16 @@ public class PromptImagePersistenceAdapter implements LoadPromptImagePort, SaveP
                 .toList();
     }
 
+    @Override
+    public List<PromptImage> listByPromptIdForUpdate(Long promptId) {
+        if (promptId == null || promptId <= 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_ID);
+        }
+        return promptImageRepository.findAllByPromptIdForUpdate(promptId).stream()
+                .map(PromptImageJpaEntity::toDomain)
+                .toList();
+    }
+
     /** 업로드 준비 이미지 일괄 저장 및 DB 제약 확인 */
     @Override
     public void createAll(List<PromptImage> images) {

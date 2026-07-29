@@ -11,6 +11,7 @@ import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.domain.enums.TagType;
+import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
 import com.promsearch.prompt.infrastructure.persistence.entity.PostJpaEntity;
 import jakarta.persistence.EntityManager;
 import java.util.List;
@@ -96,5 +97,73 @@ class PromptPersistenceAdapterTest {
                         true
                 )
         )).isInstanceOf(DataIntegrityViolationException.class);
+    }
+
+    @DisplayName("임시저장은 사용자별 기존 DRAFT post_id를 유지하며 본문과 태그를 전체 교체한다")
+    @Test
+    void saveDraftUpdatesInPlace() {
+        Tag job = tagPersistenceAdapter.create(Tag.create(TagType.JOB, "개발", "개발", false));
+        Tag task = tagPersistenceAdapter.create(Tag.create(TagType.TASK, "요약", "요약", false));
+        Tag aiModel = tagPersistenceAdapter.create(Tag.create(TagType.AI_MODEL, "GPT", "gpt", false));
+        Prompt firstDraft = Prompt.createDraft(
+                1L,
+                "첫 초안",
+                null,
+                null,
+                null,
+                null,
+                PromptVisibility.PUBLIC
+        );
+        PromptDraftInfo first = promptPersistenceAdapter.saveOrReplaceDraft(
+                firstDraft,
+                List.of(job)
+        );
+
+        Prompt secondDraft = Prompt.createDraft(
+                1L,
+                "수정 초안",
+                "본문",
+                PromptOutputType.TEXT,
+                "설명",
+                PromptContentType.FREE,
+                PromptVisibility.PRIVATE
+        );
+        PromptDraftInfo second = promptPersistenceAdapter.saveOrReplaceDraft(
+                secondDraft,
+                List.of(job, task, aiModel)
+        );
+
+        entityManager.clear();
+        PostJpaEntity entity = postRepository.findById(first.promptId()).orElseThrow();
+
+        assertThat(second.promptId()).isEqualTo(first.promptId());
+        assertThat(entity.getTitle()).isEqualTo("수정 초안");
+        assertThat(entity.getPromptBody()).isEqualTo("본문");
+        assertThat(entity.getVisibility()).isEqualTo(PromptVisibility.PRIVATE);
+        assertThat(entity.getStatus()).isEqualTo(PromptStatus.DRAFT);
+        assertThat(entity.getStatistics()).isNull();
+        assertThat(entity.getPostTags()).hasSize(3);
+        assertThat(postRepository.findAll()).hasSize(1);
+    }
+
+    @DisplayName("임시저장 삭제는 live DRAFT 조회에서 제외한다")
+    @Test
+    void deleteDraft() {
+        Prompt draft = Prompt.createDraft(
+                1L,
+                "삭제할 초안",
+                null,
+                null,
+                null,
+                null,
+                PromptVisibility.PUBLIC
+        );
+        promptPersistenceAdapter.saveOrReplaceDraft(draft, List.of());
+
+        promptPersistenceAdapter.deleteDraft(1L);
+
+        assertThat(promptPersistenceAdapter.findDraftByUserId(1L)).isEmpty();
+        assertThat(postRepository.findAll()).hasSize(1);
+        assertThat(postRepository.findAll().getFirst().getDeletedAt()).isNotNull();
     }
 }

@@ -10,7 +10,10 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.author.LoadPromptAuthorPort;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
+import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
+import com.promsearch.prompt.application.port.out.prompt.SavePromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptPort;
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
@@ -19,6 +22,8 @@ import com.promsearch.prompt.application.port.out.tag.SaveTagPort;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
+import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand;
 import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.Prompt.PromptId;
 import com.promsearch.prompt.domain.PromptImage;
@@ -36,6 +41,7 @@ import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,6 +67,12 @@ class PromptCommandServiceTest {
     @Mock
     private SavePromptPort savePromptPort;
     @Mock
+    private LoadPromptDraftPort loadPromptDraftPort;
+    @Mock
+    private SavePromptDraftPort savePromptDraftPort;
+    @Mock
+    private LockPromptDraftPort lockPromptDraftPort;
+    @Mock
     private LoadPromptPricingPort loadPromptPricingPort;
 
     private PromptCommandService service;
@@ -74,6 +86,9 @@ class PromptCommandServiceTest {
                 loadPromptImagePort,
                 savePromptImagePort,
                 savePromptPort,
+                loadPromptDraftPort,
+                savePromptDraftPort,
+                lockPromptDraftPort,
                 loadPromptPricingPort
         );
         lenient().when(loadTagPort.batchGetByIds(any())).thenReturn(List.of(
@@ -83,6 +98,8 @@ class PromptCommandServiceTest {
         ));
         lenient().when(savePromptPort.create(any(), any()))
                 .thenAnswer(invocation -> persisted(invocation.getArgument(0), 10L));
+        lenient().when(savePromptDraftPort.saveOrReplaceDraft(any(), any()))
+                .thenAnswer(invocation -> draftInfo(invocation.getArgument(0), 99L));
     }
 
     @DisplayName("FREE 프롬프트와 초기 연관 데이터를 생성한다")
@@ -98,6 +115,7 @@ class PromptCommandServiceTest {
         assertThat(saved.getPricePoint()).isZero();
         assertThat(info.promptId()).isEqualTo(10L);
         assertThat(info.status()).isEqualTo(PromptStatus.ACTIVE);
+        verify(lockPromptDraftPort).lockByUserId(1L);
         verify(loadPromptPricingPort, never()).getPremiumPricePoint();
     }
 
@@ -304,6 +322,113 @@ class PromptCommandServiceTest {
         verify(savePromptPort, never()).create(any(), any());
     }
 
+    @DisplayName("초안 저장은 사용자별 잠금 안에서 제목만 필수로 DRAFT를 생성하거나 전체 교체한다")
+    @Test
+    void saveDraftWithOnlyTitle() {
+        SavePromptDraftCommand command = draftCommand(List.of());
+
+        PromptCommandInfo info = service.save(command);
+
+        verify(lockPromptDraftPort).lockByUserId(1L);
+        ArgumentCaptor<Prompt> promptCaptor = ArgumentCaptor.forClass(Prompt.class);
+        verify(savePromptDraftPort).saveOrReplaceDraft(promptCaptor.capture(), any());
+        Prompt draft = promptCaptor.getValue();
+        assertThat(draft.getStatus()).isEqualTo(PromptStatus.DRAFT);
+        assertThat(draft.getTitle()).isEqualTo("초안 제목");
+        assertThat(draft.getDescription()).isNull();
+        assertThat(draft.getOutputType()).isNull();
+        assertThat(draft.getContentType()).isNull();
+        assertThat(draft.getPromptBody()).isNull();
+        assertThat(draft.getPricePoint()).isZero();
+        assertThat(info.promptId()).isEqualTo(99L);
+        assertThat(info.status()).isEqualTo(PromptStatus.DRAFT);
+    }
+
+    @DisplayName("초안 저장은 태그 타입, 이미지 소유권, READY 상태, 중복과 정렬을 검증하고 요청 목록으로 전체 교체한다")
+    @Test
+    void saveDraftReplacesTagsAndImages() {
+        PromptImage retained = readyImage(1L);
+        retained.attachToDraft(20L, 1L, 9, false);
+        PromptImage added = readyImage(1L);
+        PromptImage detached = readyImage(1L);
+        detached.attachToDraft(20L, 1L, 0, true);
+        SavePromptDraftCommand.ImageReference retainedRef = new SavePromptDraftCommand.ImageReference(
+                retained.getPromptImageId().id(),
+                1,
+                false
+        );
+        SavePromptDraftCommand.ImageReference addedRef = new SavePromptDraftCommand.ImageReference(
+                added.getPromptImageId().id(),
+                0,
+                true
+        );
+        when(loadPromptDraftPort.findDraftPromptIdByUserId(1L)).thenReturn(Optional.of(20L));
+        org.mockito.Mockito.doAnswer(invocation -> draftInfo(invocation.getArgument(0), 20L))
+                .when(savePromptDraftPort)
+                .saveOrReplaceDraft(any(), any());
+        when(loadPromptImagePort.batchGetByIdsForUpdate(List.of(addedRef.imageId(), retainedRef.imageId()).stream()
+                .sorted()
+                .toList()))
+                .thenReturn(List.of(added, retained));
+        when(loadPromptImagePort.listByPromptIdForUpdate(20L)).thenReturn(List.of(detached, retained));
+
+        service.save(draftCommand(List.of(retainedRef, addedRef)));
+
+        @SuppressWarnings("unchecked")
+        ArgumentCaptor<List<PromptImage>> imagesCaptor = ArgumentCaptor.forClass(List.class);
+        verify(savePromptImagePort, org.mockito.Mockito.times(2)).updateAll(imagesCaptor.capture());
+        assertThat(imagesCaptor.getAllValues().get(0))
+                .extracting(image -> image.getPromptImageId().id())
+                .containsExactly(detached.getPromptImageId().id(), retained.getPromptImageId().id());
+        assertThat(imagesCaptor.getAllValues().get(1))
+                .extracting(image -> image.getPromptImageId().id())
+                .containsExactly(retained.getPromptImageId().id(), added.getPromptImageId().id());
+        assertThat(detached.getPromptId()).isNull();
+        assertThat(retained.getPromptId()).isEqualTo(20L);
+        assertThat(retained.getSortOrder()).isEqualTo(1);
+        assertThat(added.getPromptId()).isEqualTo(20L);
+        assertThat(added.isThumbnail()).isTrue();
+    }
+
+    @DisplayName("초안 삭제는 없으면 404로 실패하고 삭제 시 연결 이미지를 detach한다")
+    @Test
+    void deleteDraftNotFoundOrDetachImages() {
+        when(loadPromptDraftPort.findDraftPromptIdByUserId(1L)).thenReturn(Optional.empty());
+        assertPromptError(() -> service.delete(1L), PromptErrorCode.PROMPT_NOT_FOUND);
+
+        PromptImage image = readyImage(1L);
+        image.attachToDraft(20L, 1L, 0, true);
+        when(loadPromptDraftPort.findDraftPromptIdByUserId(1L)).thenReturn(Optional.of(20L));
+        when(loadPromptImagePort.listByPromptIdForUpdate(20L)).thenReturn(List.of(image));
+
+        service.delete(1L);
+
+        assertThat(image.getPromptId()).isNull();
+        verify(savePromptImagePort).updateAll(List.of(image));
+        verify(savePromptDraftPort).deleteDraft(1L);
+    }
+
+    @DisplayName("게시 생성은 현재 사용자 초안에 연결된 READY 이미지를 새 ACTIVE 프롬프트로 재사용할 수 있다")
+    @Test
+    void createCanReuseImagesAttachedToOwnDraft() {
+        PromptImage draftImage = readyImage(1L);
+        draftImage.attachToDraft(20L, 1L, 0, true);
+        PromptImage unusedDraftImage = readyImage(1L);
+        unusedDraftImage.attachToDraft(20L, 1L, 1, false);
+        ImageReference reference = new ImageReference(draftImage.getPromptImageId().id(), 0, true);
+        when(loadPromptDraftPort.findDraftPromptIdByUserId(1L)).thenReturn(Optional.of(20L));
+        when(loadPromptImagePort.batchGetByIdsForUpdate(List.of(reference.imageId())))
+                .thenReturn(List.of(draftImage));
+        when(loadPromptImagePort.listByPromptIdForUpdate(20L)).thenReturn(List.of(draftImage, unusedDraftImage));
+
+        service.create(command(PromptContentType.FREE, List.of(reference)));
+
+        assertThat(draftImage.getPromptId()).isEqualTo(10L);
+        assertThat(unusedDraftImage.getPromptId()).isNull();
+        verify(savePromptImagePort).updateAll(List.of(draftImage, unusedDraftImage));
+        verify(savePromptDraftPort).deleteDraft(1L);
+    }
+
     private CreatePromptCommand command(PromptContentType contentType, List<ImageReference> images) {
         List<ImageReference> requiredImages = images;
         if (requiredImages.isEmpty()) {
@@ -330,6 +455,23 @@ class PromptCommandServiceTest {
                 "본문",
                 PromptVisibility.PUBLIC,
                 requiredImages
+        );
+    }
+
+    private SavePromptDraftCommand draftCommand(List<SavePromptDraftCommand.ImageReference> images) {
+        return new SavePromptDraftCommand(
+                1L,
+                "초안 제목",
+                null,
+                null,
+                List.of(1L),
+                List.of(2L),
+                List.of(3L),
+                null,
+                null,
+                null,
+                PromptVisibility.PUBLIC,
+                images
         );
     }
 
@@ -377,6 +519,26 @@ class PromptCommandServiceTest {
                 List.of(),
                 null,
                 List.of()
+        );
+    }
+
+    private PromptDraftInfo draftInfo(Prompt prompt, Long id) {
+        return new PromptDraftInfo(
+                id,
+                prompt.getTitle(),
+                prompt.getDescription(),
+                prompt.getOutputType(),
+                List.of(1L),
+                List.of(2L),
+                List.of(3L),
+                null,
+                prompt.getContentType(),
+                prompt.getPromptBody(),
+                prompt.getVisibility(),
+                List.of(),
+                prompt.getStatus(),
+                prompt.getPricePoint(),
+                Instant.parse("2026-07-28T12:00:00Z")
         );
     }
 

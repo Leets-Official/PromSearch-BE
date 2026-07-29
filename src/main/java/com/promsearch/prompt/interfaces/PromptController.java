@@ -6,8 +6,11 @@ import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
 import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
@@ -48,6 +51,9 @@ public class PromptController implements PromptControllerDocs {
     private final CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
     private final CreatePromptUseCase createPromptUseCase;
     private final GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
+    private final SavePromptDraftUseCase savePromptDraftUseCase;
+    private final GetPromptDraftUseCase getPromptDraftUseCase;
+    private final DeletePromptDraftUseCase deletePromptDraftUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -105,7 +111,9 @@ public class PromptController implements PromptControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @Valid @RequestBody SavePromptDraftRequest request
     ) {
-        throw new NotImplementedException();
+        return ApiResponse.onSuccess(PromptCommandResponse.from(
+                savePromptDraftUseCase.save(request.toCommand(user.userId()))
+        ));
     }
 
     @GetMapping("/prompts/draft")
@@ -113,7 +121,9 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<PromptDraftResponse> getDraft(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException();
+        return ApiResponse.onSuccess(PromptDraftResponse.from(
+                getPromptDraftUseCase.get(user.userId())
+        ));
     }
 
     @DeleteMapping("/prompts/draft")
@@ -121,7 +131,8 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<Void> deleteDraft(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException();
+        deletePromptDraftUseCase.delete(user.userId());
+        return ApiResponse.onSuccess(null);
     }
 
     @PostMapping("/prompts")

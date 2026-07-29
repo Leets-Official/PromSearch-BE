@@ -16,7 +16,8 @@ import org.junit.jupiter.api.Test;
 
 class PromptCreationMigrationTest {
 
-    private static final String MIGRATION_PATH = "db/migration/V6__add_prompt_creation_fields.sql";
+    private static final String CREATION_MIGRATION_PATH = "db/migration/V6__add_prompt_creation_fields.sql";
+    private static final String DRAFT_MIGRATION_PATH = "db/migration/V7__add_single_live_prompt_draft_constraint.sql";
 
     @DisplayName("생성 필드 마이그레이션은 공개 범위와 custom 태그 정규화 중복을 제한한다")
     @Test
@@ -24,7 +25,15 @@ class PromptCreationMigrationTest {
         String databaseUrl = "jdbc:h2:mem:prompt_creation_migration;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
 
         try (Connection connection = DriverManager.getConnection(databaseUrl, "sa", "")) {
-            execute(connection, "create table posts (post_id bigint primary key, title varchar(20))");
+            execute(connection, """
+                    create table posts (
+                        post_id bigint primary key,
+                        user_id bigint,
+                        title varchar(20),
+                        status varchar(20),
+                        deleted_at timestamp
+                    )
+                    """);
             execute(connection, """
                     create table tags (
                         tag_id bigint primary key,
@@ -70,13 +79,41 @@ class PromptCreationMigrationTest {
                     insert into tags (tag_id, tag_type, tag_name, normalized_name)
                     values (3, 'AI_MODEL', 'gpt4.1mini', 'gpt4.1mini')
                     """)).isInstanceOf(SQLException.class);
+
+            execute(connection, "insert into posts (post_id, user_id, title, status) values (10, 1, 'draft1', 'DRAFT')");
+            assertThatThrownBy(() -> execute(
+                    connection,
+                    "insert into posts (post_id, user_id, title, status) values (11, 1, 'draft2', 'DRAFT')"
+            )).isInstanceOf(SQLException.class);
+            execute(connection, """
+                    insert into posts (post_id, user_id, title, status, deleted_at)
+                    values (12, 1, 'deleted draft', 'DRAFT', timestamp '2026-07-28 00:00:00')
+                    """);
+            execute(connection, "insert into posts (post_id, user_id, title, status) values (13, 1, 'active', 'ACTIVE')");
         }
     }
 
     private void executeMigration(Connection connection) throws Exception {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(MIGRATION_PATH)) {
-            assertThat(inputStream).as("migration resource").isNotNull();
+        executeMigration(connection, CREATION_MIGRATION_PATH);
+        executeMigration(connection, DRAFT_MIGRATION_PATH);
+    }
+
+    private void executeMigration(Connection connection, String migrationPath) throws Exception {
+        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(migrationPath)) {
+            assertThat(inputStream).as("migration resource %s", migrationPath).isNotNull();
             String migration = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+            if (DRAFT_MIGRATION_PATH.equals(migrationPath)) {
+                assertThat(migration)
+                        .contains("where status = 'DRAFT' and deleted_at is null");
+                execute(connection, """
+                        alter table posts add column live_draft_user_id bigint
+                            generated always as (
+                                case when status = 'DRAFT' and deleted_at is null then user_id else null end
+                            )
+                        """);
+                execute(connection, "create unique index uk_posts_user_live_draft on posts (live_draft_user_id)");
+                return;
+            }
             for (String statement : migration.split(";")) {
                 if (!statement.isBlank()) {
                     execute(connection, statement);

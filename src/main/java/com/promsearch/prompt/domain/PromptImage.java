@@ -259,6 +259,17 @@ public class PromptImage {
 
     /** 소유권·READY 상태·중복 연결 검증 및 프롬프트 연결 */
     public void attachToPrompt(Long promptId, Long requesterId, int sortOrder, boolean thumbnail) {
+        attachToPrompt(promptId, requesterId, sortOrder, thumbnail, null);
+    }
+
+    /** 현재 사용자의 초안에 연결된 이미지는 게시 생성 시 새 프롬프트로 옮길 수 있다. */
+    public void attachToPrompt(
+            Long promptId,
+            Long requesterId,
+            int sortOrder,
+            boolean thumbnail,
+            Long reusableDraftPromptId
+    ) {
         /*
          * 생성 API에서는 여러 이미지를 한 트랜잭션에서 연결하고, JPA lock_version 충돌을 처리해야 한다.
          * 그래야 동일 이미지를 동시에 두 프롬프트에 연결하는 경쟁 상태를 막을 수 있다.
@@ -271,7 +282,7 @@ public class PromptImage {
         if (status != PromptImageStatus.READY) {
             throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_READY);
         }
-        if (this.promptId != null) {
+        if (this.promptId != null && !Objects.equals(this.promptId, reusableDraftPromptId)) {
             throw new PromptDomainException(PromptErrorCode.IMAGE_ALREADY_ATTACHED);
         }
         if (sortOrder < 0) {
@@ -281,6 +292,46 @@ public class PromptImage {
         this.promptId = promptId;
         this.sortOrder = sortOrder;
         this.thumbnail = thumbnail;
+        touch();
+    }
+
+    /** 초안 저장용 이미지 연결. 같은 초안에 연결되어 있던 이미지는 전체 교체 중 재정렬할 수 있다. */
+    public void attachToDraft(Long draftPromptId, Long requesterId, int sortOrder, boolean thumbnail) {
+        validatePromptId(draftPromptId);
+        validateUploaderId(requesterId);
+        if (!Objects.equals(uploaderId, requesterId)) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_OWNED);
+        }
+        if (status != PromptImageStatus.READY) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_READY);
+        }
+        if (promptId != null && !Objects.equals(promptId, draftPromptId)) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_ALREADY_ATTACHED);
+        }
+        if (sortOrder < 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_IMAGE_ORDER);
+        }
+
+        promptId = draftPromptId;
+        this.sortOrder = sortOrder;
+        this.thumbnail = thumbnail;
+        touch();
+    }
+
+    /** 초안에서 제외되거나 초안이 삭제된 이미지를 다시 미연결 상태로 되돌린다. */
+    public void detachFromPrompt(Long requesterId, Long expectedPromptId) {
+        validateUploaderId(requesterId);
+        validatePromptId(expectedPromptId);
+        if (!Objects.equals(uploaderId, requesterId)) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_NOT_OWNED);
+        }
+        if (!Objects.equals(promptId, expectedPromptId)) {
+            throw new PromptDomainException(PromptErrorCode.IMAGE_ALREADY_ATTACHED);
+        }
+
+        promptId = null;
+        sortOrder = null;
+        thumbnail = false;
         touch();
     }
 

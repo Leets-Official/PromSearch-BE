@@ -33,4 +33,13 @@ public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntit
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select image from PromptImageJpaEntity image where image.id in :ids order by image.id")
     List<PromptImageJpaEntity> findAllByIdInForUpdate(@Param("ids") Collection<UUID> ids);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select image
+            from PromptImageJpaEntity image
+            where image.promptId = :promptId
+            order by image.sortOrder asc
+            """)
+    List<PromptImageJpaEntity> findAllByPromptIdForUpdate(@Param("promptId") Long promptId);
 }
