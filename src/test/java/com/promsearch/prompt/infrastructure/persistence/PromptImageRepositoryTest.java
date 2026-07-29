@@ -81,6 +81,34 @@ class PromptImageRepositoryTest {
         assertThat(images.getFirst().getThumbnail()).isTrue();
     }
 
+    @DisplayName("상세 조회용 이미지 조회 시 삭제된 이미지는 제외한다")
+    @Test
+    void findReadyImagesExcludingSoftDeletedImages() {
+        PromptImage active = readyImage(1L, "active.jpg");
+        active.attachToPrompt(10L, 1L, 0, true);
+        PromptImage deleted = readyImage(1L, "deleted.jpg");
+        deleted.attachToPrompt(10L, 1L, 1, false);
+
+        promptImageRepository.saveAllAndFlush(List.of(
+                PromptImageJpaEntity.from(active),
+                PromptImageJpaEntity.from(deleted)
+        ));
+        entityManager.createNativeQuery(
+                        "update prompt_images set deleted_at = current_timestamp "
+                                + "where prompt_image_id = :id")
+                .setParameter("id", deleted.getPromptImageId().id())
+                .executeUpdate();
+        entityManager.clear();
+
+        List<PromptImageJpaEntity> images = promptImageRepository
+                .findAllByPromptIdAndStatusAndDeletedAtIsNullOrderBySortOrderAsc(
+                        10L, PromptImageStatus.READY);
+
+        assertThat(images)
+                .extracting(PromptImageJpaEntity::getId)
+                .containsExactly(active.getPromptImageId().id());
+    }
+
     @DisplayName("업로더와 처리 상태로 이미지 자산을 조회한다")
     @Test
     void findImagesByUploaderAndStatus() {

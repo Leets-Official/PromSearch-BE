@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.interfaces.PromptController;
 import com.promsearch.user.interfaces.UserController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -53,11 +54,22 @@ class OpenApiDocumentationTest {
                 new AuthController(null, null, null, null),
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
         ));
+        Operation promptDetailOperation = customizer.customize(new Operation(), handlerMethod(
+                new PromptController(null, null, null, null),
+                PromptController.class.getMethod(
+                        "getPromptDetail",
+                        Long.class,
+                        AuthenticatedUserPrincipal.class)
+        ));
 
         assertThat(protectedOperation.getSecurity())
                 .flatExtracting(SecurityRequirement::keySet)
                 .containsExactly("jwtBearerAuth");
         assertThat(authOperation.getSecurity()).isNull();
+        assertThat(promptDetailOperation.getSecurity()).hasSize(2);
+        assertThat(promptDetailOperation.getSecurity().get(0)).isEmpty();
+        assertThat(promptDetailOperation.getSecurity().get(1))
+                .containsKey("jwtBearerAuth");
     }
 
     private HandlerMethod handlerMethod(Object bean, Method method) {

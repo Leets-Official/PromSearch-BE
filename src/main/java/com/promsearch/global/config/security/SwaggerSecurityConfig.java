@@ -83,7 +83,8 @@ public class SwaggerSecurityConfig {
                                 "/error"
                         ).permitAll()
                         .requestMatchers(RegexRequestMatcher.regexMatcher(
-                                HttpMethod.GET, "^/api/v1/prompts/[1-9][0-9]*$")).permitAll()
+                                HttpMethod.GET,
+                                "^/api/v1/prompts/(?!draft$)[^/]+$")).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

@@ -2,12 +2,14 @@ package com.promsearch.global.config.openapi;
 
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
+import com.promsearch.prompt.interfaces.PromptController;
 import com.promsearch.test.interfaces.TestController;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import java.util.List;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,6 +43,17 @@ public class OpenApiConfig {
                     || TestController.class.isAssignableFrom(beanType)) {
                 return operation;
             }
+
+            boolean promptDetailEndpoint = PromptController.class.isAssignableFrom(beanType)
+                    && handlerMethod.getMethod().getName().equals("getPromptDetail");
+            if (promptDetailEndpoint) {
+                operation.setSecurity(List.of(
+                        new SecurityRequirement(),
+                        new SecurityRequirement().addList(JWT_BEARER_SCHEME)
+                ));
+                return operation;
+            }
+
             return operation.addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));
         };
     }

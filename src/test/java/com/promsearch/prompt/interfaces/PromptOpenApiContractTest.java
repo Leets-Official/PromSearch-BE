@@ -96,6 +96,18 @@ class PromptOpenApiContractTest {
                 .containsExactly("ANONYMOUS", "PREMIUM", "FREE", "AUTHOR", "UNLOCKED");
     }
 
+    @DisplayName("상세 조회는 비회원과 JWT 인증 사용자를 모두 허용하도록 문서화한다")
+    @Test
+    void promptDetailDocumentsOptionalJwtAuthentication() throws Exception {
+        JsonNode security = openApiDocument()
+                .at("/paths/~1api~1v1~1prompts~1{promptId}/get/security");
+
+        assertThat(security.isArray()).isTrue();
+        assertThat(security).hasSize(2);
+        assertThat(security.get(0).isEmpty()).isTrue();
+        assertThat(security.get(1).has("jwtBearerAuth")).isTrue();
+    }
+
     private JsonNode openApiDocument() throws Exception {
         String response = mockMvc.perform(get("/docs-json"))
                 .andExpect(status().isOk())

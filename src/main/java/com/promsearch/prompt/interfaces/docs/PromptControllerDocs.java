@@ -70,7 +70,6 @@ public interface PromptControllerDocs {
     })
     ApiResponse<PromptDetailResponse> getPromptDetail(
             @Parameter(description = "프롬프트 ID", example = "10", required = true)
-            @Positive(message = "promptId must be positive")
             @PathVariable Long promptId,
 
             @Parameter(hidden = true)

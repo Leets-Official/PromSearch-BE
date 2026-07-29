@@ -28,7 +28,7 @@ public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntit
 
     List<PromptImageJpaEntity> findAllByPromptIdOrderBySortOrderAsc(Long promptId);
 
-    List<PromptImageJpaEntity> findAllByPromptIdAndStatusOrderBySortOrderAsc(
+    List<PromptImageJpaEntity> findAllByPromptIdAndStatusAndDeletedAtIsNullOrderBySortOrderAsc(
             Long promptId,
             PromptImageStatus status
     );
