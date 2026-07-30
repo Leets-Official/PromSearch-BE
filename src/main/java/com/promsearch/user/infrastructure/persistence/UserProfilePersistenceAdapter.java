@@ -2,8 +2,8 @@ package com.promsearch.user.infrastructure.persistence;
 
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
-import com.promsearch.user.application.port.out.UserProfileStats;
-import com.promsearch.user.application.port.out.UserProfileStatsReader;
+import com.promsearch.user.application.port.out.user.UserProfileStats;
+import com.promsearch.user.application.port.out.user.UserProfileStatsReader;
 import jakarta.persistence.EntityManager;
 import java.util.EnumSet;
 import java.util.Set;

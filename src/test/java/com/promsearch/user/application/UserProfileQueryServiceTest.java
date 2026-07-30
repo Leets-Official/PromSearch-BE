@@ -2,15 +2,18 @@ package com.promsearch.user.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.promsearch.user.application.port.out.UserProfileStats;
-import com.promsearch.user.application.port.out.UserProfileStatsReader;
-import com.promsearch.user.application.port.out.UserRepository;
+import com.promsearch.user.application.port.out.user.LoadUserPort;
+import com.promsearch.user.application.port.out.user.UserProfileStats;
+import com.promsearch.user.application.port.out.user.UserProfileStatsReader;
+import com.promsearch.user.application.service.query.UserProfileQueryService;
+import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.User.UserId;
 import com.promsearch.user.domain.enums.UserGrade;
 import com.promsearch.user.domain.enums.UserRole;
 import com.promsearch.user.domain.enums.UserStatus;
 import java.time.Instant;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +39,6 @@ class UserProfileQueryServiceTest {
 
         assertThat(profile.userId()).isEqualTo(1L);
         assertThat(profile.nickname()).isEqualTo("creator");
-        assertThat(profile.name()).isEqualTo("Creator Name");
         assertThat(profile.profileImageUrl()).isEqualTo("https://cdn.test/profile.png");
         assertThat(profile.grade()).isEqualTo(UserGrade.PRIME);
         assertThat(profile.promptCount()).isEqualTo(5);
@@ -62,18 +64,23 @@ class UserProfileQueryServiceTest {
         );
     }
 
-    private static class FakeUserRepository implements UserRepository {
+    private static class FakeUserRepository implements LoadUserPort {
 
         private User user;
 
         @Override
-        public User create(User user) {
+        public User getById(Long userId) {
             return user;
         }
 
         @Override
-        public User getById(Long userId) {
-            return user;
+        public Optional<User> findByEmail(String email) {
+            return Optional.empty();
+        }
+
+        @Override
+        public Optional<User> findById(Long userId) {
+            return Optional.ofNullable(user);
         }
 
         @Override
@@ -84,11 +91,6 @@ class UserProfileQueryServiceTest {
         @Override
         public boolean existsByEmail(String email) {
             return false;
-        }
-
-        @Override
-        public User update(User user) {
-            return user;
         }
     }
 

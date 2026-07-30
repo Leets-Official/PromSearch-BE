@@ -1,14 +1,14 @@
 package com.promsearch.prompt.infrastructure.persistence;
 
 import com.promsearch.community.domain.enums.InteractionType;
-import com.promsearch.prompt.application.HomePromptAuthorInfo;
-import com.promsearch.prompt.application.HomePromptListInfo;
-import com.promsearch.prompt.application.HomePromptListQuery;
-import com.promsearch.prompt.application.HomePromptStatisticsInfo;
-import com.promsearch.prompt.application.HomePromptSummaryInfo;
-import com.promsearch.prompt.application.HomePromptTagInfo;
-import com.promsearch.prompt.application.HomePromptViewerInteractionInfo;
-import com.promsearch.prompt.application.port.out.HomePromptReader;
+import com.promsearch.prompt.application.port.out.prompt.HomePromptReader;
+import com.promsearch.prompt.application.usecase.dto.HomePromptAuthorInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
+import com.promsearch.prompt.application.usecase.dto.HomePromptStatisticsInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptSummaryInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptTagInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptViewerInteractionInfo;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;

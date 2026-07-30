@@ -1,30 +1,33 @@
 package com.promsearch.user.infrastructure.persistence;
 
-import com.promsearch.user.application.port.out.UserRepository;
+import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
+import com.promsearch.user.application.port.out.user.LoadUserPort;
+import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.UserStatus;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.stereotype.Repository;
+import org.springframework.stereotype.Component;
 
-@Repository
+@Component
 @RequiredArgsConstructor
-public class UserPersistenceAdapter implements UserRepository {
+public class UserPersistenceAdapter implements LoadUserPort, SaveUserPort {
 
-    private final UserJpaRepository userJpaRepository;
+    private final UserRepository userRepository;
 
     @Override
     public User create(User user) {
         try {
-            UserJpaEntity savedUser = userJpaRepository.saveAndFlush(UserMapper.toJpaEntity(user));
+            UserJpaEntity savedUser = userRepository.saveAndFlush(UserMapper.toJpaEntity(user));
             return UserMapper.toDomain(savedUser);
         } catch (DataIntegrityViolationException e) {
-            if (userJpaRepository.existsByEmail(user.getEmail())) {
+            if (userRepository.existsByEmail(user.getEmail())) {
                 throw new UserDomainException(UserErrorCode.DUPLICATE_EMAIL);
             }
-            if (userJpaRepository.existsByNickname(user.getNickname())) {
+            if (userRepository.existsByNickname(user.getNickname())) {
                 throw new UserDomainException(UserErrorCode.DUPLICATE_NICKNAME);
             }
             throw e;
@@ -37,13 +40,25 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     @Override
+    public Optional<User> findByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .map(UserMapper::toDomain);
+    }
+
+    @Override
+    public Optional<User> findById(Long userId) {
+        return userRepository.findById(userId)
+                .map(UserMapper::toDomain);
+    }
+
+    @Override
     public boolean existsByNickname(String nickname) {
-        return userJpaRepository.existsByNickname(nickname);
+        return userRepository.existsByNickname(nickname);
     }
 
     @Override
     public boolean existsByEmail(String email) {
-        return userJpaRepository.existsByEmail(email);
+        return userRepository.existsByEmail(email);
     }
 
     @Override
@@ -51,13 +66,13 @@ public class UserPersistenceAdapter implements UserRepository {
         try {
             UserJpaEntity userJpaEntity = getActiveUserJpaEntity(user.getUserId().id());
             userJpaEntity.updateFrom(user);
-            userJpaRepository.flush();
+            userRepository.flush();
             return UserMapper.toDomain(userJpaEntity);
         } catch (DataIntegrityViolationException e) {
-            if (userJpaRepository.existsByEmailAndIdNot(user.getEmail(), user.getUserId().id())) {
+            if (userRepository.existsByEmailAndIdNot(user.getEmail(), user.getUserId().id())) {
                 throw new UserDomainException(UserErrorCode.DUPLICATE_EMAIL);
             }
-            if (userJpaRepository.existsByNicknameAndIdNot(user.getNickname(), user.getUserId().id())) {
+            if (userRepository.existsByNicknameAndIdNot(user.getNickname(), user.getUserId().id())) {
                 throw new UserDomainException(UserErrorCode.DUPLICATE_NICKNAME);
             }
             throw e;
@@ -65,7 +80,7 @@ public class UserPersistenceAdapter implements UserRepository {
     }
 
     private UserJpaEntity getActiveUserJpaEntity(Long userId) {
-        return userJpaRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
+        return userRepository.findByIdAndStatus(userId, UserStatus.ACTIVE)
                 .orElseThrow(() -> new UserDomainException(UserErrorCode.USER_NOT_FOUND));
     }
 }

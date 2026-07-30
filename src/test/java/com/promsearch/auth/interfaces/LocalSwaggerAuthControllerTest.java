@@ -9,9 +9,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.promsearch.auth.interfaces.dto.SignupRequest;
-import com.promsearch.auth.interfaces.dto.SwaggerTokenRequest;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
+import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.auth.interfaces.dto.request.SwaggerTokenRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

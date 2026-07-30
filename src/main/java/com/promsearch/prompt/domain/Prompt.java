@@ -20,7 +20,7 @@ public class Prompt {
     private final String promptBody;
     private final String thumbnailImage;
     private final PromptOutputType outputType;
-    private final String authorTip;
+    private final String description;
     private final PromptContentType contentType;
     private final PromptStatus status;
     private final Long pricePoint;
@@ -41,7 +41,7 @@ public class Prompt {
             String promptBody,
             String thumbnailImage,
             PromptOutputType outputType,
-            String authorTip,
+            String description,
             PromptContentType contentType,
             PromptStatus status,
             Long pricePoint,
@@ -60,7 +60,7 @@ public class Prompt {
         this.promptBody = promptBody;
         this.thumbnailImage = thumbnailImage;
         this.outputType = outputType;
-        this.authorTip = authorTip;
+        this.description = description;
         this.contentType = contentType;
         this.status = status;
         this.pricePoint = pricePoint;
@@ -80,7 +80,7 @@ public class Prompt {
             String promptBody,
             String thumbnailImage,
             PromptOutputType outputType,
-            String authorTip,
+            String description,
             PromptContentType contentType,
             Long pricePoint
     ) {
@@ -93,7 +93,7 @@ public class Prompt {
                 .promptBody(promptBody)
                 .thumbnailImage(thumbnailImage)
                 .outputType(outputType)
-                .authorTip(authorTip)
+                .description(description)
                 .contentType(contentType)
                 .status(PromptStatus.DRAFT)
                 .pricePoint(pricePoint)
@@ -111,7 +111,7 @@ public class Prompt {
             String promptBody,
             String thumbnailImage,
             PromptOutputType outputType,
-            String authorTip,
+            String description,
             PromptContentType contentType,
             PromptStatus status,
             Long pricePoint,
@@ -136,7 +136,7 @@ public class Prompt {
                 .promptBody(promptBody)
                 .thumbnailImage(thumbnailImage)
                 .outputType(outputType)
-                .authorTip(authorTip)
+                .description(description)
                 .contentType(contentType)
                 .status(status)
                 .pricePoint(pricePoint)

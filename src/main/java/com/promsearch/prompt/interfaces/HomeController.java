@@ -2,11 +2,11 @@ package com.promsearch.prompt.interfaces;
 
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.prompt.application.HomePromptListInfo;
-import com.promsearch.prompt.application.HomePromptListQuery;
-import com.promsearch.prompt.application.ListHomePromptsUseCase;
+import com.promsearch.prompt.application.usecase.ListHomePromptsUseCase;
+import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
+import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
 import com.promsearch.prompt.interfaces.docs.HomeControllerDocs;
-import com.promsearch.prompt.interfaces.dto.HomePromptListResponse;
+import com.promsearch.prompt.interfaces.dto.response.HomePromptListResponse;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -39,8 +39,8 @@ public class HomeController implements HomeControllerDocs {
     @Override
     public ApiResponse<HomePromptListResponse> listPopularPrompts(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero int page,
-            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(50) int size
+            @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     ) {
         /*
          * 홈 목록은 비회원도 조회할 수 있습니다.
@@ -58,8 +58,8 @@ public class HomeController implements HomeControllerDocs {
     public ApiResponse<HomePromptListResponse> listJobPrompts(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @PathVariable @Positive Long jobTagId,
-            @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero int page,
-            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(50) int size
+            @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     ) {
         /*
          * jobTagId는 단순 문자열이 아니라 tags 테이블의 JOB 타입 태그 ID입니다.

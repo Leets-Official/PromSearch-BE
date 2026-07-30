@@ -2,7 +2,8 @@ package com.promsearch.prompt.interfaces.docs;
 
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.prompt.interfaces.dto.HomePromptListResponse;
+import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
+import com.promsearch.prompt.interfaces.dto.response.HomePromptListResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -31,10 +32,10 @@ public interface HomeControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
             @Parameter(description = "0부터 시작하는 페이지 번호", example = "0")
-            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "0") @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
 
             @Parameter(description = "페이지 크기. 최대 50까지 허용합니다.", example = "12")
-            @RequestParam(defaultValue = "12") @Min(1) @Max(50) int size
+            @RequestParam(defaultValue = "12") @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     );
 
     @Operation(
@@ -53,9 +54,9 @@ public interface HomeControllerDocs {
             @PathVariable @Positive Long jobTagId,
 
             @Parameter(description = "0부터 시작하는 페이지 번호", example = "0")
-            @RequestParam(defaultValue = "0") @PositiveOrZero int page,
+            @RequestParam(defaultValue = "0") @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
 
             @Parameter(description = "페이지 크기. 최대 50까지 허용합니다.", example = "12")
-            @RequestParam(defaultValue = "12") @Min(1) @Max(50) int size
+            @RequestParam(defaultValue = "12") @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     );
 }

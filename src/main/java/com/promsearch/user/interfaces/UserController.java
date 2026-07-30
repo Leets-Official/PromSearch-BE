@@ -1,17 +1,19 @@
 package com.promsearch.user.interfaces;
 
+import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
-import com.promsearch.user.application.ChangePasswordUseCase;
-import com.promsearch.user.application.DeleteUserUseCase;
-import com.promsearch.user.application.GetPublicUserProfileUseCase;
-import com.promsearch.user.application.PublicUserProfileInfo;
-import com.promsearch.user.application.UpdateUserProfileUseCase;
-import com.promsearch.user.application.UserInfo;
-import com.promsearch.user.interfaces.dto.ChangePasswordRequest;
-import com.promsearch.user.interfaces.dto.PublicUserProfileResponse;
-import com.promsearch.user.interfaces.dto.UpdateUserProfileRequest;
-import com.promsearch.user.interfaces.dto.UserResponse;
+import com.promsearch.user.application.usecase.ChangePasswordUseCase;
+import com.promsearch.user.application.usecase.DeleteUserUseCase;
+import com.promsearch.user.application.usecase.GetPublicUserProfileUseCase;
+import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
+import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
+import com.promsearch.user.application.usecase.dto.UserInfo;
+import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.response.PublicUserProfileResponse;
+import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
+import com.promsearch.user.interfaces.dto.response.UserResponse;
 import com.promsearch.user.interfaces.docs.UserControllerDocs;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
@@ -36,6 +38,14 @@ public class UserController implements UserControllerDocs {
     private final ChangePasswordUseCase changePasswordUseCase;
     private final DeleteUserUseCase deleteUserUseCase;
     private final GetPublicUserProfileUseCase getPublicUserProfileUseCase;
+
+    @GetMapping("/me")
+    @Override
+    public ApiResponse<UserProfileResponse> getMyProfile(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    ) {
+        throw new NotImplementedException();
+    }
 
     @PatchMapping("/me")
     @Override
