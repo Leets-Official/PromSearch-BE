@@ -46,8 +46,12 @@ class OpenApiDocumentationTest {
     void jwtSecurityRequirementOnlyForProtectedApis() throws Exception {
         OperationCustomizer customizer = openApiConfig.jwtSecurityOperationCustomizer();
         Operation protectedOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null),
+                new UserController(null, null, null, null),
                 UserController.class.getMethod("delete", AuthenticatedUserPrincipal.class)
+        ));
+        Operation publicUserOperation = customizer.customize(new Operation(), handlerMethod(
+                new UserController(null, null, null, null),
+                UserController.class.getMethod("checkNicknameAvailability", String.class)
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
                 new AuthController(null, null, null, null),
@@ -57,6 +61,7 @@ class OpenApiDocumentationTest {
         assertThat(protectedOperation.getSecurity())
                 .flatExtracting(SecurityRequirement::keySet)
                 .containsExactly("jwtBearerAuth");
+        assertThat(publicUserOperation.getSecurity()).isNull();
         assertThat(authOperation.getSecurity()).isNull();
     }
 

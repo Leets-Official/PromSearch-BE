@@ -31,6 +31,17 @@ class UserOpenApiContractTest {
         assertThat(document.at("/paths/~1api~1v1~1users~1me/get").isMissingNode()).isFalse();
     }
 
+    @DisplayName("Swagger에 닉네임 중복 확인 API와 필수 query parameter를 노출한다")
+    @Test
+    void nicknameAvailabilityIsDocumented() throws Exception {
+        JsonNode operation = openApiDocument()
+                .at("/paths/~1api~1v1~1users~1nicknames~1availability/get");
+
+        assertThat(operation.isMissingNode()).isFalse();
+        assertThat(operation.at("/parameters/0/name").asText()).isEqualTo("nickname");
+        assertThat(operation.at("/parameters/0/required").asBoolean()).isTrue();
+    }
+
     @DisplayName("프로필 조회 응답 스키마는 username, profileImageUrl, email, point, gradeName을 포함한다")
     @Test
     void userProfileSchemaContainsRequiredFields() throws Exception {
