@@ -16,4 +16,7 @@ public interface LoadPromptImagePort {
 
     /** 이미지 식별자 목록 기반 일괄 조회 */
     List<PromptImage> listByIds(Collection<UUID> imageIds);
+
+    /** 초안 전체 교체/삭제 중 기존 연결 이미지를 잠금 조회 */
+    List<PromptImage> listByPromptIdForUpdate(Long promptId);
 }

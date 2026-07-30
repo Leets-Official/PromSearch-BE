@@ -159,7 +159,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-005] 내 임시저장 생성 또는 교체",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = IMPLEMENTED_BY_HANHARAM
                     + "제목이 공백 제거 후 1자 이상일 때 저장할 수 있으며 사용자별 최신 임시저장 한 개를 생성하거나 교체합니다. "
                     + "제목 외 필드는 생략할 수 있습니다."
     )
@@ -167,7 +167,9 @@ public interface PromptControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 생성 또는 교체 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 저장 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "이미지 소유권 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자, 태그 또는 이미지 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미지 상태 또는 중복 연결 충돌")
     })
     ApiResponse<PromptCommandResponse> saveDraft(
             @Parameter(hidden = true)
@@ -178,14 +180,13 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-006] 내 임시저장 조회",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = IMPLEMENTED_BY_HANHARAM
                     + "인증된 사용자의 최신 임시저장 한 개를 작성 중인 전체 내용과 함께 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "임시저장 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "임시저장 없음")
     })
     ApiResponse<PromptDraftResponse> getDraft(
             @Parameter(hidden = true)
@@ -194,14 +195,13 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-007] 내 임시저장 삭제",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = IMPLEMENTED_BY_HANHARAM
                     + "인증된 사용자의 최신 임시저장을 삭제합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "임시저장 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "임시저장 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 삭제 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "임시저장 없음")
     })
     ApiResponse<Void> deleteDraft(
             @Parameter(hidden = true)

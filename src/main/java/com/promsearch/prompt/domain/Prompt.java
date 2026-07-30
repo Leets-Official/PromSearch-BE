@@ -147,6 +147,35 @@ public class Prompt {
                 .build();
     }
 
+    public static Prompt createDraft(
+            Long userId,
+            String title,
+            String promptBody,
+            PromptOutputType outputType,
+            String description,
+            PromptContentType contentType,
+            PromptVisibility visibility
+    ) {
+        validateDraftRequired(userId, title, visibility);
+
+        Instant now = Instant.now();
+        return Prompt.builder()
+                .userId(userId)
+                .title(title.strip())
+                .promptBody(trimToNull(promptBody))
+                .outputType(outputType)
+                .description(trimToNull(description))
+                .contentType(contentType)
+                .status(PromptStatus.DRAFT)
+                .visibility(visibility)
+                .pricePoint(0L)
+                .createdAt(now)
+                .updatedAt(now)
+                .images(List.of())
+                .postTags(List.of())
+                .build();
+    }
+
     public static Prompt reconstruct(
             PromptId promptId,
             Long userId,
@@ -171,7 +200,11 @@ public class Prompt {
         if (status == null) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_STATUS);
         }
-        validateRequired(userId, title, outputType, contentType, pricePoint);
+        if (status == PromptStatus.DRAFT) {
+            validateDraftRequired(userId, title, visibility);
+        } else {
+            validateRequired(userId, title, outputType, contentType, pricePoint);
+        }
         if (visibility == null) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_VISIBILITY);
         }
@@ -228,6 +261,18 @@ public class Prompt {
         }
     }
 
+    private static void validateDraftRequired(Long userId, String title, PromptVisibility visibility) {
+        if (userId == null || userId <= 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_USER_ID);
+        }
+        if (title == null || title.isBlank() || title.strip().length() > MAX_TITLE_LENGTH) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_TITLE);
+        }
+        if (visibility == null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_VISIBILITY);
+        }
+    }
+
     private static void validatePromptBody(String promptBody) {
         if (promptBody == null || promptBody.isBlank()) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_BODY);
@@ -245,6 +290,13 @@ public class Prompt {
                 || (contentType == PromptContentType.PREMIUM && pricePoint <= 0)) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PRICE_POINT);
         }
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.strip();
     }
 
     public record PromptId(Long id) {

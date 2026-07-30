@@ -21,6 +21,7 @@ import jakarta.persistence.Table;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -149,7 +150,42 @@ public class PostJpaEntity extends BaseEntity {
         this.postTags.add(postTag);
     }
 
+    public void replaceDraft(Prompt draft, List<TagJpaEntity> tags) {
+        if (draft.getStatus() != PromptStatus.DRAFT) {
+            throw new IllegalArgumentException("DRAFT 상태만 임시저장으로 교체할 수 있습니다.");
+        }
+
+        title = draft.getTitle();
+        promptBody = draft.getPromptBody();
+        thumbnailImageUrl = null;
+        outputType = draft.getOutputType();
+        description = draft.getDescription();
+        contentType = draft.getContentType();
+        status = PromptStatus.DRAFT;
+        visibility = draft.getVisibility();
+        pricePoint = draft.getPricePoint() != null ? draft.getPricePoint() : 0L;
+        hiddenReason = null;
+        hiddenAt = null;
+        postTags.removeIf(postTag -> tags.stream()
+                .noneMatch(tag -> Objects.equals(tag.getId(), postTag.getTag().getId())));
+        for (TagJpaEntity tag : tags) {
+            boolean alreadyAttached = postTags.stream()
+                    .anyMatch(postTag -> Objects.equals(postTag.getTag().getId(), tag.getId()));
+            if (!alreadyAttached) {
+                addPostTag(PostTagJpaEntity.create(this, tag));
+            }
+        }
+        statistics = null;
+    }
+
     public void initializeStatistics(PostStatisticsJpaEntity statistics) {
         this.statistics = statistics;
+    }
+
+    public void deleteDraft() {
+        if (status != PromptStatus.DRAFT) {
+            throw new IllegalArgumentException("DRAFT 상태만 임시저장에서 삭제할 수 있습니다.");
+        }
+        markDeleted();
     }
 }

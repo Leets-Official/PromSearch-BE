@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.global.config.JpaConfig;
 import com.promsearch.prompt.application.port.out.author.LoadPromptAuthorPort;
+import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
@@ -68,6 +69,9 @@ class PromptCreationTransactionIntegrationTest {
 
     @MockitoBean
     private LoadPromptPricingPort loadPromptPricingPort;
+
+    @MockitoBean
+    private LockPromptDraftPort lockPromptDraftPort;
 
     @BeforeEach
     void cleanDatabase() {

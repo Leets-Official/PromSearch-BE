@@ -12,17 +12,24 @@ import com.promsearch.global.config.JacksonConfig;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
+import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusesInfo;
+import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
 import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
+import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
 import java.net.URI;
@@ -70,22 +77,126 @@ class PromptControllerTest {
     @MockitoBean
     private GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
 
+    @MockitoBean
+    private SavePromptDraftUseCase savePromptDraftUseCase;
+
+    @MockitoBean
+    private GetPromptDraftUseCase getPromptDraftUseCase;
+
+    @MockitoBean
+    private DeletePromptDraftUseCase deletePromptDraftUseCase;
+
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
     }
 
-    @DisplayName("아직 구현하지 않은 프롬프트 인터페이스 4개는 구현 중 응답을 반환한다")
+    @DisplayName("인증 사용자의 임시저장을 생성 또는 전체 교체한다")
     @Test
-    void promptInterfacesReturnNotImplemented() throws Exception {
-        expectNotImplemented(put("/api/v1/prompts/draft")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(validDraftRequest()));
+    void saveDraft() throws Exception {
+        Mockito.when(savePromptDraftUseCase.save(Mockito.any()))
+                .thenReturn(new PromptCommandInfo(
+                        7L,
+                        PromptStatus.DRAFT,
+                        PromptVisibility.PRIVATE,
+                        0L,
+                        Instant.parse("2026-07-28T12:00:00Z")
+                ));
 
-        expectNotImplemented(get("/api/v1/prompts/draft"));
-        expectNotImplemented(delete("/api/v1/prompts/draft"));
+        mockMvc.perform(put("/api/v1/prompts/draft")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title":"회의록 자동 정리",
+                                  "description":null,
+                                  "outputType":"TEXT",
+                                  "jobTagIds":[1],
+                                  "taskTagIds":[2],
+                                  "aiModelTagIds":[3],
+                                  "contentType":"FREE",
+                                  "promptBody":null,
+                                  "visibility":"PRIVATE",
+                                  "images":[{
+                                    "imageId":"123e4567-e89b-12d3-a456-426614174000",
+                                    "sortOrder":0,
+                                    "thumbnail":true
+                                  }]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.promptId").value(7))
+                .andExpect(jsonPath("$.result.status").value("DRAFT"))
+                .andExpect(jsonPath("$.result.visibility").value("PRIVATE"));
 
-        expectNotImplemented(delete("/api/v1/prompts/1"));
+        ArgumentCaptor<SavePromptDraftCommand> captor = ArgumentCaptor.forClass(SavePromptDraftCommand.class);
+        Mockito.verify(savePromptDraftUseCase).save(captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().userId()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().title()).isEqualTo("회의록 자동 정리");
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().images()).hasSize(1);
+    }
+
+    @DisplayName("인증 사용자의 임시저장을 전체 필드로 조회한다")
+    @Test
+    void getDraft() throws Exception {
+        UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Mockito.when(getPromptDraftUseCase.get(1L))
+                .thenReturn(new PromptDraftInfo(
+                        7L,
+                        "회의록 자동 정리",
+                        null,
+                        PromptOutputType.TEXT,
+                        List.of(1L),
+                        List.of(2L),
+                        List.of(3L),
+                        "GPT 4.1 Mini",
+                        PromptContentType.FREE,
+                        null,
+                        PromptVisibility.PUBLIC,
+                        List.of(new PromptDraftInfo.ImageInfo(imageId, 0, true)),
+                        PromptStatus.DRAFT,
+                        0L,
+                        Instant.parse("2026-07-28T12:00:00Z")
+                ));
+
+        mockMvc.perform(get("/api/v1/prompts/draft")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.promptId").value(7))
+                .andExpect(jsonPath("$.result.description").doesNotExist())
+                .andExpect(jsonPath("$.result.outputType").value("TEXT"))
+                .andExpect(jsonPath("$.result.jobTagIds[0]").value(1))
+                .andExpect(jsonPath("$.result.taskTagIds[0]").value(2))
+                .andExpect(jsonPath("$.result.aiModelTagIds[0]").value(3))
+                .andExpect(jsonPath("$.result.customAiModel").value("GPT 4.1 Mini"))
+                .andExpect(jsonPath("$.result.contentType").value("FREE"))
+                .andExpect(jsonPath("$.result.promptBody").doesNotExist())
+                .andExpect(jsonPath("$.result.images[0].imageId").value(imageId.toString()))
+                .andExpect(jsonPath("$.result.images[0].sortOrder").value(0))
+                .andExpect(jsonPath("$.result.images[0].thumbnail").value(true))
+                .andExpect(jsonPath("$.result.status").value("DRAFT"))
+                .andExpect(jsonPath("$.result.updatedAt").value("2026-07-28T21:00:00+09:00"));
+    }
+
+    @DisplayName("인증 사용자의 임시저장을 삭제한다")
+    @Test
+    void deleteDraft() throws Exception {
+        mockMvc.perform(delete("/api/v1/prompts/draft")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Mockito.verify(deletePromptDraftUseCase).delete(1L);
     }
 
     @DisplayName("인증 사용자의 프롬프트를 생성하고 201 응답을 반환한다")
@@ -234,9 +345,22 @@ class PromptControllerTest {
     @DisplayName("생성과 임시저장은 500자 제목을 허용하고 공백이거나 500자를 초과하면 거절한다")
     @Test
     void promptTitleValidation() throws Exception {
-        expectNotImplemented(put("/api/v1/prompts/draft")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "\"}"));
+        Mockito.when(savePromptDraftUseCase.save(Mockito.any()))
+                .thenReturn(new PromptCommandInfo(
+                        7L,
+                        PromptStatus.DRAFT,
+                        PromptVisibility.PUBLIC,
+                        0L,
+                        Instant.parse("2026-07-28T12:00:00Z")
+                ));
+        mockMvc.perform(put("/api/v1/prompts/draft")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "\"}"))
+                .andExpect(status().isOk());
 
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -314,6 +438,15 @@ class PromptControllerTest {
                           "contentType":"FREE",
                           "promptBody":"이미지를 생성해 주세요.",
                           "visibility":"PUBLIC",
+                          "images":[null]
+                        }
+                        """));
+
+        expectBadRequest(put("/api/v1/prompts/draft")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "title":"회의록 자동 정리",
                           "images":[null]
                         }
                         """));

@@ -51,9 +51,9 @@ class PromptOpenApiContractTest {
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1upload-urls/post", "PROMPT-002", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1{imageId}~1complete/post", "PROMPT-003", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompt-images~1statuses/get", "PROMPT-004", "한하람", "구현완료");
-        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/put", "PROMPT-005", "한하람", "구현중");
-        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/get", "PROMPT-006", "한하람", "구현중");
-        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/delete", "PROMPT-007", "한하람", "구현중");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/put", "PROMPT-005", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/get", "PROMPT-006", "한하람", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/delete", "PROMPT-007", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts/post", "PROMPT-008", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "한하람", "구현중");
     }

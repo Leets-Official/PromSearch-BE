@@ -1,6 +1,7 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
 import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
@@ -56,4 +57,30 @@ public record PromptDraftResponse(
         @Schema(description = "마지막 임시저장 시각", example = "2026-07-23T21:00:00+09:00")
         Instant updatedAt
 ) {
+
+    public static PromptDraftResponse from(PromptDraftInfo info) {
+        return new PromptDraftResponse(
+                info.promptId(),
+                info.title(),
+                info.description(),
+                info.outputType(),
+                info.jobTagIds(),
+                info.taskTagIds(),
+                info.aiModelTagIds(),
+                info.customAiModel(),
+                info.contentType(),
+                info.promptBody(),
+                info.visibility(),
+                info.images().stream()
+                        .map(image -> new PromptImageResponse(
+                                image.imageId(),
+                                image.sortOrder(),
+                                image.thumbnail()
+                        ))
+                        .toList(),
+                info.status(),
+                info.pricePoint(),
+                info.updatedAt()
+        );
+    }
 }
