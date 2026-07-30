@@ -6,6 +6,7 @@ import com.promsearch.prompt.domain.Prompt.PromptId;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -45,6 +46,10 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "prompt_body", columnDefinition = "TEXT")
     private String promptBody;
 
+    /*
+     * TODO(#33): 프롬프트 생성·조회 전환이 끝나면 prompt_images.is_thumbnail에서 대표 이미지를 찾고
+     * 이 중복 URL 컬럼은 제거한다. URL 대신 Object Key를 기준으로 조회해야 한다.
+     */
     @Column(name = "thumbnail_image_url", length = 500)
     private String thumbnailImageUrl;
 
@@ -63,6 +68,10 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "status", nullable = false, length = 20)
     private PromptStatus status;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false, length = 20)
+    private PromptVisibility visibility;
+
     @Column(name = "price_point")
     private Long pricePoint;
 
@@ -71,9 +80,6 @@ public class PostJpaEntity extends BaseEntity {
 
     @Column(name = "hidden_at")
     private Instant hiddenAt;
-
-    @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<PostImageJpaEntity> images = new ArrayList<>();
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTagJpaEntity> postTags = new ArrayList<>();
@@ -93,6 +99,7 @@ public class PostJpaEntity extends BaseEntity {
         this.description = description;
         this.contentType = contentType;
         this.status = PromptStatus.DRAFT;
+        this.visibility = PromptVisibility.PUBLIC;
         this.pricePoint = pricePoint != null ? pricePoint : 0L;
     }
 
@@ -128,18 +135,13 @@ public class PostJpaEntity extends BaseEntity {
                 getCreatedAt(),
                 getUpdatedAt(),
                 getDeletedAt(),
-                images.stream()
-                        .map(PostImageJpaEntity::toDomain)
-                        .toList(),
+                // PromptImage는 독립 Aggregate이므로 조회 어댑터에서 필요한 경우 별도로 일괄 조회한다.
+                List.of(),
                 statistics != null ? statistics.toDomain() : null,
                 postTags.stream()
                         .map(PostTagJpaEntity::toDomain)
                         .toList()
         );
-    }
-
-    public void addImage(PostImageJpaEntity image) {
-        this.images.add(image);
     }
 
     public void addPostTag(PostTagJpaEntity postTag) {

@@ -3,6 +3,7 @@ package com.promsearch.global.config.openapi;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.promsearch.auth.interfaces.AuthController;
+import com.promsearch.community.interfaces.CommentController;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.interfaces.HomeController;
 import com.promsearch.user.interfaces.UserController;
@@ -48,8 +49,12 @@ class OpenApiDocumentationTest {
         OperationCustomizer customizer = openApiConfig.jwtSecurityOperationCustomizer();
 
         Operation protectedOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null, null),
+                new UserController(null, null, null, null, null),
                 UserController.class.getMethod("delete", AuthenticatedUserPrincipal.class)
+        ));
+        Operation publicUserOperation = customizer.customize(new Operation(), handlerMethod(
+                new UserController(null, null, null, null, null),
+                UserController.class.getMethod("checkNicknameAvailability", String.class)
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
                 new AuthController(null, null, null, null),
@@ -60,16 +65,43 @@ class OpenApiDocumentationTest {
                 HomeController.class.getMethod("listPopularPrompts", AuthenticatedUserPrincipal.class, int.class, int.class)
         ));
         Operation publicProfileOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null, null),
+                new UserController(null, null, null, null, null),
                 UserController.class.getMethod("getPublicProfile", Long.class)
+        ));
+        Operation commentListOperation = customizer.customize(new Operation(), handlerMethod(
+                new CommentController(null, null, null, null, null, null),
+                CommentController.class.getMethod(
+                        "getComments",
+                        Long.class,
+                        Long.class,
+                        int.class,
+                        AuthenticatedUserPrincipal.class)
+        ));
+        Operation replyListOperation = customizer.customize(new Operation(), handlerMethod(
+                new CommentController(null, null, null, null, null, null),
+                CommentController.class.getMethod(
+                        "getReplies",
+                        Long.class,
+                        Long.class,
+                        int.class,
+                        AuthenticatedUserPrincipal.class)
         ));
 
         assertThat(protectedOperation.getSecurity())
                 .flatExtracting(SecurityRequirement::keySet)
                 .containsExactly("jwtBearerAuth");
+        assertThat(publicUserOperation.getSecurity()).isNull();
         assertThat(authOperation.getSecurity()).isNull();
         assertThat(homeOperation.getSecurity()).isNull();
         assertThat(publicProfileOperation.getSecurity()).isNull();
+        assertThat(commentListOperation.getSecurity()).hasSize(2);
+        assertThat(commentListOperation.getSecurity().get(0)).isEmpty();
+        assertThat(commentListOperation.getSecurity().get(1))
+                .containsKey("jwtBearerAuth");
+        assertThat(replyListOperation.getSecurity()).hasSize(2);
+        assertThat(replyListOperation.getSecurity().get(0)).isEmpty();
+        assertThat(replyListOperation.getSecurity().get(1))
+                .containsKey("jwtBearerAuth");
     }
 
     private HandlerMethod handlerMethod(Object bean, Method method) {

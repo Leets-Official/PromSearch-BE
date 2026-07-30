@@ -2,14 +2,15 @@ package com.promsearch.global.config.openapi;
 
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
-import com.promsearch.prompt.interfaces.HomeController;
+import com.promsearch.community.interfaces.CommentController;
 import com.promsearch.test.interfaces.TestController;
-import com.promsearch.user.interfaces.UserController;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import java.util.List;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,25 +44,27 @@ public class OpenApiConfig {
              * 자물쇠 표시가 없어야 프론트/QA가 인증 필요 여부를 잘못 이해하지 않습니다.
              *
              * - Auth/Test/Swagger 토큰 API: 기존 공개 API
-             * - HomeController: 홈 목록은 비회원도 접근 가능
-             * - UserController#getPublicProfile: 카드 작성자 프로필은 비회원도 접근 가능
+             * - @SecurityRequirements: 비회원 접근 가능한 공개 API
              */
             if (AuthController.class.isAssignableFrom(beanType)
                     || LocalSwaggerAuthController.class.isAssignableFrom(beanType)
                     || TestController.class.isAssignableFrom(beanType)
-                    || HomeController.class.isAssignableFrom(beanType)
-                    || isPublicUserProfileOperation(beanType, handlerMethod.getMethod().getName())) {
+                    || handlerMethod.hasMethodAnnotation(SecurityRequirements.class)) {
                 return operation;
             }
+
+            boolean commentListEndpoint = CommentController.class.isAssignableFrom(beanType)
+                    && (handlerMethod.getMethod().getName().equals("getComments")
+                        || handlerMethod.getMethod().getName().equals("getReplies"));
+            if (commentListEndpoint) {
+                operation.setSecurity(List.of(
+                        new SecurityRequirement(),
+                        new SecurityRequirement().addList(JWT_BEARER_SCHEME)
+                ));
+                return operation;
+            }
+
             return operation.addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));
         };
-    }
-
-    private boolean isPublicUserProfileOperation(Class<?> beanType, String methodName) {
-        /*
-         * UserController 전체를 공개 처리하면 /me 수정, 비밀번호 변경, 회원 탈퇴까지 공개 API처럼 보입니다.
-         * 그래서 상대 프로필 조회 메서드만 메서드명으로 좁혀 Swagger 보안 요구사항을 제거합니다.
-         */
-        return UserController.class.isAssignableFrom(beanType) && "getPublicProfile".equals(methodName);
     }
 }

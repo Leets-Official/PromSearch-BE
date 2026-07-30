@@ -9,7 +9,7 @@ public record PromptDetailImageResponse(
 
         @Schema(
                 description = "워터마크 이미지의 Presigned URL. 원본 이미지 경로는 제공하지 않습니다.",
-                example = "https://storage.example.com/final/prompts/10/31.webp?X-Amz-Signature=..."
+                example = "https://storage.example.com/final/prompts/10/31.jpg?X-Amz-Signature=..."
         )
         String imageUrl,
 

@@ -12,6 +12,7 @@ import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadUrlResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptInsightResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,6 +26,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -82,20 +84,43 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-IMAGE-001] 이미지 업로드 URL 발급",
-            description = "JPEG, PNG, WebP 이미지의 S3 임시 업로드용 Presigned URL을 최대 10개 발급합니다. "
-                    + "프론트엔드는 업로드 완료 후 응답의 imageId만 프롬프트 저장 요청에 전달합니다."
+            description = "JPEG, PNG 이미지의 S3 원본 업로드용 Presigned PUT URL을 최대 10개 발급합니다. "
+                    + "프론트엔드는 요청한 Content-Type을 PUT 요청에도 동일하게 전송하고, "
+                    + "업로드 성공 후 완료 API를 호출해야 합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "업로드 URL 발급 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "파일 형식, 용량, 크기 또는 개수 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 발급 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "S3 연결 또는 자격 증명 오류")
     })
     ApiResponse<PromptImageUploadUrlResponse> issueImageUploadUrls(
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
             @Valid @RequestBody PromptImageUploadUrlRequest request
+    );
+
+    @Operation(
+            summary = "[PROMPT-IMAGE-002] 이미지 업로드 완료",
+            description = "S3 HeadObject로 업로드 여부, Content-Type, 파일 크기를 검증하고 이미지 상태를 UPLOADED로 변경합니다. "
+                    + "동일한 이미지에 대한 완료 요청은 멱등하게 처리합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "업로드 검증 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "업로드 메타데이터 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "다른 사용자의 이미지"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "이미지 자산 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "S3 객체 없음 또는 변경할 수 없는 상태"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "S3 연결 또는 자격 증명 오류")
+    })
+    ApiResponse<PromptImageUploadCompleteResponse> completeImageUpload(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+
+            @Parameter(description = "업로드 완료를 확인할 이미지 식별자")
+            @PathVariable UUID imageId
     );
 
     @Operation(

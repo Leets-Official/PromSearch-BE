@@ -29,3 +29,10 @@ auth:
       client-secret: ${GOOGLE_CLIENT_SECRET:}
       token-uri: https://oauth2.googleapis.com/token
       user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+storage:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
+    original-prefix: ${AWS_S3_ORIGINAL_PREFIX:prompt-images/original}
+    upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}

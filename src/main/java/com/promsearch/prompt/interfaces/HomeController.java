@@ -7,6 +7,7 @@ import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
 import com.promsearch.prompt.interfaces.docs.HomeControllerDocs;
 import com.promsearch.prompt.interfaces.dto.response.HomePromptListResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
@@ -36,6 +37,7 @@ public class HomeController implements HomeControllerDocs {
     private final ListHomePromptsUseCase listHomePromptsUseCase;
 
     @GetMapping("/popular")
+    @SecurityRequirements
     @Override
     public ApiResponse<HomePromptListResponse> listPopularPrompts(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
@@ -54,6 +56,7 @@ public class HomeController implements HomeControllerDocs {
     }
 
     @GetMapping("/jobs/{jobTagId}")
+    @SecurityRequirements
     @Override
     public ApiResponse<HomePromptListResponse> listJobPrompts(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,

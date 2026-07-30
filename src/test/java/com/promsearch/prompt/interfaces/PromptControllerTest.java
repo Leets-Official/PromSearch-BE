@@ -8,12 +8,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
+import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
+import com.promsearch.prompt.domain.enums.PromptImageStatus;
+import java.net.URI;
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -27,13 +41,20 @@ class PromptControllerTest {
     @MockitoBean
     private AuthenticateAccessTokenUseCase authenticateAccessTokenUseCase;
 
-    @DisplayName("프롬프트 인터페이스 6개는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @MockitoBean
+    private IssuePromptImageUploadUrlsUseCase issuePromptImageUploadUrlsUseCase;
+
+    @MockitoBean
+    private CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
+    @DisplayName("아직 구현하지 않은 프롬프트 인터페이스 5개는 구현 중 응답을 반환한다")
     @Test
     void promptInterfacesReturnNotImplemented() throws Exception {
-        expectNotImplemented(post("/api/v1/prompt-images/upload-urls")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(validUploadUrlRequest()));
-
         expectNotImplemented(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(validDraftRequest()));
@@ -46,6 +67,54 @@ class PromptControllerTest {
                 .content(validCreateRequest()));
 
         expectNotImplemented(delete("/api/v1/prompts/1"));
+    }
+
+    @DisplayName("인증 사용자의 이미지 업로드 URL을 발급한다")
+    @Test
+    void issueImageUploadUrls() throws Exception {
+        UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Mockito.when(issuePromptImageUploadUrlsUseCase.issue(Mockito.any()))
+                .thenReturn(new PromptImageUploadUrlsInfo(List.of(
+                        new PromptImageUploadUrlsInfo.UploadTarget(
+                                imageId,
+                                URI.create("https://s3.example.com/upload"),
+                                Instant.parse("2026-07-26T01:10:00Z")
+                        )
+                )));
+
+        mockMvc.perform(post("/api/v1/prompt-images/upload-urls")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validUploadUrlRequest()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.images[0].imageId").value(imageId.toString()))
+                .andExpect(jsonPath("$.result.images[0].uploadUrl").value("https://s3.example.com/upload"));
+    }
+
+    @DisplayName("S3 이미지 업로드 완료를 확인한다")
+    @Test
+    void completeImageUpload() throws Exception {
+        UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Mockito.when(completePromptImageUploadUseCase.complete(Mockito.any()))
+                .thenReturn(new PromptImageUploadInfo(
+                        imageId,
+                        PromptImageStatus.UPLOADED,
+                        Instant.parse("2026-07-26T01:00:00Z")
+                ));
+
+        mockMvc.perform(post("/api/v1/prompt-images/{imageId}/complete", imageId)
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.imageId").value(imageId.toString()))
+                .andExpect(jsonPath("$.result.status").value("UPLOADED"));
     }
 
     @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
@@ -126,6 +195,28 @@ class PromptControllerTest {
                         """));
     }
 
+    @DisplayName("WebP 업로드는 지원 범위에서 제외한다")
+    @Test
+    void webpUploadIsRejected() throws Exception {
+        mockMvc.perform(post("/api/v1/prompt-images/upload-urls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "images":[{
+                                    "fileName":"result.webp",
+                                    "contentType":"image/webp",
+                                    "fileSize":1024,
+                                    "width":1920,
+                                    "height":1080
+                                  }]
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"))
+                .andExpect(jsonPath("$.result['images[0].contentType']")
+                        .value("이미지 형식은 JPEG 또는 PNG만 지원합니다."));
+    }
+
     @DisplayName("게시완료 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
     @Test
     void getMyPublishedPromptsRejectsInvalidStatus() throws Exception {
@@ -172,8 +263,8 @@ class PromptControllerTest {
         return """
                 {
                   "images":[{
-                    "fileName":"prompt-result.webp",
-                    "contentType":"image/webp",
+                    "fileName":"prompt-result.jpg",
+                    "contentType":"image/jpeg",
                     "fileSize":5242880,
                     "width":1920,
                     "height":1080
@@ -203,5 +294,13 @@ class PromptControllerTest {
                   "images":[]
                 }
                 """;
+    }
+
+    private UsernamePasswordAuthenticationToken authenticationPrincipal() {
+        return new UsernamePasswordAuthenticationToken(
+                new AuthenticatedUserPrincipal(1L, "USER"),
+                null,
+                List.of()
+        );
     }
 }
