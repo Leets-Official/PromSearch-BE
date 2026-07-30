@@ -55,10 +55,21 @@ class OpenApiDocumentationTest {
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
         ));
         Operation commentListOperation = customizer.customize(new Operation(), handlerMethod(
-                new CommentController(null, null, null, null, null),
+                new CommentController(null, null, null, null, null, null),
                 CommentController.class.getMethod(
                         "getComments",
                         Long.class,
+                        Long.class,
+                        int.class,
+                        AuthenticatedUserPrincipal.class)
+        ));
+        Operation replyListOperation = customizer.customize(new Operation(), handlerMethod(
+                new CommentController(null, null, null, null, null, null),
+                CommentController.class.getMethod(
+                        "getReplies",
+                        Long.class,
+                        Long.class,
+                        int.class,
                         AuthenticatedUserPrincipal.class)
         ));
 
@@ -69,6 +80,10 @@ class OpenApiDocumentationTest {
         assertThat(commentListOperation.getSecurity()).hasSize(2);
         assertThat(commentListOperation.getSecurity().get(0)).isEmpty();
         assertThat(commentListOperation.getSecurity().get(1))
+                .containsKey("jwtBearerAuth");
+        assertThat(replyListOperation.getSecurity()).hasSize(2);
+        assertThat(replyListOperation.getSecurity().get(0)).isEmpty();
+        assertThat(replyListOperation.getSecurity().get(1))
                 .containsKey("jwtBearerAuth");
     }
 

@@ -13,12 +13,14 @@ import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
 import com.promsearch.community.application.usecase.CreateCommentReplyUseCase;
 import com.promsearch.community.application.usecase.CreateCommentUseCase;
 import com.promsearch.community.application.usecase.DeleteCommentUseCase;
+import com.promsearch.community.application.usecase.GetCommentRepliesUseCase;
 import com.promsearch.community.application.usecase.GetCommentsUseCase;
 import com.promsearch.community.application.usecase.UpdateCommentUseCase;
 import com.promsearch.community.application.usecase.dto.CommentAuthorInfo;
 import com.promsearch.community.application.usecase.dto.CommentInfo;
 import com.promsearch.community.application.usecase.dto.CommentListInfo;
 import com.promsearch.community.application.usecase.dto.CommentReplyInfo;
+import com.promsearch.community.application.usecase.dto.CommentReplyListInfo;
 import com.promsearch.community.domain.enums.CommentStatus;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import java.time.Instant;
@@ -49,6 +51,8 @@ class CommentControllerTest {
     @MockitoBean
     private GetCommentsUseCase getCommentsUseCase;
     @MockitoBean
+    private GetCommentRepliesUseCase getCommentRepliesUseCase;
+    @MockitoBean
     private CreateCommentUseCase createCommentUseCase;
     @MockitoBean
     private UpdateCommentUseCase updateCommentUseCase;
@@ -66,14 +70,28 @@ class CommentControllerTest {
     @Test
     void getCommentsWithoutAuthentication() throws Exception {
         given(getCommentsUseCase.getComments(any()))
-                .willReturn(new CommentListInfo(List.of(commentInfo())));
+                .willReturn(new CommentListInfo(List.of(commentInfo()), 100L, true));
 
         mockMvc.perform(get("/api/v1/prompts/10/comments"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("COMMON-200"))
                 .andExpect(jsonPath("$.result.comments[0].commentId").value(100))
                 .andExpect(jsonPath("$.result.comments[0].mine").value(true))
-                .andExpect(jsonPath("$.result.comments[0].replies[0].commentId").value(101));
+                .andExpect(jsonPath("$.result.comments[0].replyCount").value(1))
+                .andExpect(jsonPath("$.result.nextCursor").value(100))
+                .andExpect(jsonPath("$.result.hasNext").value(true));
+    }
+
+    @DisplayName("비로그인 사용자도 대댓글 목록을 조회할 수 있다")
+    @Test
+    void getRepliesWithoutAuthentication() throws Exception {
+        given(getCommentRepliesUseCase.getReplies(any()))
+                .willReturn(new CommentReplyListInfo(List.of(replyInfo()), null, false));
+
+        mockMvc.perform(get("/api/v1/comments/100/replies"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.replies[0].commentId").value(101))
+                .andExpect(jsonPath("$.result.hasNext").value(false));
     }
 
     @DisplayName("댓글을 생성하면 201 응답을 반환한다")
@@ -194,7 +212,7 @@ class CommentControllerTest {
                 false,
                 NOW,
                 NOW,
-                List.of(replyInfo())
+                1L
         );
     }
 

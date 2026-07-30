@@ -3,23 +3,26 @@ package com.promsearch.community.application.service.query;
 import com.promsearch.community.application.port.out.comment.LoadCommentAuthorPort;
 import com.promsearch.community.application.port.out.comment.LoadCommentAuthorPort.CommentAuthorSnapshot;
 import com.promsearch.community.application.port.out.comment.LoadCommentPort;
+import com.promsearch.community.application.port.out.comment.LoadCommentPort.CommentPage;
+import com.promsearch.community.application.port.out.comment.LoadCommentPort.ReplyPage;
 import com.promsearch.community.application.port.out.comment.LoadCommentTargetPort;
 import com.promsearch.community.application.port.out.comment.LoadCommentTargetPort.CommentTargetSnapshot;
+import com.promsearch.community.application.usecase.GetCommentRepliesUseCase;
 import com.promsearch.community.application.usecase.GetCommentsUseCase;
 import com.promsearch.community.application.usecase.dto.CommentAuthorInfo;
 import com.promsearch.community.application.usecase.dto.CommentInfo;
 import com.promsearch.community.application.usecase.dto.CommentListInfo;
 import com.promsearch.community.application.usecase.dto.CommentReplyInfo;
+import com.promsearch.community.application.usecase.dto.CommentReplyListInfo;
+import com.promsearch.community.application.usecase.dto.GetCommentRepliesQuery;
 import com.promsearch.community.application.usecase.dto.GetCommentsQuery;
 import com.promsearch.community.domain.Comment;
 import com.promsearch.community.domain.exception.CommunityDomainException;
 import com.promsearch.community.domain.exception.CommunityErrorCode;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,7 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class CommentQueryService implements GetCommentsUseCase {
+public class CommentQueryService implements GetCommentsUseCase, GetCommentRepliesUseCase {
 
     private static final String DELETED_COMMENT_CONTENT = "삭제된 댓글입니다.";
 
@@ -37,72 +40,62 @@ public class CommentQueryService implements GetCommentsUseCase {
 
     @Override
     public CommentListInfo getComments(GetCommentsQuery query) {
-        CommentTargetSnapshot target = loadCommentTargetPort.getActivePublicById(query.postId());
-        List<Comment> allComments = loadCommentPort.listByPostId(query.postId());
-
-        Map<Long, List<Comment>> activeRepliesByParentId = groupActiveReplies(allComments);
-        List<Comment> visibleParents = allComments.stream()
-                .filter(comment -> comment.getParentCommentId() == null)
-                .filter(comment -> comment.isActive()
-                        || comment.isDeleted()
-                        && activeRepliesByParentId.containsKey(comment.getCommentId().id()))
-                .toList();
-
-        Set<Long> authorIds = collectAuthorIds(visibleParents, activeRepliesByParentId);
-        Map<Long, CommentAuthorSnapshot> authors = loadCommentAuthorPort.batchGetByIds(authorIds);
-
-        List<CommentInfo> comments = visibleParents.stream()
-                .map(parent -> toCommentInfo(
-                        parent,
-                        activeRepliesByParentId.getOrDefault(parent.getCommentId().id(), List.of()),
+        CommentTargetSnapshot target =
+                loadCommentTargetPort.getActivePublicById(query.postId());
+        CommentPage page =
+                loadCommentPort.listParentPage(query.postId(), query.cursor(), query.size());
+        Set<Long> authorIds = page.comments().stream()
+                .filter(Comment::isActive)
+                .map(Comment::getUserId)
+                .collect(Collectors.toSet());
+        Map<Long, CommentAuthorSnapshot> authors =
+                loadCommentAuthorPort.batchGetByIds(authorIds);
+        List<CommentInfo> comments = page.comments().stream()
+                .map(comment -> toCommentInfo(
+                        comment,
                         authors,
                         target,
-                        query.viewerId()
+                        query.viewerId(),
+                        page.replyCounts().getOrDefault(comment.getCommentId().id(), 0L)
                 ))
                 .toList();
 
-        return new CommentListInfo(comments);
+        return new CommentListInfo(comments, page.nextCursor(), page.hasNext());
     }
 
-    private Map<Long, List<Comment>> groupActiveReplies(List<Comment> comments) {
-        Map<Long, List<Comment>> repliesByParentId = new HashMap<>();
-        for (Comment comment : comments) {
-            if (comment.getParentCommentId() != null && comment.isActive()) {
-                repliesByParentId
-                        .computeIfAbsent(comment.getParentCommentId(), ignored -> new ArrayList<>())
-                        .add(comment);
-            }
+    @Override
+    public CommentReplyListInfo getReplies(GetCommentRepliesQuery query) {
+        Comment parent = loadCommentPort.getById(query.parentCommentId());
+        if (parent.getParentCommentId() != null) {
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_PARENT_COMMENT);
         }
-        return repliesByParentId;
-    }
+        CommentTargetSnapshot target =
+                loadCommentTargetPort.getActivePublicById(parent.getPostId());
+        ReplyPage page = loadCommentPort.listReplyPage(
+                query.parentCommentId(),
+                query.cursor(),
+                query.size()
+        );
+        Set<Long> authorIds = page.replies().stream()
+                .map(Comment::getUserId)
+                .collect(Collectors.toSet());
+        Map<Long, CommentAuthorSnapshot> authors =
+                loadCommentAuthorPort.batchGetByIds(authorIds);
+        List<CommentReplyInfo> replies = page.replies().stream()
+                .map(reply -> toReplyInfo(reply, authors, target, query.viewerId()))
+                .toList();
 
-    private Set<Long> collectAuthorIds(
-            List<Comment> parents,
-            Map<Long, List<Comment>> repliesByParentId
-    ) {
-        Set<Long> authorIds = new HashSet<>();
-        for (Comment parent : parents) {
-            if (parent.isActive()) {
-                authorIds.add(parent.getUserId());
-            }
-            repliesByParentId.getOrDefault(parent.getCommentId().id(), List.of())
-                    .forEach(reply -> authorIds.add(reply.getUserId()));
-        }
-        return authorIds;
+        return new CommentReplyListInfo(replies, page.nextCursor(), page.hasNext());
     }
 
     private CommentInfo toCommentInfo(
             Comment comment,
-            List<Comment> replies,
             Map<Long, CommentAuthorSnapshot> authors,
             CommentTargetSnapshot target,
-            Long viewerId
+            Long viewerId,
+            long replyCount
     ) {
-        List<CommentReplyInfo> replyInfos = replies.stream()
-                .map(reply -> toReplyInfo(reply, authors, target, viewerId))
-                .toList();
         boolean deleted = comment.isDeleted();
-
         return new CommentInfo(
                 comment.getCommentId().id(),
                 comment.getParentCommentId(),
@@ -113,7 +106,7 @@ public class CommentQueryService implements GetCommentsUseCase {
                 !deleted && target.authorId().equals(comment.getUserId()),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),
-                replyInfos
+                replyCount
         );
     }
 
@@ -136,7 +129,10 @@ public class CommentQueryService implements GetCommentsUseCase {
         );
     }
 
-    private CommentAuthorSnapshot getAuthor(Map<Long, CommentAuthorSnapshot> authors, Long userId) {
+    private CommentAuthorSnapshot getAuthor(
+            Map<Long, CommentAuthorSnapshot> authors,
+            Long userId
+    ) {
         CommentAuthorSnapshot author = authors.get(userId);
         if (author == null) {
             throw new CommunityDomainException(CommunityErrorCode.COMMENT_AUTHOR_NOT_FOUND);
@@ -145,7 +141,11 @@ public class CommentQueryService implements GetCommentsUseCase {
     }
 
     private CommentAuthorInfo toAuthorInfo(CommentAuthorSnapshot author) {
-        return new CommentAuthorInfo(author.userId(), author.nickname(), author.profileImageUrl());
+        return new CommentAuthorInfo(
+                author.userId(),
+                author.nickname(),
+                author.profileImageUrl()
+        );
     }
 
     private boolean isMine(Comment comment, Long viewerId) {

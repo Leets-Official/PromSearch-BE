@@ -19,7 +19,6 @@ import com.promsearch.community.application.usecase.dto.CreateCommentReplyComman
 import com.promsearch.community.application.usecase.dto.DeleteCommentCommand;
 import com.promsearch.community.application.usecase.dto.UpdateCommentCommand;
 import com.promsearch.community.domain.Comment;
-import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -105,7 +104,7 @@ public class CommentCommandService implements
                 target.authorId().equals(comment.getUserId()),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),
-                List.of()
+                0L
         );
     }
 

@@ -45,7 +45,8 @@ public class OpenApiConfig {
             }
 
             boolean commentListEndpoint = CommentController.class.isAssignableFrom(beanType)
-                    && handlerMethod.getMethod().getName().equals("getComments");
+                    && (handlerMethod.getMethod().getName().equals("getComments")
+                        || handlerMethod.getMethod().getName().equals("getReplies"));
             if (commentListEndpoint) {
                 operation.setSecurity(List.of(
                         new SecurityRequirement(),

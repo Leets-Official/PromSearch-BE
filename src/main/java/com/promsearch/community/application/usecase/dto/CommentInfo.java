@@ -2,7 +2,6 @@ package com.promsearch.community.application.usecase.dto;
 
 import com.promsearch.community.domain.enums.CommentStatus;
 import java.time.Instant;
-import java.util.List;
 
 public record CommentInfo(
         Long commentId,
@@ -14,6 +13,6 @@ public record CommentInfo(
         boolean promptAuthor,
         Instant createdAt,
         Instant updatedAt,
-        List<CommentReplyInfo> replies
+        long replyCount
 ) {
 }

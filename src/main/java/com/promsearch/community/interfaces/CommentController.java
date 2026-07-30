@@ -3,14 +3,17 @@ package com.promsearch.community.interfaces;
 import com.promsearch.community.application.usecase.CreateCommentReplyUseCase;
 import com.promsearch.community.application.usecase.CreateCommentUseCase;
 import com.promsearch.community.application.usecase.DeleteCommentUseCase;
+import com.promsearch.community.application.usecase.GetCommentRepliesUseCase;
 import com.promsearch.community.application.usecase.GetCommentsUseCase;
 import com.promsearch.community.application.usecase.UpdateCommentUseCase;
 import com.promsearch.community.application.usecase.dto.DeleteCommentCommand;
+import com.promsearch.community.application.usecase.dto.GetCommentRepliesQuery;
 import com.promsearch.community.application.usecase.dto.GetCommentsQuery;
 import com.promsearch.community.interfaces.docs.CommentControllerDocs;
 import com.promsearch.community.interfaces.dto.request.CreateCommentRequest;
 import com.promsearch.community.interfaces.dto.request.UpdateCommentRequest;
 import com.promsearch.community.interfaces.dto.response.CommentListResponse;
+import com.promsearch.community.interfaces.dto.response.CommentReplyListResponse;
 import com.promsearch.community.interfaces.dto.response.CommentReplyResponse;
 import com.promsearch.community.interfaces.dto.response.CommentResponse;
 import com.promsearch.global.response.ApiResponse;
@@ -27,6 +30,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @Validated
@@ -36,6 +40,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CommentController implements CommentControllerDocs {
 
     private final GetCommentsUseCase getCommentsUseCase;
+    private final GetCommentRepliesUseCase getCommentRepliesUseCase;
     private final CreateCommentUseCase createCommentUseCase;
     private final UpdateCommentUseCase updateCommentUseCase;
     private final DeleteCommentUseCase deleteCommentUseCase;
@@ -45,11 +50,29 @@ public class CommentController implements CommentControllerDocs {
     @Override
     public ApiResponse<CommentListResponse> getComments(
             @PathVariable Long promptId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
         Long viewerId = user == null ? null : user.userId();
         return ApiResponse.onSuccess(CommentListResponse.from(
-                getCommentsUseCase.getComments(GetCommentsQuery.of(promptId, viewerId))
+                getCommentsUseCase.getComments(
+                        GetCommentsQuery.of(promptId, viewerId, cursor, size))
+        ));
+    }
+
+    @GetMapping("/comments/{commentId}/replies")
+    @Override
+    public ApiResponse<CommentReplyListResponse> getReplies(
+            @PathVariable Long commentId,
+            @RequestParam(required = false) Long cursor,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    ) {
+        Long viewerId = user == null ? null : user.userId();
+        return ApiResponse.onSuccess(CommentReplyListResponse.from(
+                getCommentRepliesUseCase.getReplies(
+                        GetCommentRepliesQuery.of(commentId, viewerId, cursor, size))
         ));
     }
 

@@ -8,10 +8,12 @@ import com.promsearch.community.application.service.query.CommentQueryService;
 import com.promsearch.community.application.usecase.dto.CommentInfo;
 import com.promsearch.community.application.usecase.dto.CommentListInfo;
 import com.promsearch.community.application.usecase.dto.CommentReplyInfo;
+import com.promsearch.community.application.usecase.dto.CommentReplyListInfo;
 import com.promsearch.community.application.usecase.dto.CreateCommentCommand;
 import com.promsearch.community.application.usecase.dto.CreateCommentReplyCommand;
 import com.promsearch.community.application.usecase.dto.DeleteCommentCommand;
 import com.promsearch.community.application.usecase.dto.GetCommentsQuery;
+import com.promsearch.community.application.usecase.dto.GetCommentRepliesQuery;
 import com.promsearch.community.application.usecase.dto.UpdateCommentCommand;
 import com.promsearch.community.domain.enums.CommentStatus;
 import com.promsearch.community.domain.exception.CommunityDomainException;
@@ -87,11 +89,14 @@ class CommentCrudIntegrationTest {
         assertThat(beforeDelete.comments()).singleElement()
                 .satisfies(comment -> {
                     assertThat(comment.mine()).isTrue();
-                    assertThat(comment.replies()).singleElement()
-                            .satisfies(savedReply -> {
-                                assertThat(savedReply.commentId()).isEqualTo(reply.commentId());
-                                assertThat(savedReply.promptAuthor()).isTrue();
-                            });
+                    assertThat(comment.replyCount()).isEqualTo(1L);
+                });
+        CommentReplyListInfo replies = commentQueryService.getReplies(
+                GetCommentRepliesQuery.of(parent.commentId(), 2L, null, 20));
+        assertThat(replies.replies()).singleElement()
+                .satisfies(savedReply -> {
+                    assertThat(savedReply.commentId()).isEqualTo(reply.commentId());
+                    assertThat(savedReply.promptAuthor()).isTrue();
                 });
         assertThat(commentCount()).isEqualTo(2L);
 
@@ -105,7 +110,7 @@ class CommentCrudIntegrationTest {
                     assertThat(comment.author()).isNull();
                     assertThat(comment.mine()).isFalse();
                     assertThat(comment.promptAuthor()).isFalse();
-                    assertThat(comment.replies()).hasSize(1);
+                    assertThat(comment.replyCount()).isEqualTo(1L);
                 });
         assertThat(commentCount()).isEqualTo(1L);
 
@@ -122,6 +127,57 @@ class CommentCrudIntegrationTest {
                 .isInstanceOf(CommunityDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(CommunityErrorCode.COMMENT_TARGET_PROMPT_NOT_FOUND);
+    }
+
+    @DisplayName("부모 댓글은 최신순, 대댓글은 오래된 순으로 커서 조회한다")
+    @Test
+    void cursorPagination() {
+        CommentInfo first = commentCommandService.createComment(
+                CreateCommentCommand.of(10L, 2L, "첫 부모 댓글"));
+        CommentInfo second = commentCommandService.createComment(
+                CreateCommentCommand.of(10L, 2L, "둘째 부모 댓글"));
+        CommentInfo third = commentCommandService.createComment(
+                CreateCommentCommand.of(10L, 2L, "셋째 부모 댓글"));
+
+        CommentListInfo firstParentPage = commentQueryService.getComments(
+                GetCommentsQuery.of(10L, null, null, 2));
+        assertThat(firstParentPage.comments())
+                .extracting(CommentInfo::commentId)
+                .containsExactly(third.commentId(), second.commentId());
+        assertThat(firstParentPage.hasNext()).isTrue();
+        assertThat(firstParentPage.nextCursor()).isEqualTo(second.commentId());
+
+        CommentListInfo secondParentPage = commentQueryService.getComments(
+                GetCommentsQuery.of(10L, null, firstParentPage.nextCursor(), 2));
+        assertThat(secondParentPage.comments())
+                .extracting(CommentInfo::commentId)
+                .containsExactly(first.commentId());
+        assertThat(secondParentPage.hasNext()).isFalse();
+
+        CommentReplyInfo firstReply = commentCommandService.createReply(
+                CreateCommentReplyCommand.of(first.commentId(), 1L, "첫 답글"));
+        CommentReplyInfo secondReply = commentCommandService.createReply(
+                CreateCommentReplyCommand.of(first.commentId(), 2L, "둘째 답글"));
+        CommentReplyInfo thirdReply = commentCommandService.createReply(
+                CreateCommentReplyCommand.of(first.commentId(), 1L, "셋째 답글"));
+
+        CommentReplyListInfo firstReplyPage = commentQueryService.getReplies(
+                GetCommentRepliesQuery.of(first.commentId(), null, null, 2));
+        assertThat(firstReplyPage.replies())
+                .extracting(CommentReplyInfo::commentId)
+                .containsExactly(firstReply.commentId(), secondReply.commentId());
+        assertThat(firstReplyPage.hasNext()).isTrue();
+
+        CommentReplyListInfo secondReplyPage = commentQueryService.getReplies(
+                GetCommentRepliesQuery.of(
+                        first.commentId(),
+                        null,
+                        firstReplyPage.nextCursor(),
+                        2));
+        assertThat(secondReplyPage.replies())
+                .extracting(CommentReplyInfo::commentId)
+                .containsExactly(thirdReply.commentId());
+        assertThat(secondReplyPage.hasNext()).isFalse();
     }
 
     private Long commentCount() {

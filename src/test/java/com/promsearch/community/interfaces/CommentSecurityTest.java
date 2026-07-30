@@ -49,6 +49,14 @@ class CommentSecurityTest {
                 .andExpect(status().isBadRequest());
     }
 
+    @DisplayName("대댓글 목록도 인증 없이 애플리케이션까지 접근할 수 있다")
+    @Test
+    void anonymousUserCanAccessReplyList() throws Exception {
+        mockMvc.perform(get("/api/v1/comments/999999/replies"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("COMMUNITY-001"));
+    }
+
     @DisplayName("댓글 작성은 인증 없이 접근할 수 없다")
     @Test
     void anonymousUserCannotCreateComment() throws Exception {
