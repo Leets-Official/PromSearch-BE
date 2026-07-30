@@ -62,6 +62,24 @@ class LocalSwaggerAuthControllerTest {
         assertThat(properties.has("taskTags")).isTrue();
     }
 
+    @DisplayName("로그인 응답 Swagger 스키마는 이름 대신 프로필 이미지 URL을 노출한다")
+    @Test
+    void loginResponseSchemaExposesProfileImageInsteadOfName() throws Exception {
+        String response = mockMvc.perform(get("/docs-json"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        var properties = objectMapper.readTree(response)
+                .at("/components/schemas/LoginResponse/properties");
+
+        assertThat(properties.has("name")).isFalse();
+        assertThat(properties.has("profileImageUrl")).isTrue();
+        assertThat(properties.has("nickname")).isTrue();
+        assertThat(properties.has("email")).isTrue();
+    }
+
     @DisplayName("local Swagger token API로 받은 Authorization 헤더값으로 보호 API를 호출할 수 있다")
     @Test
     void swaggerTokenCanAuthorizeProtectedApiInLocal() throws Exception {

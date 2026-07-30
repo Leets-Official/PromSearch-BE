@@ -1,7 +1,6 @@
 package com.promsearch.auth.interfaces;
 
 import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -26,6 +25,7 @@ import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
 import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -203,7 +203,18 @@ class AuthControllerTest {
     @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
     void loginSuccess() throws Exception {
-        signup("gildong", "gildong@example.com", "password123");
+        SignupRequest signupRequest = new SignupRequest(
+                "gildong",
+                "gildong@example.com",
+                "password123",
+                "https://cdn.promsearch.com/profiles/me.png",
+                List.of(),
+                List.of()
+        );
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isCreated());
 
         LoginRequest request = new LoginRequest("gildong@example.com", "password123");
 
@@ -218,7 +229,9 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value(nullValue()))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.profileImageUrl")
+                        .value("https://cdn.promsearch.com/profiles/me.png"))
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
@@ -436,7 +449,12 @@ class AuthControllerTest {
     void socialLoginSuccessWithNewKakaoAccount() throws Exception {
         given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
         given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialLoginResult("kakao-1", "kakao-user@example.com", "카카오유저", null));
+                .willReturn(new SocialLoginResult(
+                        "kakao-1",
+                        "kakao-user@example.com",
+                        "카카오유저",
+                        "https://cdn.promsearch.com/profiles/kakao.png"
+                ));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -450,6 +468,9 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("kakao-user@example.com"))
                 .andExpect(jsonPath("$.result.nickname").value("카카오유저"))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.profileImageUrl")
+                        .value("https://cdn.promsearch.com/profiles/kakao.png"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
         assertThat(userJpaRepository.existsByEmail("kakao-user@example.com")).isTrue();

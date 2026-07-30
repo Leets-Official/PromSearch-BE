@@ -6,7 +6,7 @@ public record LoginInfo(
         String tokenType,
         Long expiresIn,
         Long userId,
-        String name,
+        String profileImageUrl,
         String nickname,
         String email
 ) {
@@ -15,10 +15,10 @@ public record LoginInfo(
             String accessToken,
             Long expiresIn,
             AuthenticatedUserInfo user,
-            String name,
+            String profileImageUrl,
             String nickname
     ) {
-        return of(accessToken, null, expiresIn, user, name, nickname);
+        return of(accessToken, null, expiresIn, user, profileImageUrl, nickname);
     }
 
     public static LoginInfo of(
@@ -26,7 +26,7 @@ public record LoginInfo(
             String refreshToken,
             Long expiresIn,
             AuthenticatedUserInfo user,
-            String name,
+            String profileImageUrl,
             String nickname
     ) {
         return new LoginInfo(
@@ -35,7 +35,7 @@ public record LoginInfo(
                 "Bearer",
                 expiresIn,
                 user.userId(),
-                name,
+                profileImageUrl,
                 nickname,
                 user.email()
         );
