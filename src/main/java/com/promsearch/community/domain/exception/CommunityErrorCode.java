@@ -18,7 +18,9 @@ public enum CommunityErrorCode implements BaseCode {
     INVALID_COMMENT_POST_ID(HttpStatus.BAD_REQUEST, "COMMUNITY-011", "댓글의 프롬프트 식별자가 유효하지 않습니다."),
     INVALID_COMMENT_USER_ID(HttpStatus.BAD_REQUEST, "COMMUNITY-012", "댓글 작성자 식별자가 유효하지 않습니다."),
     INVALID_INTERACTION_POST_ID(HttpStatus.BAD_REQUEST, "COMMUNITY-013", "상호작용 프롬프트 식별자가 유효하지 않습니다."),
-    INVALID_INTERACTION_USER_ID(HttpStatus.BAD_REQUEST, "COMMUNITY-014", "상호작용 사용자 식별자가 유효하지 않습니다.");
+    INVALID_INTERACTION_USER_ID(HttpStatus.BAD_REQUEST, "COMMUNITY-014", "상호작용 사용자 식별자가 유효하지 않습니다."),
+    INTERACTION_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMUNITY-015", "상호작용할 수 있는 프롬프트를 찾을 수 없습니다."),
+    INTERACTION_COUNT_INCONSISTENT(HttpStatus.CONFLICT, "COMMUNITY-016", "프롬프트 상호작용 수가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
