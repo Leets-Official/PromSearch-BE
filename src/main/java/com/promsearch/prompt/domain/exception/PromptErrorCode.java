@@ -66,7 +66,13 @@ public enum PromptErrorCode implements BaseCode {
             HttpStatus.INTERNAL_SERVER_ERROR,
             "PROMPT-046",
             "이미지 처리 중 오류가 발생했습니다."
-    );
+    ),
+    INVALID_PROMPT_VISIBILITY(HttpStatus.BAD_REQUEST, "PROMPT-047", "프롬프트 공개 범위가 유효하지 않습니다."),
+    DUPLICATE_IMAGE(HttpStatus.CONFLICT, "PROMPT-048", "동일한 이미지를 중복으로 연결할 수 없습니다."),
+    DUPLICATE_IMAGE_ORDER(HttpStatus.CONFLICT, "PROMPT-049", "이미지 정렬 순서는 중복될 수 없습니다."),
+    INVALID_PROMPT_DESCRIPTION(HttpStatus.BAD_REQUEST, "PROMPT-050", "프롬프트 설명이 유효하지 않습니다."),
+    REQUIRED_TAG_MISSING(HttpStatus.BAD_REQUEST, "PROMPT-051", "필수 태그를 하나 이상 선택해야 합니다."),
+    IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "PROMPT-052", "프롬프트 이미지를 하나 이상 선택해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

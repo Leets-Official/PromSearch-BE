@@ -8,12 +8,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.promsearch.auth.application.usecase.AuthenticateAccessTokenUseCase;
+import com.promsearch.global.config.JacksonConfig;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
+import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
+import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
+import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import java.net.URI;
 import java.time.Instant;
 import java.util.List;
@@ -22,9 +29,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,6 +42,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PromptController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(JacksonConfig.class)
 class PromptControllerTest {
 
     @Autowired
@@ -47,12 +57,15 @@ class PromptControllerTest {
     @MockitoBean
     private CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
 
+    @MockitoBean
+    private CreatePromptUseCase createPromptUseCase;
+
     @AfterEach
     void clearSecurityContext() {
         SecurityContextHolder.clearContext();
     }
 
-    @DisplayName("아직 구현하지 않은 프롬프트 인터페이스 5개는 구현 중 응답을 반환한다")
+    @DisplayName("아직 구현하지 않은 프롬프트 인터페이스 4개는 구현 중 응답을 반환한다")
     @Test
     void promptInterfacesReturnNotImplemented() throws Exception {
         expectNotImplemented(put("/api/v1/prompts/draft")
@@ -62,11 +75,49 @@ class PromptControllerTest {
         expectNotImplemented(get("/api/v1/prompts/draft"));
         expectNotImplemented(delete("/api/v1/prompts/draft"));
 
-        expectNotImplemented(post("/api/v1/prompts")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(validCreateRequest()));
-
         expectNotImplemented(delete("/api/v1/prompts/1"));
+    }
+
+    @DisplayName("인증 사용자의 프롬프트를 생성하고 201 응답을 반환한다")
+    @Test
+    void createPrompt() throws Exception {
+        Instant updatedAt = Instant.parse("2026-07-28T12:00:00Z");
+        Mockito.when(createPromptUseCase.create(Mockito.any()))
+                .thenReturn(new PromptCommandInfo(
+                        10L,
+                        PromptStatus.ACTIVE,
+                        PromptVisibility.PUBLIC,
+                        0L,
+                        updatedAt
+                ));
+
+        mockMvc.perform(post("/api/v1/prompts")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        })
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(validCreateRequest().replace(
+                                "회의록 자동 정리",
+                                "가".repeat(Prompt.MAX_TITLE_LENGTH)
+                        )))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-201"))
+                .andExpect(jsonPath("$.result.promptId").value(10))
+                .andExpect(jsonPath("$.result.status").value("ACTIVE"))
+                .andExpect(jsonPath("$.result.visibility").value("PUBLIC"))
+                .andExpect(jsonPath("$.result.pricePoint").value(0))
+                .andExpect(jsonPath("$.result.updatedAt").value("2026-07-28T21:00:00+09:00"))
+                .andExpect(jsonPath("$.result.promptBody").doesNotExist());
+
+        ArgumentCaptor<CreatePromptCommand> captor = ArgumentCaptor.forClass(CreatePromptCommand.class);
+        Mockito.verify(createPromptUseCase).create(captor.capture());
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().userId()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().title())
+                .hasSize(Prompt.MAX_TITLE_LENGTH);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().visibility())
+                .isEqualTo(PromptVisibility.PUBLIC);
     }
 
     @DisplayName("인증 사용자의 이미지 업로드 URL을 발급한다")
@@ -124,9 +175,13 @@ class PromptControllerTest {
         expectNotImplemented(get("/api/v1/prompts/me/insights"));
     }
 
-    @DisplayName("임시저장은 제목이 공백이거나 20자를 초과하면 거절한다")
+    @DisplayName("생성과 임시저장은 500자 제목을 허용하고 공백이거나 500자를 초과하면 거절한다")
     @Test
-    void draftTitleValidation() throws Exception {
+    void promptTitleValidation() throws Exception {
+        expectNotImplemented(put("/api/v1/prompts/draft")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "\"}"));
+
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -135,9 +190,14 @@ class PromptControllerTest {
 
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"title":"123456789012345678901"}
-                        """));
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH + 1) + "\"}"));
+
+        expectBadRequest(post("/api/v1/prompts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validCreateRequest().replace(
+                        "회의록 자동 정리",
+                        "가".repeat(Prompt.MAX_TITLE_LENGTH + 1)
+                )));
     }
 
     @DisplayName("MASTER 콘텐츠 타입은 생성 요청에서 허용하지 않는다")
@@ -166,15 +226,64 @@ class PromptControllerTest {
                 .content("""
                         {
                           "title":"회의록 자동 정리",
+                          "description":"회의록을 정리합니다.",
                           "outputType":"IMAGE",
+                          "jobTagIds":[1],
+                          "taskTagIds":[2],
+                          "aiModelTagIds":[3],
                           "contentType":"FREE",
                           "promptBody":"이미지를 생성해 주세요.",
+                          "visibility":"PUBLIC",
                           "images":[
                             {"imageId":"123e4567-e89b-12d3-a456-426614174000","sortOrder":0,"thumbnail":true},
                             {"imageId":"123e4567-e89b-12d3-a456-426614174001","sortOrder":1,"thumbnail":true}
                           ]
                         }
+                """));
+    }
+
+    @DisplayName("프롬프트 이미지 목록에 null 원소를 허용하지 않는다")
+    @Test
+    void nullImageIsRejected() throws Exception {
+        expectBadRequest(post("/api/v1/prompts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        {
+                          "title":"회의록 자동 정리",
+                          "description":"회의록을 정리합니다.",
+                          "outputType":"IMAGE",
+                          "jobTagIds":[1],
+                          "taskTagIds":[2],
+                          "aiModelTagIds":[3],
+                          "contentType":"FREE",
+                          "promptBody":"이미지를 생성해 주세요.",
+                          "visibility":"PUBLIC",
+                          "images":[null]
+                        }
                         """));
+    }
+
+    @DisplayName("설명, 직군·태스크·AI 모델, 공개 범위와 이미지는 생성 요청에 필수다")
+    @Test
+    void requiredPromptCreationFieldsAreRejectedWhenMissing() throws Exception {
+        mockMvc.perform(post("/api/v1/prompts")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "title":"회의록 자동 정리",
+                                  "outputType":"TEXT",
+                                  "contentType":"FREE",
+                                  "promptBody":"회의록을 정리해 주세요."
+                                }
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"))
+                .andExpect(jsonPath("$.result.description").exists())
+                .andExpect(jsonPath("$.result.jobTagIds").exists())
+                .andExpect(jsonPath("$.result.taskTagIds").exists())
+                .andExpect(jsonPath("$.result.visibility").exists())
+                .andExpect(jsonPath("$.result.images").exists());
     }
 
     @DisplayName("업로드 URL 요청은 허용 형식과 이미지 크기 정책을 검증한다")
@@ -291,7 +400,12 @@ class PromptControllerTest {
                   "customAiModel":"GPT 4.1 Mini",
                   "contentType":"FREE",
                   "promptBody":"회의록을 읽고 결정 사항과 할 일을 정리해 주세요.",
-                  "images":[]
+                  "visibility":"PUBLIC",
+                  "images":[{
+                    "imageId":"123e4567-e89b-12d3-a456-426614174000",
+                    "sortOrder":0,
+                    "thumbnail":true
+                  }]
                 }
                 """;
     }

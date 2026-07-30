@@ -174,13 +174,16 @@ public interface PromptControllerDocs {
     @Operation(
             summary = "[PROMPT-004] 프롬프트 게시물 생성",
             description = "프롬프트 게시물을 생성합니다. FREE는 0포인트, PREMIUM은 추후 확정할 서버 고정 가격을 적용하며 "
-                    + "요청에서 가격을 입력받지 않습니다. 원본 이미지는 백엔드 워터마크 처리 후 저장합니다."
+                    + "요청에서 가격을 입력받지 않습니다. 설명, 직군·태스크·AI 모델 태그, 공개 범위와 "
+                    + "READY 이미지 한 장 이상이 필수입니다. 원본 이미지는 백엔드 워터마크 처리 후 저장합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "프롬프트 생성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 생성 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "이미지 소유권 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "사용자, 태그 또는 이미지 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미지 상태 또는 중복 연결 충돌")
     })
     ResponseEntity<ApiResponse<PromptCommandResponse>> createPrompt(
             @Parameter(hidden = true)

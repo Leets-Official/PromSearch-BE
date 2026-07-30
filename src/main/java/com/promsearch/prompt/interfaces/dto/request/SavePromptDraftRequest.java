@@ -1,6 +1,7 @@
 package com.promsearch.prompt.interfaces.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -13,9 +14,9 @@ import java.util.List;
 
 @Schema(description = "내 최신 임시저장 생성 또는 교체 요청. 제목 외 필드는 생략할 수 있습니다.")
 public record SavePromptDraftRequest(
-        @Schema(description = "제목. 공백이 아닌 문자가 한 글자 이상 있어야 합니다.", example = "회의록 자동 정리", maxLength = 20)
+        @Schema(description = "제목. 공백이 아닌 문자가 한 글자 이상 있어야 합니다.", example = "회의록 자동 정리", maxLength = Prompt.MAX_TITLE_LENGTH)
         @NotBlank(message = "title must not be blank")
-        @Size(max = 20, message = "title must be 20 characters or less")
+        @Size(max = Prompt.MAX_TITLE_LENGTH, message = "title must be 500 characters or less")
         String title,
 
         @Schema(description = "프롬프트 설명. 별도 최대 글자 수 제한이 없는 TEXT 값입니다.")
