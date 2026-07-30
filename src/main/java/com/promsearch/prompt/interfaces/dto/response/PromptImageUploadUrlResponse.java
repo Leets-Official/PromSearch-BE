@@ -17,7 +17,7 @@ public record PromptImageUploadUrlResponse(
             @Schema(description = "프롬프트 저장 요청에 전달할 이미지 식별자", example = "123e4567-e89b-12d3-a456-426614174000")
             UUID imageId,
 
-            @Schema(description = "S3 임시 영역 업로드용 Presigned URL", example = "https://example-bucket.s3.amazonaws.com/temp/image.webp?signature=...")
+            @Schema(description = "S3 임시 영역 업로드용 Presigned URL", example = "https://example-bucket.s3.amazonaws.com/temp/image.jpg?signature=...")
             URI uploadUrl,
 
             @Schema(description = "업로드 URL 만료 시각", example = "2026-07-23T12:10:00Z")
