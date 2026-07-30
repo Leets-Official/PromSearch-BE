@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.dto.response;
 
+import com.promsearch.community.application.usecase.dto.CommentAuthorInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "댓글 작성자 공개 정보")
@@ -17,4 +18,7 @@ public record CommentAuthorResponse(
         )
         String profileImageUrl
 ) {
+    public static CommentAuthorResponse from(CommentAuthorInfo info) {
+        return new CommentAuthorResponse(info.userId(), info.nickname(), info.profileImageUrl());
+    }
 }
