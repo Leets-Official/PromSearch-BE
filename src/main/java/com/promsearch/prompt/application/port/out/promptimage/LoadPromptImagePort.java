@@ -13,4 +13,7 @@ public interface LoadPromptImagePort {
 
     /** 프롬프트 연결 경쟁을 막기 위해 요청 이미지 전체를 잠금 조회 */
     List<PromptImage> batchGetByIdsForUpdate(Collection<UUID> imageIds);
+
+    /** 이미지 식별자 목록 기반 일괄 조회 */
+    List<PromptImage> listByIds(Collection<UUID> imageIds);
 }

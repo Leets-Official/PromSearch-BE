@@ -13,9 +13,12 @@ import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptImageStatusInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptImageStatusesInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
 import com.promsearch.prompt.domain.Prompt;
@@ -63,6 +66,9 @@ class PromptControllerTest {
 
     @MockitoBean
     private GetPromptDetailUseCase getPromptDetailUseCase;
+
+    @MockitoBean
+    private GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
 
     @AfterEach
     void clearSecurityContext() {
@@ -170,6 +176,52 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.imageId").value(imageId.toString()))
                 .andExpect(jsonPath("$.result.status").value("UPLOADED"));
+    }
+
+    @DisplayName("인증 사용자의 이미지 처리 상태를 요청 순서대로 조회한다")
+    @Test
+    void getImageStatuses() throws Exception {
+        UUID firstImageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        UUID secondImageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
+        Mockito.when(getPromptImageStatusesUseCase.getStatuses(Mockito.any()))
+                .thenReturn(new PromptImageStatusesInfo(List.of(
+                        new PromptImageStatusInfo(firstImageId, PromptImageStatus.PROCESSING, null),
+                        new PromptImageStatusInfo(secondImageId, PromptImageStatus.FAILED, "WATERMARK_RENDER_FAILED")
+                )));
+
+        mockMvc.perform(get("/api/v1/prompt-images/statuses")
+                        .param("imageIds", firstImageId + "," + secondImageId)
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.images[0].imageId").value(firstImageId.toString()))
+                .andExpect(jsonPath("$.result.images[0].status").value("PROCESSING"))
+                .andExpect(jsonPath("$.result.images[0].failureCode").doesNotExist())
+                .andExpect(jsonPath("$.result.images[1].imageId").value(secondImageId.toString()))
+                .andExpect(jsonPath("$.result.images[1].status").value("FAILED"))
+                .andExpect(jsonPath("$.result.images[1].failureCode").value("WATERMARK_RENDER_FAILED"));
+    }
+
+    @DisplayName("이미지 상태 조회는 최대 10개까지만 허용한다")
+    @Test
+    void imageStatusQueryAcceptsUpToTenImageIds() throws Exception {
+        String imageIds = java.util.stream.Stream.generate(UUID::randomUUID)
+                .limit(11)
+                .map(UUID::toString)
+                .collect(java.util.stream.Collectors.joining(","));
+
+        mockMvc.perform(get("/api/v1/prompt-images/statuses")
+                        .param("imageIds", imageIds)
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
     @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")

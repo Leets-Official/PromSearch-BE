@@ -72,7 +72,9 @@ public enum PromptErrorCode implements BaseCode {
     DUPLICATE_IMAGE_ORDER(HttpStatus.CONFLICT, "PROMPT-049", "이미지 정렬 순서는 중복될 수 없습니다."),
     INVALID_PROMPT_DESCRIPTION(HttpStatus.BAD_REQUEST, "PROMPT-050", "프롬프트 설명이 유효하지 않습니다."),
     REQUIRED_TAG_MISSING(HttpStatus.BAD_REQUEST, "PROMPT-051", "필수 태그를 하나 이상 선택해야 합니다."),
-    IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "PROMPT-052", "프롬프트 이미지를 하나 이상 선택해야 합니다.");
+    IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "PROMPT-052", "프롬프트 이미지를 하나 이상 선택해야 합니다."),
+    INVALID_IMAGE_STATUS_QUERY_COUNT(HttpStatus.BAD_REQUEST, "PROMPT-053", "조회할 이미지 개수가 유효하지 않습니다."),
+    DUPLICATE_IMAGE_ID(HttpStatus.BAD_REQUEST, "PROMPT-054", "중복된 이미지 식별자는 조회할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
