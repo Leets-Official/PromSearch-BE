@@ -24,12 +24,13 @@ class PromptOpenApiContractTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @DisplayName("Swagger에 프롬프트 인터페이스 6개와 구현 중 상태를 노출한다")
+    @DisplayName("Swagger에 프롬프트 이미지 업로드 완료를 포함한 인터페이스를 노출한다")
     @Test
     void promptEndpointsAreDocumented() throws Exception {
         JsonNode document = openApiDocument();
 
         assertThat(document.at("/paths/~1api~1v1~1prompt-images~1upload-urls/post").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1prompt-images~1{imageId}~1complete/post").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/put").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1draft/delete").isMissingNode()).isFalse();

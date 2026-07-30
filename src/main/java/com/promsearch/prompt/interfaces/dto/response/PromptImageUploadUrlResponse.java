@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.net.URI;
 import java.time.Instant;
@@ -11,6 +12,18 @@ public record PromptImageUploadUrlResponse(
         @Schema(description = "요청 순서대로 발급된 이미지 업로드 정보")
         List<UploadTarget> images
 ) {
+
+    public static PromptImageUploadUrlResponse from(PromptImageUploadUrlsInfo info) {
+        return new PromptImageUploadUrlResponse(
+                info.images().stream()
+                        .map(image -> new UploadTarget(
+                                image.imageId(),
+                                image.uploadUrl(),
+                                image.expiresAt()
+                        ))
+                        .toList()
+        );
+    }
 
     @Schema(description = "개별 이미지 업로드 정보")
     public record UploadTarget(

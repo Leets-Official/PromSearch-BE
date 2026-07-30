@@ -15,7 +15,10 @@ import org.junit.jupiter.api.Test;
 
 class PromptImageMigrationTest {
 
-    private static final String MIGRATION_PATH = "db/migration/V3__create_prompt_images.sql";
+    private static final String[] MIGRATION_PATHS = {
+            "db/migration/V3__create_prompt_images.sql",
+            "db/migration/V4__add_prompt_image_upload_completion.sql"
+    };
 
     @DisplayName("이미지 자산 마이그레이션은 PostgreSQL 호환 모드의 빈 DB에 적용된다")
     @Test
@@ -32,6 +35,7 @@ class PromptImageMigrationTest {
             }
 
             execute(connection, validInsertSql());
+            execute(connection, validUploadedInsertSql());
 
             assertThatThrownBy(() -> execute(connection, invalidWebpInsertSql()))
                     .isInstanceOf(SQLException.class);
@@ -39,12 +43,14 @@ class PromptImageMigrationTest {
     }
 
     private void executeMigration(Connection connection) throws Exception {
-        try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(MIGRATION_PATH)) {
-            assertThat(inputStream).as("migration resource").isNotNull();
-            String migration = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
-            for (String statement : migration.split(";")) {
-                if (!statement.isBlank()) {
-                    execute(connection, statement);
+        for (String migrationPath : MIGRATION_PATHS) {
+            try (InputStream inputStream = getClass().getClassLoader().getResourceAsStream(migrationPath)) {
+                assertThat(inputStream).as("migration resource").isNotNull();
+                String migration = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                for (String statement : migration.split(";")) {
+                    if (!statement.isBlank()) {
+                        execute(connection, statement);
+                    }
                 }
             }
         }
@@ -79,6 +85,20 @@ class PromptImageMigrationTest {
                 ) values (
                     random_uuid(), 1, 'originals/1/invalid.webp', 'invalid.webp',
                     'WEBP', 1024, 1920, 1080, 'UPLOADING',
+                    0, false, 0, current_timestamp, current_timestamp
+                )
+                """;
+    }
+
+    private String validUploadedInsertSql() {
+        return """
+                insert into prompt_images (
+                    prompt_image_id, uploader_id, original_object_key, original_file_name,
+                    content_type, file_size, width, height, status, etag, uploaded_at,
+                    processing_version, is_thumbnail, lock_version, created_at, updated_at
+                ) values (
+                    random_uuid(), 1, 'prompt-images/original/1/uploaded.jpg', 'uploaded.jpg',
+                    'JPEG', 1024, 1920, 1080, 'UPLOADED', '"etag"', current_timestamp,
                     0, false, 0, current_timestamp, current_timestamp
                 )
                 """;

@@ -25,3 +25,10 @@ auth:
       client-secret: test-google-client-secret
       token-uri: https://oauth2.googleapis.com/token
       user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+storage:
+  s3:
+    bucket: promsearch-test-bucket
+    region: ap-northeast-2
+    original-prefix: prompt-images/original
+    upload-url-expiration: 10m

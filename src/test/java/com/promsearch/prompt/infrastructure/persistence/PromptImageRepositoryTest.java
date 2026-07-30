@@ -8,6 +8,7 @@ import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.infrastructure.persistence.entity.PromptImageJpaEntity;
 import jakarta.persistence.EntityManager;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
@@ -31,6 +32,7 @@ class PromptImageRepositoryTest {
     void saveAndReconstructPromptImage() {
         PromptImage image = prepareImage(1L, "first.jpg");
         PromptImageJpaEntity entity = promptImageRepository.saveAndFlush(PromptImageJpaEntity.from(image));
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
         image.completeProcessing("watermarked/1/" + image.getPromptImageId().id() + ".jpg", 1);
         entity.updateFrom(image);
@@ -45,6 +47,8 @@ class PromptImageRepositoryTest {
         assertThat(savedImage.getUploaderId()).isEqualTo(1L);
         assertThat(savedImage.getOriginalObjectKey()).isEqualTo(image.getOriginalObjectKey());
         assertThat(savedImage.getStatus()).isEqualTo(PromptImageStatus.READY);
+        assertThat(savedImage.getEtag()).isEqualTo("\"etag\"");
+        assertThat(savedImage.getUploadedAt()).isEqualTo(Instant.parse("2026-07-26T01:00:00Z"));
         assertThat(savedImage.getProcessingVersion()).isEqualTo(1);
         assertThat(entity.getLockVersion()).isNotNull();
     }
@@ -100,6 +104,7 @@ class PromptImageRepositoryTest {
 
     private PromptImage readyImage(Long uploaderId, String fileName) {
         PromptImage image = prepareImage(uploaderId, fileName);
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
         image.completeProcessing("watermarked/" + uploaderId + "/" + image.getPromptImageId().id() + ".jpg", 1);
         return image;

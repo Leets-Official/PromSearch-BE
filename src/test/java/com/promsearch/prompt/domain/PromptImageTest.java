@@ -7,6 +7,7 @@ import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -108,6 +109,7 @@ class PromptImageTest {
     void readyImageCanBeAttachedToPrompt() {
         PromptImage image = prepareImage(1_024, 1_920, 1_080);
 
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
         image.completeProcessing("watermarked/1/result.jpg", 1);
         image.attachToPrompt(10L, 1L, 0, true);
@@ -158,6 +160,7 @@ class PromptImageTest {
     @Test
     void failedImageCanRestartProcessing() {
         PromptImage image = prepareImage(1_024, 1_920, 1_080);
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
         image.failProcessing("WATERMARK_RENDER_FAILED");
 
@@ -185,6 +188,7 @@ class PromptImageTest {
     @Test
     void watermarkedObjectUsesDifferentKey() {
         PromptImage image = prepareImage(1_024, 1_920, 1_080);
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
 
         assertPromptError(
@@ -195,9 +199,35 @@ class PromptImageTest {
 
     private PromptImage readyImage() {
         PromptImage image = prepareImage(1_024, 1_920, 1_080);
+        image.completeUpload("\"etag\"", Instant.parse("2026-07-26T01:00:00Z"));
         image.startProcessing();
         image.completeProcessing("watermarked/1/" + image.getPromptImageId().id() + ".jpg", 1);
         return image;
+    }
+
+    @DisplayName("S3 업로드 완료 정보가 확인되면 UPLOADED 상태와 ETag를 보관한다")
+    @Test
+    void completeUploadStoresS3Metadata() {
+        PromptImage image = prepareImage(1_024, 1_920, 1_080);
+        Instant uploadedAt = Instant.parse("2026-07-26T01:00:00Z");
+
+        image.completeUpload("\"etag\"", uploadedAt);
+
+        assertThat(image.getStatus()).isEqualTo(PromptImageStatus.UPLOADED);
+        assertThat(image.getEtag()).isEqualTo("\"etag\"");
+        assertThat(image.getUploadedAt()).isEqualTo(uploadedAt);
+        assertThat(image.isUploadCompleted()).isTrue();
+    }
+
+    @DisplayName("업로드 확인 전에는 워터마크 처리를 시작할 수 없다")
+    @Test
+    void uploadingImageCannotStartProcessing() {
+        PromptImage image = prepareImage(1_024, 1_920, 1_080);
+
+        assertPromptError(
+                image::startProcessing,
+                PromptErrorCode.INVALID_IMAGE_STATUS_TRANSITION
+        );
     }
 
     private PromptImage prepareImage(long fileSize, int width, int height) {
