@@ -33,7 +33,13 @@ class UserCommandServiceTest {
     @BeforeEach
     void setUp() {
         userRepository = new FakeUserRepository();
-        userCommandService = new UserCommandService(userRepository, userRepository, new TestPasswordEncoder());
+        userCommandService = new UserCommandService(
+                userRepository,
+                userRepository,
+                (userId, jobTags, taskTags) -> {
+                },
+                new TestPasswordEncoder()
+        );
     }
 
     @Test

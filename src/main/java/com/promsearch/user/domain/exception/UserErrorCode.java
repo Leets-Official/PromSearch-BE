@@ -17,7 +17,8 @@ public enum UserErrorCode implements BaseCode {
     INVALID_NAME(HttpStatus.BAD_REQUEST, "USER-010", "이름이 유효하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "USER-011", "사용자 권한이 유효하지 않습니다."),
     INVALID_USER_GRADE(HttpStatus.BAD_REQUEST, "USER-012", "사용자 등급이 유효하지 않습니다."),
-    INVALID_POINT(HttpStatus.BAD_REQUEST, "USER-013", "보유 포인트가 유효하지 않습니다.");
+    INVALID_POINT(HttpStatus.BAD_REQUEST, "USER-013", "보유 포인트가 유효하지 않습니다."),
+    INVALID_INTEREST_TAG(HttpStatus.BAD_REQUEST, "USER-014", "관심 태그가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

@@ -56,7 +56,7 @@ public class User {
     }
 
     public static User create(String email, String password, String nickname, String name, String profileImageUrl) {
-        validateRequired(email, password, nickname, name, 0L, UserRole.USER, UserGrade.NORMAL, UserStatus.ACTIVE);
+        validateRequired(email, password, nickname, 0L, UserRole.USER, UserGrade.NORMAL, UserStatus.ACTIVE);
 
         Instant now = Instant.now();
         return User.builder()
@@ -88,7 +88,7 @@ public class User {
             Instant createdAt,
             Instant updatedAt
     ) {
-        validateRequired(email, password, nickname, name, point, role, grade, status);
+        validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()
                 .userId(userId)
@@ -107,7 +107,7 @@ public class User {
     }
 
     public User updateProfile(String email, String nickname, String name, String profileImageUrl) {
-        validateRequired(email, password, nickname, name, point, role, grade, status);
+        validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()
                 .userId(userId)
@@ -126,7 +126,7 @@ public class User {
     }
 
     public User changePassword(String password) {
-        validateRequired(email, password, nickname, name, point, role, grade, status);
+        validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()
                 .userId(userId)
@@ -168,7 +168,6 @@ public class User {
             String email,
             String password,
             String nickname,
-            String name,
             Long point,
             UserRole role,
             UserGrade grade,
@@ -180,11 +179,8 @@ public class User {
         if (password == null || password.isBlank()) {
             throw new UserDomainException(UserErrorCode.INVALID_PASSWORD);
         }
-        if (nickname == null || nickname.isBlank()) {
-            throw new UserDomainException(UserErrorCode.INVALID_NICKNAME);
-        }
-        if (name == null || name.isBlank()) {
-            throw new UserDomainException(UserErrorCode.INVALID_NAME);
+        if (status != UserStatus.DELETED) {
+            NicknamePolicy.validate(nickname);
         }
         if (point == null || point < 0) {
             throw new UserDomainException(UserErrorCode.INVALID_POINT);

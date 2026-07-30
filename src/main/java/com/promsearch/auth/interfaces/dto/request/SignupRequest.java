@@ -3,38 +3,55 @@ package com.promsearch.auth.interfaces.dto.request;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import java.util.List;
 
 @Schema(description = "회원가입 요청")
 public record SignupRequest(
-        @Schema(description = "사용자 실명", example = "홍길동")
-        @NotBlank(message = "이름은 필수입니다.")
+        @Schema(description = "사용자 이름(선택)", example = "홍길동")
         @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
         String name,
 
-        @Schema(description = "서비스에서 사용할 닉네임", example = "prompt-master")
+        @Schema(description = "한글, 영문, 숫자로 구성된 닉네임", example = "프롬프트장인")
         @NotBlank(message = "닉네임은 필수입니다.")
-        @Size(max = 100, message = "닉네임은 100자 이하여야 합니다.")
+        @Size(max = 10, message = "닉네임은 10자 이하여야 합니다.")
+        @Pattern(regexp = "^[가-힣A-Za-z0-9]+$", message = "닉네임은 한글, 영문, 숫자만 사용할 수 있습니다.")
         String nickname,
 
         @Schema(description = "로그인 이메일", example = "gildong@example.com")
         @NotBlank(message = "이메일은 필수입니다.")
         String email,
 
-        @Schema(description = "영문, 숫자, 특수문자 중 2가지 이상을 조합한 로그인 비밀번호", example = "password123!", minLength = 8, maxLength = 20)
+        @Schema(description = "로그인 비밀번호", example = "password123!", minLength = 8, maxLength = 20)
         @NotBlank(message = "비밀번호는 필수입니다.")
-        String password
+        String password,
+
+        @Schema(description = "프로필 이미지 URL(선택)", example = "https://cdn.promsearch.com/profiles/me.png")
+        @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
+        String profileImageUrl,
+
+        @Schema(description = "관심 직군 태그 이름(최대 3개)", example = "[\"학생\", \"개발자\"]")
+        @Size(max = 3, message = "관심 직군은 최대 3개까지 선택할 수 있습니다.")
+        List<String> jobTags,
+
+        @Schema(description = "관심 태스크 태그 이름(최대 3개)", example = "[\"PPT\", \"이미지 생성\"]")
+        @Size(max = 3, message = "관심 태스크는 최대 3개까지 선택할 수 있습니다.")
+        List<String> taskTags
 ) {
 
-    public SignupCommand toCommand() {
-        return SignupCommand.of(name, nickname, email, password);
+    public SignupRequest(String name, String nickname, String email, String password) {
+        this(name, nickname, email, password, null, List.of(), List.of());
     }
 
-    /**
-     * 요청 DTO가 로깅되더라도 평문 비밀번호는 출력하지 않는다.
-     */
+    public SignupCommand toCommand() {
+        return SignupCommand.of(name, nickname, email, password, profileImageUrl, jobTags, taskTags);
+    }
+
     @Override
     public String toString() {
-        return "SignupRequest[name=" + name + ", nickname=" + nickname + ", email=" + email + ", password=***]";
+        return "SignupRequest[name=" + name + ", nickname=" + nickname + ", email=" + email
+                + ", password=***, profileImageUrl=" + profileImageUrl
+                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
     }
 }

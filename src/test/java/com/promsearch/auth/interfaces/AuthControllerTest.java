@@ -83,10 +83,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
-                .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value("홍길동"))
-                .andExpect(jsonPath("$.result.nickname").value("gildong"))
-                .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
+                .andExpect(jsonPath("$.result").doesNotExist())
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
         UserJpaEntity savedUser = userJpaRepository.findByEmail("gildong@example.com").orElseThrow();

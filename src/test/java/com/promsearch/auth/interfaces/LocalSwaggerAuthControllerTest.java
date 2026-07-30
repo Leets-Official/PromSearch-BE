@@ -7,11 +7,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
 import com.promsearch.auth.interfaces.dto.request.SwaggerTokenRequest;
 import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.infrastructure.persistence.UserRepository;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +36,9 @@ class LocalSwaggerAuthControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private UserRepository userRepository;
 
     @DisplayName("local Swagger token API로 받은 Authorization 헤더값으로 보호 API를 호출할 수 있다")
     @Test
@@ -78,15 +81,15 @@ class LocalSwaggerAuthControllerTest {
                 "password123"
         );
 
-        String response = mockMvc.perform(post("/api/v1/auth/signup")
+        mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
-                .andReturn()
-                .getResponse()
-                .getContentAsString();
+                .andExpect(status().isCreated());
 
-        JsonNode result = objectMapper.readTree(response).get("result");
-        return result.get("userId").asLong();
+        return userRepository.findByEmail("gildong@example.com")
+                .orElseThrow()
+                .toDomain()
+                .getUserId()
+                .id();
     }
 }
