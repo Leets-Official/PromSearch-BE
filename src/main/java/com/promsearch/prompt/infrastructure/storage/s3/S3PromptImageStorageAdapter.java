@@ -30,6 +30,9 @@ public class S3PromptImageStorageAdapter implements
         LoadPromptImageObjectMetadataPort,
         DeletePromptImageObjectPort {
 
+    // TODO: READY 이미지 조회에는 별도 배포 URL 포트를 두고 CloudFront OAC로 S3를 비공개 유지
+    // 비공개 이미지 정책이 필요하면 CloudFront Signed URL 또는 Signed Cookie 적용
+
     private final S3Client s3Client;
     private final S3Presigner s3Presigner;
     private final S3StorageProperties properties;
@@ -102,7 +105,12 @@ public class S3PromptImageStorageAdapter implements
         }
     }
 
-    private PromptDomainException storageUnavailable(String operation, String objectKey, SdkException cause) {
+    /** AWS SDK 세부 오류는 로그로 남기고 상위 계층에는 공통 저장소 오류만 노출 */
+    private PromptDomainException storageUnavailable(
+            String operation,
+            String objectKey,
+            SdkException cause
+    ) {
         log.warn("prompt_image_storage_failed operation={} objectKey={} errorType={}",
                 operation, objectKey, cause.getClass().getSimpleName());
         return new PromptDomainException(PromptErrorCode.IMAGE_STORAGE_UNAVAILABLE);

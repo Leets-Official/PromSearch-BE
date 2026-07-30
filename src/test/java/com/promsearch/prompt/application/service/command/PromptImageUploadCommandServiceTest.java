@@ -9,6 +9,7 @@ import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
+import com.promsearch.prompt.application.port.out.promptimage.SavePromptImageWatermarkJobPort;
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.GeneratePromptImageObjectKeyPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
@@ -19,6 +20,7 @@ import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCo
 import com.promsearch.prompt.application.usecase.dto.IssuePromptImageUploadUrlsCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
@@ -51,6 +53,8 @@ class PromptImageUploadCommandServiceTest {
     private LoadPromptImageObjectMetadataPort loadPromptImageObjectMetadataPort;
     @Mock
     private DeletePromptImageObjectPort deletePromptImageObjectPort;
+    @Mock
+    private SavePromptImageWatermarkJobPort savePromptImageWatermarkJobPort;
 
     private PromptImageUploadCommandService service;
 
@@ -62,7 +66,8 @@ class PromptImageUploadCommandServiceTest {
                 generatePromptImageObjectKeyPort,
                 presignPromptImageUploadPort,
                 loadPromptImageObjectMetadataPort,
-                deletePromptImageObjectPort
+                deletePromptImageObjectPort,
+                savePromptImageWatermarkJobPort
         );
     }
 
@@ -119,6 +124,13 @@ class PromptImageUploadCommandServiceTest {
         when(loadPromptImageObjectMetadataPort.getMetadata(image.getOriginalObjectKey()))
                 .thenReturn(new StoredObjectMetadata(1_024, "image/jpeg", "\"etag\"", uploadedAt));
         when(savePromptImagePort.update(image)).thenReturn(image);
+        String watermarkedObjectKey =
+                "prompt-images/watermarked/1/" + image.getPromptImageId().id() + ".jpg";
+        when(generatePromptImageObjectKeyPort.generateWatermarked(
+                image.getUploaderId(),
+                image.getPromptImageId().id(),
+                image.getContentType()
+        )).thenReturn(watermarkedObjectKey);
 
         PromptImageUploadInfo info = service.complete(new CompletePromptImageUploadCommand(
                 1L,
@@ -129,6 +141,14 @@ class PromptImageUploadCommandServiceTest {
         assertThat(info.uploadedAt()).isEqualTo(uploadedAt);
         assertThat(image.getEtag()).isEqualTo("\"etag\"");
         verify(savePromptImagePort).update(image);
+        ArgumentCaptor<PromptImageWatermarkJob> jobCaptor =
+                ArgumentCaptor.forClass(PromptImageWatermarkJob.class);
+        verify(savePromptImageWatermarkJobPort).save(jobCaptor.capture());
+        assertThat(jobCaptor.getValue().imageId()).isEqualTo(image.getPromptImageId().id());
+        assertThat(jobCaptor.getValue().originalObjectKey()).isEqualTo(image.getOriginalObjectKey());
+        assertThat(jobCaptor.getValue().watermarkedObjectKey()).isEqualTo(watermarkedObjectKey);
+        assertThat(jobCaptor.getValue().contentType()).isEqualTo("image/jpeg");
+        assertThat(jobCaptor.getValue().processingVersion()).isEqualTo(1);
     }
 
     @DisplayName("완료 요청 재시도는 S3를 다시 조회하지 않고 기존 결과를 반환한다")
@@ -146,6 +166,7 @@ class PromptImageUploadCommandServiceTest {
         assertThat(info.status()).isEqualTo(PromptImageStatus.UPLOADED);
         verify(loadPromptImageObjectMetadataPort, never()).getMetadata(any());
         verify(savePromptImagePort, never()).update(any());
+        verify(savePromptImageWatermarkJobPort, never()).save(any());
     }
 
     @DisplayName("S3 객체 메타데이터가 다르면 객체를 삭제하고 완료를 거절한다")
@@ -171,6 +192,7 @@ class PromptImageUploadCommandServiceTest {
 
         verify(deletePromptImageObjectPort).delete(image.getOriginalObjectKey());
         verify(savePromptImagePort, never()).update(any());
+        verify(savePromptImageWatermarkJobPort, never()).save(any());
     }
 
     @DisplayName("다른 사용자는 이미지 업로드를 완료할 수 없다")
@@ -188,6 +210,7 @@ class PromptImageUploadCommandServiceTest {
                 .isEqualTo(PromptErrorCode.IMAGE_NOT_OWNED);
 
         verify(loadPromptImageObjectMetadataPort, never()).getMetadata(any());
+        verify(savePromptImageWatermarkJobPort, never()).save(any());
     }
 
     private PromptImage uploadingImage(Long uploaderId) {

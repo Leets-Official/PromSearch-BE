@@ -48,6 +48,7 @@ class S3PromptImageStorageAdapterTest {
                         "promsearch-test-bucket",
                         "ap-northeast-2",
                         "prompt-images/original",
+                        "prompt-images/watermarked",
                         Duration.ofMinutes(10)
                 )
         );
