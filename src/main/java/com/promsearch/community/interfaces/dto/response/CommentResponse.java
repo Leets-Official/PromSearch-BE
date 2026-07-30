@@ -1,40 +1,54 @@
 package com.promsearch.community.interfaces.dto.response;
 
+import com.promsearch.community.application.usecase.dto.CommentInfo;
 import com.promsearch.community.domain.enums.CommentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
-import java.util.List;
 
-@Schema(description = "댓글 및 대댓글 응답")
+@Schema(description = "최상위 댓글 응답")
 public record CommentResponse(
         @Schema(description = "댓글 ID", example = "101")
         Long commentId,
 
-        @Schema(description = "부모 댓글 ID. 최상위 댓글이면 null입니다.", example = "100", nullable = true)
+        @Schema(description = "최상위 댓글이므로 항상 null", nullable = true)
         Long parentCommentId,
 
-        @Schema(description = "작성자 정보")
+        @Schema(description = "작성자 정보. 삭제된 댓글이면 null", nullable = true)
         CommentAuthorResponse author,
 
-        @Schema(description = "댓글 내용", example = "좋은 프롬프트네요.")
+        @Schema(description = "댓글 내용")
         String content,
 
         @Schema(description = "댓글 상태", example = "ACTIVE")
         CommentStatus status,
 
-        @Schema(description = "현재 로그인 사용자가 작성한 댓글인지 여부", example = "true")
+        @Schema(description = "현재 사용자가 작성한 댓글인지 여부")
         boolean mine,
 
-        @Schema(description = "프롬프트 작성자가 작성한 댓글인지 여부", example = "false")
+        @Schema(description = "프롬프트 작성자가 작성한 댓글인지 여부")
         boolean promptAuthor,
 
-        @Schema(description = "작성 시각", example = "2026-07-23T10:30:00+09:00")
+        @Schema(description = "작성 시각")
         Instant createdAt,
 
-        @Schema(description = "수정 시각", example = "2026-07-23T10:30:00+09:00")
+        @Schema(description = "수정 시각")
         Instant updatedAt,
 
-        @Schema(description = "작성 시간 내림차순으로 정렬된 대댓글 목록")
-        List<CommentReplyResponse> replies
+        @Schema(description = "삭제되지 않은 대댓글 개수", example = "3")
+        long replyCount
 ) {
+    public static CommentResponse from(CommentInfo info) {
+        return new CommentResponse(
+                info.commentId(),
+                info.parentCommentId(),
+                info.author() == null ? null : CommentAuthorResponse.from(info.author()),
+                info.content(),
+                info.status(),
+                info.mine(),
+                info.promptAuthor(),
+                info.createdAt(),
+                info.updatedAt(),
+                info.replyCount()
+        );
+    }
 }

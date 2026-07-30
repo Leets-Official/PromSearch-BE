@@ -85,6 +85,65 @@ class PromptOpenApiContractTest {
         assertThat(properties.has("updatedAt")).isTrue();
     }
 
+    @DisplayName("상세 조회 응답은 추천 여부와 전체 추천 수를 분리한다")
+    @Test
+    void promptDetailUsesRecommendationNaming() throws Exception {
+        JsonNode document = openApiDocument();
+        JsonNode interaction = document.at(
+                "/components/schemas/PromptViewerInteractionResponse/properties");
+        JsonNode statistics = document.at(
+                "/components/schemas/PromptStatisticsResponse/properties");
+
+        assertThat(interaction.has("recommended")).isTrue();
+        assertThat(interaction.has("liked")).isFalse();
+        assertThat(statistics.has("recommendCount")).isTrue();
+        assertThat(statistics.has("likeCount")).isFalse();
+    }
+
+    @DisplayName("상세 조회 접근 사유는 잠금과 해제 원인을 모두 구분한다")
+    @Test
+    void promptAccessReasonIncludesUnlockedStates() throws Exception {
+        JsonNode values = openApiDocument()
+                .at("/components/schemas/PromptAccessResponse/properties/reason/enum");
+
+        assertThat(values).extracting(JsonNode::asText)
+                .containsExactly("ANONYMOUS", "PREMIUM", "FREE", "AUTHOR", "UNLOCKED");
+    }
+
+    @DisplayName("상세 조회는 비회원과 JWT 인증 사용자를 모두 허용하도록 문서화한다")
+    @Test
+    void promptDetailDocumentsOptionalJwtAuthentication() throws Exception {
+        JsonNode security = openApiDocument()
+                .at("/paths/~1api~1v1~1prompts~1{promptId}/get/security");
+
+        assertThat(security.isArray()).isTrue();
+        assertThat(security).hasSize(2);
+        assertThat(security.get(0).isEmpty()).isTrue();
+        assertThat(security.get(1).has("jwtBearerAuth")).isTrue();
+    }
+
+    @DisplayName("Swagger에 내 게시완료 목록·인사이트 조회 API를 노출한다")
+    @Test
+    void promptQueryEndpointsAreDocumented() throws Exception {
+        JsonNode document = openApiDocument();
+
+        assertThat(document.at("/paths/~1api~1v1~1prompts~1me/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1prompts~1me~1insights/get").isMissingNode()).isFalse();
+    }
+
+    @DisplayName("게시완료 목록 응답은 목록 카드 필드만 포함하고 프롬프트 본문은 노출하지 않는다")
+    @Test
+    void myPromptSummarySchemaExcludesBody() throws Exception {
+        JsonNode properties = openApiDocument().at("/components/schemas/MyPromptSummaryResponse/properties");
+
+        assertThat(properties.has("promptId")).isTrue();
+        assertThat(properties.has("title")).isTrue();
+        assertThat(properties.has("publishedAt")).isTrue();
+        assertThat(properties.has("viewCount")).isTrue();
+        assertThat(properties.has("recommendCount")).isTrue();
+        assertThat(properties.has("promptBody")).isFalse();
+    }
+
     private JsonNode openApiDocument() throws Exception {
         String response = mockMvc.perform(get("/docs-json"))
                 .andExpect(status().isOk())
