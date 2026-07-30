@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -72,12 +73,25 @@ public class SwaggerSecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/prompts/*/comments",
+                                "/api/v1/comments/*/replies"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/test/health-check",
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue",
                                 "/api/v1/auth/oauth/**",
                                 "/api/v1/auth/swagger-token",
+                                /*
+                                 * 홈 목록과 상대 프로필은 서비스 탐색 흐름의 공개 조회 API입니다.
+                                 * 인증 토큰이 있으면 필터가 SecurityContext를 채워 liked/bookmarked 같은 개인화 필드를 만들 수 있고,
+                                 * 토큰이 없으면 비회원용 응답으로 내려갑니다.
+                                 */
+                                "/api/v1/home/**",
+                                "/api/v1/users/*/profile",
+                                "/api/v1/users/nicknames/availability",
                                 "/error"
                         ).permitAll()
                         .anyRequest().authenticated())

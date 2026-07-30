@@ -2,6 +2,7 @@ package com.promsearch.prompt.interfaces;
 
 import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
@@ -10,17 +11,22 @@ import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
 import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
+import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
 import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
+import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageStatusesResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadUrlResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptInsightResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.UUID;
@@ -143,6 +149,28 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<Void> deletePrompt(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @PathVariable Long promptId
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @GetMapping("/prompts/me")
+    @Override
+    public ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPublishedPrompts(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @RequestParam PromptStatus status,
+            @Min(value = 0, message = "page must be 0 or greater")
+            @RequestParam(defaultValue = "0") int page,
+            @Min(value = 1, message = "size must be 1 or greater")
+            @Max(value = 100, message = "size must be 100 or less")
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        throw new NotImplementedException();
+    }
+
+    @GetMapping("/prompts/me/insights")
+    @Override
+    public ApiResponse<PromptInsightResponse> getMyPromptInsights(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
         throw new NotImplementedException();
     }
