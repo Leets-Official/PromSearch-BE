@@ -5,7 +5,6 @@ import com.promsearch.user.domain.NicknamePolicy;
 import java.util.List;
 
 public record SignupCommand(
-        String name,
         String nickname,
         String email,
         String password,
@@ -22,12 +21,11 @@ public record SignupCommand(
         taskTags = normalizeTags(taskTags);
     }
 
-    public static SignupCommand of(String name, String nickname, String email, String password) {
-        return new SignupCommand(name, nickname, email, password, null, List.of(), List.of());
+    public static SignupCommand of(String nickname, String email, String password) {
+        return new SignupCommand(nickname, email, password, null, List.of(), List.of());
     }
 
     public static SignupCommand of(
-            String name,
             String nickname,
             String email,
             String password,
@@ -35,7 +33,7 @@ public record SignupCommand(
             List<String> jobTags,
             List<String> taskTags
     ) {
-        return new SignupCommand(name, nickname, email, password, profileImageUrl, jobTags, taskTags);
+        return new SignupCommand(nickname, email, password, profileImageUrl, jobTags, taskTags);
     }
 
     private static List<String> normalizeTags(List<String> tags) {
@@ -46,7 +44,7 @@ public record SignupCommand(
 
     @Override
     public String toString() {
-        return "SignupCommand[name=" + name + ", nickname=" + nickname + ", email=" + email
+        return "SignupCommand[nickname=" + nickname + ", email=" + email
                 + ", password=***, profileImageUrl=" + profileImageUrl
                 + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
     }

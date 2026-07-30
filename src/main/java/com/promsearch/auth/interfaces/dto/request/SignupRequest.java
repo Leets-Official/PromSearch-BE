@@ -9,10 +9,6 @@ import java.util.List;
 
 @Schema(description = "회원가입 요청")
 public record SignupRequest(
-        @Schema(description = "사용자 이름(선택)", example = "홍길동")
-        @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
-        String name,
-
         @Schema(description = "한글, 영문, 숫자로 구성된 닉네임", example = "프롬프트장인")
         @NotBlank(message = "닉네임은 필수입니다.")
         @Size(max = 10, message = "닉네임은 10자 이하여야 합니다.")
@@ -40,17 +36,17 @@ public record SignupRequest(
         List<String> taskTags
 ) {
 
-    public SignupRequest(String name, String nickname, String email, String password) {
-        this(name, nickname, email, password, null, List.of(), List.of());
+    public SignupRequest(String nickname, String email, String password) {
+        this(nickname, email, password, null, List.of(), List.of());
     }
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(name, nickname, email, password, profileImageUrl, jobTags, taskTags);
+        return SignupCommand.of(nickname, email, password, profileImageUrl, jobTags, taskTags);
     }
 
     @Override
     public String toString() {
-        return "SignupRequest[name=" + name + ", nickname=" + nickname + ", email=" + email
+        return "SignupRequest[nickname=" + nickname + ", email=" + email
                 + ", password=***, profileImageUrl=" + profileImageUrl
                 + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
     }

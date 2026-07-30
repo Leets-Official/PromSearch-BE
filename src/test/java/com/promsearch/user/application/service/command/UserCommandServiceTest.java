@@ -161,7 +161,7 @@ class UserCommandServiceTest {
 
         userCommandService.delete(1L);
         SignupInfo signupInfo = userCommandService.signup(
-                SignupCommand.of("newName", "oldNick", "old@example.com", "new-password")
+                SignupCommand.of("oldNick", "old@example.com", "new-password")
         );
 
         assertThat(signupInfo.userId()).isEqualTo(2L);

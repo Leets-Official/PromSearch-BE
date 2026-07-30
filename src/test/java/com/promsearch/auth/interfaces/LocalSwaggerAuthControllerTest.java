@@ -2,6 +2,7 @@ package com.promsearch.auth.interfaces;
 
 import static org.hamcrest.Matchers.notNullValue;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,6 +41,27 @@ class LocalSwaggerAuthControllerTest {
     @Autowired
     private UserRepository userRepository;
 
+    @DisplayName("회원가입 Swagger 요청 스키마는 이름을 노출하지 않는다")
+    @Test
+    void signupSchemaDoesNotExposeName() throws Exception {
+        String response = mockMvc.perform(get("/docs-json"))
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse()
+                .getContentAsString();
+
+        var properties = objectMapper.readTree(response)
+                .at("/components/schemas/SignupRequest/properties");
+
+        assertThat(properties.has("name")).isFalse();
+        assertThat(properties.has("nickname")).isTrue();
+        assertThat(properties.has("email")).isTrue();
+        assertThat(properties.has("password")).isTrue();
+        assertThat(properties.has("profileImageUrl")).isTrue();
+        assertThat(properties.has("jobTags")).isTrue();
+        assertThat(properties.has("taskTags")).isTrue();
+    }
+
     @DisplayName("local Swagger token API로 받은 Authorization 헤더값으로 보호 API를 호출할 수 있다")
     @Test
     void swaggerTokenCanAuthorizeProtectedApiInLocal() throws Exception {
@@ -75,7 +97,6 @@ class LocalSwaggerAuthControllerTest {
 
     private Long signupAndGetUserId() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password123"

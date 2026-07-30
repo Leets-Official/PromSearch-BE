@@ -59,7 +59,7 @@ public class UserCommandService implements
                 command.email(),
                 encodedPassword,
                 command.nickname(),
-                normalizeOptional(command.name()),
+                null,
                 normalizeOptional(command.profileImageUrl())
         );
 

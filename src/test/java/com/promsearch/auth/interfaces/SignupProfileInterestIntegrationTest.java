@@ -42,9 +42,8 @@ class SignupProfileInterestIntegrationTest {
     private GoogleOAuthAdapter googleOAuthAdapter;
 
     @Test
-    void signupSavesOptionalProfileImageAndInterestTagsWithoutName() throws Exception {
+    void signupSavesOptionalProfileImageAndInterestTags() throws Exception {
         SignupRequest request = new SignupRequest(
-                null,
                 "개발자1",
                 "interest@example.com",
                 "password123",
@@ -74,7 +73,6 @@ class SignupProfileInterestIntegrationTest {
     @Test
     void signupRejectsDuplicateInterestTags() throws Exception {
         SignupRequest request = new SignupRequest(
-                null,
                 "개발자2",
                 "duplicate-interest@example.com",
                 "password123",
@@ -92,7 +90,6 @@ class SignupProfileInterestIntegrationTest {
     @Test
     void signupRollsBackUserWhenInterestTagDoesNotExist() throws Exception {
         SignupRequest request = new SignupRequest(
-                null,
                 "개발자3",
                 "invalid-interest@example.com",
                 "password123",

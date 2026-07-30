@@ -22,7 +22,7 @@ public interface AuthControllerDocs {
     @Operation(
             summary = "[AUTH-001] 회원가입",
             description = "이메일, 비밀번호, 닉네임으로 신규 사용자를 생성합니다. "
-                    + "이름과 프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 각각 최대 3개까지 선택할 수 있습니다."
+                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 각각 최대 3개까지 선택할 수 있습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
