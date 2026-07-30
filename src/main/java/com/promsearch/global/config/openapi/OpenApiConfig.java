@@ -2,6 +2,7 @@ package com.promsearch.global.config.openapi;
 
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
+import com.promsearch.community.interfaces.CommentController;
 import com.promsearch.test.interfaces.TestController;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.models.Components;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import java.util.List;
 import org.springdoc.core.customizers.OperationCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -43,6 +45,18 @@ public class OpenApiConfig {
                     || handlerMethod.hasMethodAnnotation(SecurityRequirements.class)) {
                 return operation;
             }
+
+            boolean commentListEndpoint = CommentController.class.isAssignableFrom(beanType)
+                    && (handlerMethod.getMethod().getName().equals("getComments")
+                        || handlerMethod.getMethod().getName().equals("getReplies"));
+            if (commentListEndpoint) {
+                operation.setSecurity(List.of(
+                        new SecurityRequirement(),
+                        new SecurityRequirement().addList(JWT_BEARER_SCHEME)
+                ));
+                return operation;
+            }
+
             return operation.addSecurityItem(new SecurityRequirement().addList(JWT_BEARER_SCHEME));
         };
     }
