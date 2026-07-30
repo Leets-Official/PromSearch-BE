@@ -30,6 +30,16 @@ class CommentSecurityTest {
                 .andExpect(jsonPath("$.code").value("COMMUNITY-015"));
     }
 
+    @DisplayName("커서와 조회 크기가 있어도 댓글 목록은 인증 없이 접근할 수 있다")
+    @Test
+    void anonymousUserCanAccessPaginatedCommentList() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/999999/comments")
+                        .param("cursor", "1")
+                        .param("size", "2"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("COMMUNITY-015"));
+    }
+
     @DisplayName("0 또는 음수 프롬프트 ID는 인증 오류 대신 유효성 오류로 처리한다")
     @Test
     void invalidPromptIdIsHandledByApplication() throws Exception {
@@ -53,6 +63,16 @@ class CommentSecurityTest {
     @Test
     void anonymousUserCanAccessReplyList() throws Exception {
         mockMvc.perform(get("/api/v1/comments/999999/replies"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("COMMUNITY-001"));
+    }
+
+    @DisplayName("커서와 조회 크기가 있어도 답글 목록은 인증 없이 접근할 수 있다")
+    @Test
+    void anonymousUserCanAccessPaginatedReplyList() throws Exception {
+        mockMvc.perform(get("/api/v1/comments/999999/replies")
+                        .param("cursor", "1")
+                        .param("size", "2"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("COMMUNITY-001"));
     }

@@ -23,7 +23,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -73,14 +72,11 @@ public class SwaggerSecurityConfig {
                         .accessDeniedHandler(apiAccessDeniedHandler))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(SWAGGER_PATHS).permitAll()
-                        .requestMatchers(RegexRequestMatcher.regexMatcher(
+                        .requestMatchers(
                                 HttpMethod.GET,
-                                "^/api/v1/prompts/[^/]+/comments$"
-                        )).permitAll()
-                        .requestMatchers(RegexRequestMatcher.regexMatcher(
-                                HttpMethod.GET,
-                                "^/api/v1/comments/[^/]+/replies$"
-                        )).permitAll()
+                                "/api/v1/prompts/*/comments",
+                                "/api/v1/comments/*/replies"
+                        ).permitAll()
                         .requestMatchers(
                                 "/test/health-check",
                                 "/api/v1/auth/signup",
