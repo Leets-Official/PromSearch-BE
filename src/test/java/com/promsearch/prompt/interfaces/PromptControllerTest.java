@@ -12,6 +12,7 @@ import com.promsearch.global.config.JacksonConfig;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
@@ -62,6 +63,9 @@ class PromptControllerTest {
 
     @MockitoBean
     private CreatePromptUseCase createPromptUseCase;
+
+    @MockitoBean
+    private GetPromptDetailUseCase getPromptDetailUseCase;
 
     @MockitoBean
     private GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;

@@ -7,6 +7,7 @@ import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
@@ -53,6 +54,7 @@ public class PromptController implements PromptControllerDocs {
     private final IssuePromptImageUploadUrlsUseCase issuePromptImageUploadUrlsUseCase;
     private final CompletePromptImageUploadUseCase completePromptImageUploadUseCase;
     private final CreatePromptUseCase createPromptUseCase;
+    private final GetPromptDetailUseCase getPromptDetailUseCase;
     private final GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
 
     @GetMapping("/prompts/{promptId}")
@@ -61,7 +63,9 @@ public class PromptController implements PromptControllerDocs {
             @PathVariable Long promptId,
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException("프롬프트 상세 조회 기능은 아직 구현되지 않았습니다.");
+        return ApiResponse.onSuccess(PromptDetailResponse.from(
+                getPromptDetailUseCase.get(promptId, user == null ? null : user.userId())
+        ));
     }
 
     /** 업로드 요청 DTO 변환 및 Presigned URL 발급 응답 반환 */
