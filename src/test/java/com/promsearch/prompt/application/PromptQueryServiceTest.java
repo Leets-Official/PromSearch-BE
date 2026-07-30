@@ -7,6 +7,8 @@ import com.promsearch.prompt.application.port.out.prompt.HomePromptReader;
 import com.promsearch.prompt.application.service.query.PromptQueryService;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
+import com.promsearch.prompt.application.usecase.dto.HomePromptSort;
+import com.promsearch.prompt.domain.enums.PromptOutputType;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -20,6 +22,32 @@ class PromptQueryServiceTest {
     void setUp() {
         homePromptReader = new FakeHomePromptReader();
         promptQueryService = new PromptQueryService(homePromptReader);
+    }
+
+    @Test
+    void listPromptsDelegatesFiltersToReader() {
+        HomePromptListInfo result = promptQueryService.listPrompts(
+                HomePromptListQuery.filtered(
+                        1L,
+                        2L,
+                        List.of(3L, 4L, 3L),
+                        5L,
+                        PromptOutputType.IMAGE,
+                        "  썸네일  ",
+                        HomePromptSort.POPULAR,
+                        0,
+                        12
+                )
+        );
+
+        assertThat(homePromptReader.lastListQuery.viewerUserId()).isEqualTo(1L);
+        assertThat(homePromptReader.lastListQuery.jobTagId()).isEqualTo(2L);
+        assertThat(homePromptReader.lastListQuery.taskTagIds()).containsExactly(3L, 4L);
+        assertThat(homePromptReader.lastListQuery.aiModelTagId()).isEqualTo(5L);
+        assertThat(homePromptReader.lastListQuery.outputType()).isEqualTo(PromptOutputType.IMAGE);
+        assertThat(homePromptReader.lastListQuery.keyword()).isEqualTo("썸네일");
+        assertThat(homePromptReader.lastListQuery.sort()).isEqualTo(HomePromptSort.POPULAR);
+        assertThat(result.prompts()).isEmpty();
     }
 
     @Test
@@ -53,8 +81,15 @@ class PromptQueryServiceTest {
 
     private static class FakeHomePromptReader implements HomePromptReader {
 
+        private HomePromptListQuery lastListQuery;
         private HomePromptListQuery lastPopularQuery;
         private HomePromptListQuery lastJobQuery;
+
+        @Override
+        public HomePromptListInfo listPrompts(HomePromptListQuery query) {
+            this.lastListQuery = query;
+            return emptyResult(query);
+        }
 
         @Override
         public HomePromptListInfo listPopularPrompts(HomePromptListQuery query) {
