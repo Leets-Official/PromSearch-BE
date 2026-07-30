@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 @RestControllerAdvice(annotations = RestController.class)
@@ -41,6 +42,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.warn("[CONSTRAINT VIOLATION] {}", messages);
         return buildResponse(e, CommonErrorCode.BAD_REQUEST, HttpHeaders.EMPTY, request, messages);
+    }
+
+    // RequestParam, PathVariable 등에 바인딩할 수 없는 값(예: 잘못된 enum 문자열)을 처리한다.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<Object> handleMethodArgumentTypeMismatch(
+            MethodArgumentTypeMismatchException e,
+            WebRequest request
+    ) {
+        String message = "%s 값이 유효하지 않습니다.".formatted(e.getName());
+
+        log.warn("[TYPE MISMATCH] {}", message);
+        return buildResponse(e, CommonErrorCode.INVALID_INPUT_VALUE, HttpHeaders.EMPTY, request, message);
     }
 
     // @Valid Request Body 검증 실패를 필드별 메시지로 정리한다.

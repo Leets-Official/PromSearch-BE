@@ -36,6 +36,10 @@ class LikeOpenApiContractTest {
         assertThat(deleteOperation.isMissingNode()).isFalse();
         assertThat(createOperation.path("summary").asText()).contains("[COMMUNITY-001]");
         assertThat(deleteOperation.path("summary").asText()).contains("[COMMUNITY-002]");
+        assertThat(createOperation.path("description").asText())
+                .contains("작업자: 한하람", "구현 상태: 구현완료");
+        assertThat(deleteOperation.path("description").asText())
+                .contains("작업자: 한하람", "구현 상태: 구현완료");
         assertThat(createOperation.path("security").get(0).has("jwtBearerAuth")).isTrue();
         assertThat(deleteOperation.path("security").get(0).has("jwtBearerAuth")).isTrue();
 
