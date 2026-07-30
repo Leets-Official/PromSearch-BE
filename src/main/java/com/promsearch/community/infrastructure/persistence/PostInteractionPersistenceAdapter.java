@@ -2,6 +2,7 @@ package com.promsearch.community.infrastructure.persistence;
 
 import com.promsearch.community.application.port.out.postinteraction.CreatePostInteractionPort;
 import com.promsearch.community.application.port.out.postinteraction.DeletePostInteractionPort;
+import com.promsearch.community.application.port.out.postinteraction.DeletePostInteractionIfPresentPort;
 import com.promsearch.community.domain.PostInteraction;
 import com.promsearch.community.domain.enums.InteractionType;
 import com.promsearch.community.domain.exception.CommunityDomainException;
@@ -15,14 +16,16 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class PostInteractionPersistenceAdapter implements
         CreatePostInteractionPort,
-        DeletePostInteractionPort {
+        DeletePostInteractionPort,
+        DeletePostInteractionIfPresentPort {
 
     private final PostInteractionRepository postInteractionRepository;
 
     @Override
-    public void create(PostInteraction postInteraction) {
+    public PostInteraction create(PostInteraction postInteraction) {
         try {
-            postInteractionRepository.saveAndFlush(PostInteractionJpaEntity.from(postInteraction));
+            return postInteractionRepository.saveAndFlush(PostInteractionJpaEntity.from(postInteraction))
+                    .toDomain();
         } catch (DataIntegrityViolationException exception) {
             throw new CommunityDomainException(CommunityErrorCode.ALREADY_INTERACTED);
         }
@@ -38,5 +41,14 @@ public class PostInteractionPersistenceAdapter implements
         if (deletedCount == 0) {
             throw new CommunityDomainException(CommunityErrorCode.INTERACTION_NOT_FOUND);
         }
+    }
+
+    @Override
+    public void deleteIfPresent(Long userId, Long postId, InteractionType interactionType) {
+        postInteractionRepository.deleteByUserIdAndPostIdAndInteractionType(
+                userId,
+                postId,
+                interactionType
+        );
     }
 }

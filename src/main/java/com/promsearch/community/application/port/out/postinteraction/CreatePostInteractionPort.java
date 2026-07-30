@@ -4,5 +4,5 @@ import com.promsearch.community.domain.PostInteraction;
 
 public interface CreatePostInteractionPort {
 
-    void create(PostInteraction postInteraction);
+    PostInteraction create(PostInteraction postInteraction);
 }
