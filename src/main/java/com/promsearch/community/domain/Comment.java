@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public class Comment {
 
+    private static final int MAX_CONTENT_LENGTH = 500;
+
     private final CommentId commentId;
     private final Long postId;
     private final Long userId;
@@ -90,6 +92,34 @@ public class Comment {
                 .build();
     }
 
+    public void updateContent(Long requesterId, String content) {
+        validateRequester(requesterId);
+        validateActive();
+        validateContent(content);
+        this.content = content;
+    }
+
+    public void delete(Long requesterId) {
+        validateRequester(requesterId);
+        validateActive();
+        this.status = CommentStatus.DELETED;
+    }
+
+    public void validateCanHaveReply() {
+        validateActive();
+        if (parentCommentId != null) {
+            throw new CommunityDomainException(CommunityErrorCode.REPLY_TO_REPLY_NOT_ALLOWED);
+        }
+    }
+
+    public boolean isActive() {
+        return status == CommentStatus.ACTIVE;
+    }
+
+    public boolean isDeleted() {
+        return status == CommentStatus.DELETED;
+    }
+
     private static void validateRequired(Long postId, Long userId, String content) {
         if (postId == null || postId <= 0) {
             throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_POST_ID);
@@ -99,6 +129,38 @@ public class Comment {
         }
         if (content == null || content.isBlank()) {
             throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
+        }
+        validateContentLength(content);
+    }
+
+    private static void validateContent(String content) {
+        if (content == null || content.isBlank()) {
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
+        }
+        validateContentLength(content);
+    }
+
+    private static void validateContentLength(String content) {
+        if (content.length() > MAX_CONTENT_LENGTH) {
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_CONTENT);
+        }
+    }
+
+    private void validateRequester(Long requesterId) {
+        if (requesterId == null || requesterId <= 0) {
+            throw new CommunityDomainException(CommunityErrorCode.INVALID_COMMENT_USER_ID);
+        }
+        if (!userId.equals(requesterId)) {
+            throw new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_OWNED);
+        }
+    }
+
+    private void validateActive() {
+        if (status == CommentStatus.DELETED) {
+            throw new CommunityDomainException(CommunityErrorCode.COMMENT_ALREADY_DELETED);
+        }
+        if (status != CommentStatus.ACTIVE) {
+            throw new CommunityDomainException(CommunityErrorCode.COMMENT_NOT_FOUND);
         }
     }
 

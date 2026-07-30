@@ -15,6 +15,8 @@ import lombok.Getter;
 @Getter
 public class Prompt {
 
+    public static final int MAX_TITLE_LENGTH = 500;
+
     private final PromptId promptId;
     private final Long userId;
     private final String title;
@@ -212,7 +214,7 @@ public class Prompt {
         if (userId == null || userId <= 0) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_USER_ID);
         }
-        if (title == null || title.isBlank() || title.strip().length() > 20) {
+        if (title == null || title.isBlank() || title.strip().length() > MAX_TITLE_LENGTH) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_TITLE);
         }
         if (outputType == null) {

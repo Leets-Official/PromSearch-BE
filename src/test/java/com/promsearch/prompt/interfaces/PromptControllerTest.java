@@ -18,6 +18,7 @@ import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -100,7 +101,10 @@ class PromptControllerTest {
                             return request;
                         })
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(validCreateRequest()))
+                        .content(validCreateRequest().replace(
+                                "회의록 자동 정리",
+                                "가".repeat(Prompt.MAX_TITLE_LENGTH)
+                        )))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
@@ -114,6 +118,8 @@ class PromptControllerTest {
         ArgumentCaptor<CreatePromptCommand> captor = ArgumentCaptor.forClass(CreatePromptCommand.class);
         Mockito.verify(createPromptUseCase).create(captor.capture());
         org.assertj.core.api.Assertions.assertThat(captor.getValue().userId()).isEqualTo(1L);
+        org.assertj.core.api.Assertions.assertThat(captor.getValue().title())
+                .hasSize(Prompt.MAX_TITLE_LENGTH);
         org.assertj.core.api.Assertions.assertThat(captor.getValue().visibility())
                 .isEqualTo(PromptVisibility.PUBLIC);
     }
@@ -166,9 +172,20 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.result.status").value("UPLOADED"));
     }
 
-    @DisplayName("임시저장은 제목이 공백이거나 20자를 초과하면 거절한다")
+    @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
     @Test
-    void draftTitleValidation() throws Exception {
+    void promptQueryEndpointsReturnNotImplemented() throws Exception {
+        expectNotImplemented(get("/api/v1/prompts/me").param("status", "ACTIVE"));
+        expectNotImplemented(get("/api/v1/prompts/me/insights"));
+    }
+
+    @DisplayName("생성과 임시저장은 500자 제목을 허용하고 공백이거나 500자를 초과하면 거절한다")
+    @Test
+    void promptTitleValidation() throws Exception {
+        expectNotImplemented(put("/api/v1/prompts/draft")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "\"}"));
+
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("""
@@ -177,9 +194,14 @@ class PromptControllerTest {
 
         expectBadRequest(put("/api/v1/prompts/draft")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                        {"title":"123456789012345678901"}
-                        """));
+                .content("{\"title\":\"" + "가".repeat(Prompt.MAX_TITLE_LENGTH + 1) + "\"}"));
+
+        expectBadRequest(post("/api/v1/prompts")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(validCreateRequest().replace(
+                        "회의록 자동 정리",
+                        "가".repeat(Prompt.MAX_TITLE_LENGTH + 1)
+                )));
     }
 
     @DisplayName("MASTER 콘텐츠 타입은 생성 요청에서 허용하지 않는다")
@@ -306,6 +328,32 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"))
                 .andExpect(jsonPath("$.result['images[0].contentType']")
                         .value("이미지 형식은 JPEG 또는 PNG만 지원합니다."));
+    }
+
+    @DisplayName("게시완료 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRejectsInvalidStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me").param("status", "PUBLISHED"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @DisplayName("게시완료 목록 조회는 status 파라미터가 없으면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRequiresStatus() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @DisplayName("게시완료 목록 조회는 size가 100을 초과하면 400을 반환한다")
+    @Test
+    void getMyPublishedPromptsRejectsOversizedPage() throws Exception {
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "ACTIVE")
+                        .param("size", "101"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
     private void expectNotImplemented(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)

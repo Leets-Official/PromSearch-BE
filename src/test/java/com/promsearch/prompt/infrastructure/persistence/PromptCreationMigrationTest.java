@@ -3,6 +3,7 @@ package com.promsearch.prompt.infrastructure.persistence;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.promsearch.prompt.domain.Prompt;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Connection;
@@ -23,7 +24,7 @@ class PromptCreationMigrationTest {
         String databaseUrl = "jdbc:h2:mem:prompt_creation_migration;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE";
 
         try (Connection connection = DriverManager.getConnection(databaseUrl, "sa", "")) {
-            execute(connection, "create table posts (post_id bigint primary key)");
+            execute(connection, "create table posts (post_id bigint primary key, title varchar(20))");
             execute(connection, """
                     create table tags (
                         tag_id bigint primary key,
@@ -38,7 +39,8 @@ class PromptCreationMigrationTest {
                     """);
             executeMigration(connection);
 
-            execute(connection, "insert into posts (post_id) values (1)");
+            execute(connection, "insert into posts (post_id, title) values (1, '"
+                    + "가".repeat(Prompt.MAX_TITLE_LENGTH) + "')");
             try (ResultSet resultSet = query(
                     connection,
                     "select visibility from posts where post_id = 1"

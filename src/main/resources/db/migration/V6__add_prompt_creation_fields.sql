@@ -1,3 +1,5 @@
+alter table posts alter column title type varchar(500);
+
 alter table posts add column visibility varchar(20) not null default 'PUBLIC';
 
 alter table posts add constraint ck_posts_visibility

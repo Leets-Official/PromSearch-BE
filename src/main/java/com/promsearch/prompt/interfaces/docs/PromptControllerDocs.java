@@ -2,15 +2,19 @@ package com.promsearch.prompt.interfaces.docs;
 
 import com.promsearch.global.exception.constant.CommonErrorCode;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
+import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
 import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
+import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadUrlResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptInsightResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -19,20 +23,23 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.util.UUID;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 /**
- * 작업자: 한하람
- * 구현 상태: 구현 중
+ * 생성·임시저장·삭제·이미지 업로드 API 작업자: 한하람 (구현 중)
  */
 @Tag(
         name = "Prompt | 프롬프트",
-        description = "프롬프트 상세 조회·생성·단일 임시저장·삭제·이미지 업로드 API | 작업자: 한하람 | 상태: 구현 중"
+        description = "프롬프트 상세 조회·생성·단일 임시저장·삭제·이미지 업로드 API(작업자: 한하람, 상태: 구현 중), "
+                + "내 게시완료 목록·인사이트 조회 API"
 )
 public interface PromptControllerDocs {
 
@@ -205,5 +212,50 @@ public interface PromptControllerDocs {
 
             @Parameter(description = "삭제할 프롬프트 식별자", example = "1")
             @Positive(message = "promptId must be greater than 0") @PathVariable Long promptId
+    );
+
+    @Operation(
+            summary = "[PROMPT-006] 내 게시완료 목록 조회",
+            description = "인증된 사용자가 작성한 게시완료(status=ACTIVE) 프롬프트 목록을 최신순으로 페이지네이션 조회합니다. "
+                    + "논리 삭제된 게시물은 제외하며, 목록 카드에 필요한 필드만 포함하고 프롬프트 본문은 포함하지 않습니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시완료 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+    })
+    ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPublishedPrompts(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+
+            @Parameter(
+                    description = "조회할 게시물 처리 상태. 이 API는 게시완료된 게시물만 다루므로 ACTIVE만 지원합니다.",
+                    example = "ACTIVE"
+            )
+            @RequestParam PromptStatus status,
+
+            @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
+            @Min(value = 0, message = "page must be 0 or greater")
+            @RequestParam(defaultValue = "0") int page,
+
+            @Parameter(description = "페이지당 항목 수", example = "20")
+            @Min(value = 1, message = "size must be 1 or greater")
+            @Max(value = 100, message = "size must be 100 or less")
+            @RequestParam(defaultValue = "20") int size
+    );
+
+    @Operation(
+            summary = "[PROMPT-007] 내 게시글 인사이트 조회",
+            description = "인증된 사용자가 작성한 전체 게시물(논리 삭제 제외) 기준으로 누적 조회수·추천수·복사수를 실시간 합산(SUM)해 반환합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인사이트 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+    })
+    ApiResponse<PromptInsightResponse> getMyPromptInsights(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 }
