@@ -80,6 +80,7 @@ public class SwaggerSecurityConfig {
                                 "/api/v1/auth/swagger-token",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
