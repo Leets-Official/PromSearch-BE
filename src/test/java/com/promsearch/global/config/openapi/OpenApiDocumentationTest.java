@@ -6,6 +6,7 @@ import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.community.interfaces.CommentController;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.interfaces.HomeController;
+import com.promsearch.prompt.interfaces.PromptController;
 import com.promsearch.user.interfaces.UserController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -60,6 +61,13 @@ class OpenApiDocumentationTest {
                 new AuthController(null, null, null, null),
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
         ));
+        Operation promptDetailOperation = customizer.customize(new Operation(), handlerMethod(
+                new PromptController(null, null, null, null),
+                PromptController.class.getMethod(
+                        "getPromptDetail",
+                        Long.class,
+                        AuthenticatedUserPrincipal.class)
+        ));
         Operation homeOperation = customizer.customize(new Operation(), handlerMethod(
                 new HomeController(null),
                 HomeController.class.getMethod("listPopularPrompts", AuthenticatedUserPrincipal.class, int.class, int.class)
@@ -92,6 +100,10 @@ class OpenApiDocumentationTest {
                 .containsExactly("jwtBearerAuth");
         assertThat(publicUserOperation.getSecurity()).isNull();
         assertThat(authOperation.getSecurity()).isNull();
+        assertThat(promptDetailOperation.getSecurity()).hasSize(2);
+        assertThat(promptDetailOperation.getSecurity().get(0)).isEmpty();
+        assertThat(promptDetailOperation.getSecurity().get(1))
+                .containsKey("jwtBearerAuth");
         assertThat(homeOperation.getSecurity()).isNull();
         assertThat(publicProfileOperation.getSecurity()).isNull();
         assertThat(commentListOperation.getSecurity()).hasSize(2);

@@ -23,6 +23,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -94,6 +95,9 @@ public class SwaggerSecurityConfig {
                                 "/api/v1/users/nicknames/availability",
                                 "/error"
                         ).permitAll()
+                        .requestMatchers(RegexRequestMatcher.regexMatcher(
+                                HttpMethod.GET,
+                                "^/api/v1/prompts/(?!draft$)[^/]+$")).permitAll()
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

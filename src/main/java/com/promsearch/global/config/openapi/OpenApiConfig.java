@@ -3,6 +3,7 @@ package com.promsearch.global.config.openapi;
 import com.promsearch.auth.interfaces.AuthController;
 import com.promsearch.auth.interfaces.LocalSwaggerAuthController;
 import com.promsearch.community.interfaces.CommentController;
+import com.promsearch.prompt.interfaces.PromptController;
 import com.promsearch.test.interfaces.TestController;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.models.Components;
@@ -53,10 +54,12 @@ public class OpenApiConfig {
                 return operation;
             }
 
+            boolean promptDetailEndpoint = PromptController.class.isAssignableFrom(beanType)
+                    && handlerMethod.getMethod().getName().equals("getPromptDetail");
             boolean commentListEndpoint = CommentController.class.isAssignableFrom(beanType)
                     && (handlerMethod.getMethod().getName().equals("getComments")
                         || handlerMethod.getMethod().getName().equals("getReplies"));
-            if (commentListEndpoint) {
+            if (promptDetailEndpoint || commentListEndpoint) {
                 operation.setSecurity(List.of(
                         new SecurityRequirement(),
                         new SecurityRequirement().addList(JWT_BEARER_SCHEME)
