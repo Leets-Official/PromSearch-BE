@@ -11,15 +11,23 @@ import com.promsearch.user.application.usecase.CheckNicknameAvailabilityUseCase;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
 import com.promsearch.user.application.usecase.GetPublicUserProfileUseCase;
+import com.promsearch.user.application.usecase.GetMyProfileUseCase;
+import com.promsearch.user.application.usecase.IssueProfileImageUploadUrlUseCase;
+import com.promsearch.user.application.usecase.CompleteProfileImageUploadUseCase;
+import com.promsearch.user.application.usecase.RemoveProfileImageUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityInfo;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityQuery;
 import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
+import com.promsearch.user.application.usecase.dto.UserProfileInfo;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.domain.enums.UserGrade;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -50,6 +58,18 @@ class UserControllerTest {
     @MockitoBean
     private GetPublicUserProfileUseCase getPublicUserProfileUseCase;
 
+    @MockitoBean
+    private GetMyProfileUseCase getMyProfileUseCase;
+
+    @MockitoBean
+    private IssueProfileImageUploadUrlUseCase issueProfileImageUploadUrlUseCase;
+
+    @MockitoBean
+    private CompleteProfileImageUploadUseCase completeProfileImageUploadUseCase;
+
+    @MockitoBean
+    private RemoveProfileImageUseCase removeProfileImageUseCase;
+
     @DisplayName("사용 가능한 닉네임이면 available true를 반환한다")
     @Test
     void checkNicknameAvailabilityReturnsTrue() throws Exception {
@@ -78,13 +98,30 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @DisplayName("내 프로필 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @DisplayName("내 프로필 조회는 저장된 프로필 정보를 반환한다")
     @Test
-    void getMyProfileReturnsNotImplemented() throws Exception {
-        mockMvc.perform(get("/api/v1/users/me"))
-                .andExpect(status().isNotImplemented())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("COMMON-501"));
+    void getMyProfileReturnsProfile() throws Exception {
+        when(getMyProfileUseCase.getMyProfile(1L)).thenReturn(new UserProfileInfo(
+                "nickname",
+                "https://cdn.test/profile.png",
+                "user@test.com",
+                100L,
+                "NORMAL"
+        ));
+
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new AuthenticatedUserPrincipal(1L, "USER"),
+                null,
+                java.util.List.of()
+        ));
+        try {
+            mockMvc.perform(get("/api/v1/users/me"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.username").value("nickname"))
+                    .andExpect(jsonPath("$.result.profileImageUrl").value("https://cdn.test/profile.png"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
     }
 
     @DisplayName("공개 프로필 조회는 실명을 응답하지 않는다")

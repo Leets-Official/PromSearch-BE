@@ -15,14 +15,10 @@ public record UpdateUserProfileRequest(
         String nickname,
 
         @Schema(description = "변경할 이메일. null이면 기존 값을 유지합니다.", example = "gildong@example.com")
-        String email,
-
-        @Schema(description = "변경할 프로필 이미지 URL. 빈 문자열이면 제거합니다.", example = "https://cdn.example.com/profile.png")
-        @Size(max = 500, message = "profileImageUrl must be 500 characters or less")
-        String profileImageUrl
+        String email
 ) {
 
     public UpdateUserProfileCommand toCommand(Long userId) {
-        return UpdateUserProfileCommand.of(userId, name, nickname, email, profileImageUrl);
+        return UpdateUserProfileCommand.of(userId, name, nickname, email);
     }
 }

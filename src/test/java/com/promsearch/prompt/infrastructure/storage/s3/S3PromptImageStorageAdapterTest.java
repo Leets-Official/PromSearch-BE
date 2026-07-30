@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort.StoredObjectMetadata;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageUploadPort.PresignedUpload;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageOperations;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
 import java.net.URLDecoder;
@@ -41,17 +43,16 @@ class S3PromptImageStorageAdapterTest {
                         AwsBasicCredentials.create("test-access-key", "test-secret-key")
                 ))
                 .build();
-        adapter = new S3PromptImageStorageAdapter(
+        S3ObjectStorageOperations operations = new S3ObjectStorageOperations(
                 s3Client,
                 s3Presigner,
-                new S3StorageProperties(
+                new S3ObjectStorageProperties(
                         "promsearch-test-bucket",
                         "ap-northeast-2",
-                        "prompt-images/original",
-                        "prompt-images/watermarked",
                         Duration.ofMinutes(10)
                 )
         );
+        adapter = new S3PromptImageStorageAdapter(operations);
     }
 
     @AfterEach

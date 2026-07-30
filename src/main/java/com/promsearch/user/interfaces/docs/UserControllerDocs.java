@@ -4,10 +4,13 @@ import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
 import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.request.ProfileImageUploadUrlRequest;
+import com.promsearch.user.interfaces.dto.request.CompleteProfileImageUploadRequest;
 import com.promsearch.user.interfaces.dto.response.NicknameAvailabilityResponse;
 import com.promsearch.user.interfaces.dto.response.PublicUserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserResponse;
+import com.promsearch.user.interfaces.dto.response.ProfileImageUploadUrlResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -25,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface UserControllerDocs {
 
     String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
-    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
     String IMPLEMENTED_BY_RUCHAN04 = "**작업자: ruchan04 | 구현 상태: 구현완료**\n\n";
 
     @Operation(
@@ -48,13 +50,12 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-004] 내 프로필 조회",
-            description = NOT_IMPLEMENTED_BY_KALLIN1
+            description = IMPLEMENTED_BY_HANHARAM
                     + "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ApiResponse<UserProfileResponse> getMyProfile(
             @Parameter(hidden = true)
@@ -77,6 +78,35 @@ public interface UserControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
             @Valid @RequestBody UpdateUserProfileRequest request
+    );
+
+    @Operation(
+            summary = "[USER-007] 프로필 이미지 업로드 URL 발급",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "JPEG, PNG, WEBP 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned PUT URL을 발급합니다."
+    )
+    ApiResponse<ProfileImageUploadUrlResponse> issueProfileImageUploadUrl(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @Valid @RequestBody ProfileImageUploadUrlRequest request
+    );
+
+    @Operation(
+            summary = "[USER-008] 프로필 이미지 업로드 완료",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "S3 객체의 소유권과 메타데이터를 검증한 후 사용자 프로필 이미지로 연결합니다."
+    )
+    ApiResponse<UserResponse> completeProfileImageUpload(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @Valid @RequestBody CompleteProfileImageUploadRequest request
+    );
+
+    @Operation(
+            summary = "[USER-009] 프로필 이미지 제거",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "프로필 이미지를 제거하고 S3 관리 객체는 트랜잭션 커밋 후 정리합니다."
+    )
+    ApiResponse<Void> removeProfileImage(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 
     @Operation(

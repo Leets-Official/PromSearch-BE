@@ -1,7 +1,7 @@
 package com.promsearch.worker.prompt.infrastructure.sqs;
 
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -23,7 +23,7 @@ public class WorkerSqsConfig {
 
     /** 20초 Long Polling보다 긴 HTTP 응답 제한을 가진 SQS 동기 클라이언트 */
     @Bean
-    SqsClient workerSqsClient(S3StorageProperties storageProperties) {
+    SqsClient workerSqsClient(S3ObjectStorageProperties storageProperties) {
         // TODO: 소비 동시성을 높일 때 Apache HTTP 커넥션 풀로 전환하고
         // maxConnections를 Long Polling 수 + 삭제 요청 동시성 이상으로 설정
         return SqsClient.builder()
