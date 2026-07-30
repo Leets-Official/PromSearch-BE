@@ -12,6 +12,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -72,12 +73,18 @@ public class SwaggerSecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         .requestMatchers(
+                                HttpMethod.GET,
+                                "/api/v1/prompts/*/comments",
+                                "/api/v1/comments/*/replies"
+                        ).permitAll()
+                        .requestMatchers(
                                 "/test/health-check",
                                 "/api/v1/auth/signup",
                                 "/api/v1/auth/login",
                                 "/api/v1/auth/reissue",
                                 "/api/v1/auth/oauth/**",
                                 "/api/v1/auth/swagger-token",
+                                "/api/v1/users/nicknames/availability",
                                 "/error"
                         ).permitAll()
                         .anyRequest().authenticated())

@@ -4,17 +4,53 @@ import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
 import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
+import com.promsearch.user.interfaces.dto.response.NicknameAvailabilityResponse;
+import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "User | 사용자", description = "내 프로필 수정, 비밀번호 변경, 회원 탈퇴 API")
+@Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 비밀번호 변경, 회원 탈퇴 API")
 public interface UserControllerDocs {
+
+    @Operation(
+            summary = "[USER-005] 닉네임 중복 확인",
+            description = "회원가입 또는 프로필 수정 전에 닉네임 사용 가능 여부를 확인합니다. "
+                    + "응답은 안내용이며 실제 저장 시 서버에서 중복 여부를 다시 검증합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "닉네임 사용 가능 여부 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "닉네임 누락 또는 길이 제한 초과")
+    })
+    ApiResponse<NicknameAvailabilityResponse> checkNicknameAvailability(
+            @Parameter(description = "확인할 닉네임", required = true, example = "prompt-master")
+            @RequestParam
+            @NotBlank(message = "닉네임은 필수입니다.")
+            @Size(max = 100, message = "닉네임은 100자 이하여야 합니다.")
+            String nickname
+    );
+
+    @Operation(
+            summary = "[USER-004] 내 프로필 조회",
+            description = "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+    })
+    ApiResponse<UserProfileResponse> getMyProfile(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
 
     @Operation(
             summary = "[USER-001] 내 프로필 수정",
