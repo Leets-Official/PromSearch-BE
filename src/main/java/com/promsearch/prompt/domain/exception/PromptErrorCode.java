@@ -44,7 +44,29 @@ public enum PromptErrorCode implements BaseCode {
     IMAGE_UPLOAD_METADATA_MISMATCH(HttpStatus.BAD_REQUEST, "PROMPT-037", "업로드된 이미지 정보가 요청과 일치하지 않습니다."),
     IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "PROMPT-038", "이미지 저장소를 사용할 수 없습니다."),
     INVALID_IMAGE_UPLOAD_METADATA(HttpStatus.BAD_REQUEST, "PROMPT-039", "이미지 업로드 완료 정보가 유효하지 않습니다."),
-    INVALID_IMAGE_UPLOAD_COUNT(HttpStatus.BAD_REQUEST, "PROMPT-040", "업로드할 이미지 개수가 유효하지 않습니다.");
+    INVALID_IMAGE_UPLOAD_COUNT(HttpStatus.BAD_REQUEST, "PROMPT-040", "업로드할 이미지 개수가 유효하지 않습니다."),
+    INVALID_IMAGE_WATERMARK_JOB(HttpStatus.BAD_REQUEST, "PROMPT-041", "워터마크 작업 정보가 유효하지 않습니다."),
+    IMAGE_ORIGINAL_DOWNLOAD_FAILED(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "PROMPT-042",
+            "원본 이미지를 불러올 수 없습니다."
+    ),
+    INVALID_IMAGE_SOURCE(HttpStatus.CONFLICT, "PROMPT-043", "처리할 원본 이미지가 유효하지 않습니다."),
+    IMAGE_WATERMARK_RENDER_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "PROMPT-044",
+            "이미지 워터마크 처리에 실패했습니다."
+    ),
+    IMAGE_WATERMARK_UPLOAD_FAILED(
+            HttpStatus.SERVICE_UNAVAILABLE,
+            "PROMPT-045",
+            "워터마크 이미지를 저장할 수 없습니다."
+    ),
+    IMAGE_PROCESSING_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "PROMPT-046",
+            "이미지 처리 중 오류가 발생했습니다."
+    );
 
     private final HttpStatus httpStatus;
     private final String code;

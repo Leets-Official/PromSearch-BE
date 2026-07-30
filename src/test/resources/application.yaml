@@ -31,4 +31,5 @@ storage:
     bucket: promsearch-test-bucket
     region: ap-northeast-2
     original-prefix: prompt-images/original
+    watermarked-prefix: prompt-images/watermarked
     upload-url-expiration: 10m

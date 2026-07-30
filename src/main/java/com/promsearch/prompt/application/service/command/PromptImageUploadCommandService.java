@@ -2,6 +2,7 @@ package com.promsearch.prompt.application.service.command;
 
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
+import com.promsearch.prompt.application.port.out.promptimage.SavePromptImageWatermarkJobPort;
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.GeneratePromptImageObjectKeyPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
@@ -15,11 +16,13 @@ import com.promsearch.prompt.application.usecase.dto.IssuePromptImageUploadUrlsC
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo.UploadTarget;
+import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -43,6 +46,7 @@ public class PromptImageUploadCommandService implements
         CompletePromptImageUploadUseCase {
 
     private static final int MAX_IMAGE_COUNT = 10;
+    private static final int CURRENT_WATERMARK_PROCESSING_VERSION = 1;
 
     private final LoadPromptImagePort loadPromptImagePort;
     private final SavePromptImagePort savePromptImagePort;
@@ -50,6 +54,7 @@ public class PromptImageUploadCommandService implements
     private final PresignPromptImageUploadPort presignPromptImageUploadPort;
     private final LoadPromptImageObjectMetadataPort loadPromptImageObjectMetadataPort;
     private final DeletePromptImageObjectPort deletePromptImageObjectPort;
+    private final SavePromptImageWatermarkJobPort savePromptImageWatermarkJobPort;
 
     /**
      * 이미지 자산 준비 → Object Key 생성 → Presigned PUT URL 발급 → 이미지 일괄 저장
@@ -129,12 +134,31 @@ public class PromptImageUploadCommandService implements
 
         image.completeUpload(metadata.etag(), metadata.lastModified());
         PromptImage updatedImage = savePromptImagePort.update(image);
-        // TODO: 워터마크 단계 구현 시 커밋 이후 Outbox·SQS 이벤트를 발행하고 Worker에서 PROCESSING → READY 처리
+        savePromptImageWatermarkJobPort.save(createWatermarkJob(updatedImage));
         log.info("prompt_image_upload_completed uploaderId={} imageId={}",
                 command.uploaderId(), command.imageId());
         return PromptImageUploadInfo.from(updatedImage);
     }
 
+    /** 업로드 완료 이미지의 원본·결과 Key와 처리 버전을 담은 Outbox 작업 생성 */
+    private PromptImageWatermarkJob createWatermarkJob(PromptImage image) {
+        return new PromptImageWatermarkJob(
+                PromptImageWatermarkJob.CURRENT_EVENT_VERSION,
+                UUID.randomUUID(),
+                image.getPromptImageId().id(),
+                image.getOriginalObjectKey(),
+                generatePromptImageObjectKeyPort.generateWatermarked(
+                        image.getUploaderId(),
+                        image.getPromptImageId().id(),
+                        image.getContentType()
+                ),
+                image.getContentType().getMimeType(),
+                CURRENT_WATERMARK_PROCESSING_VERSION,
+                Instant.now()
+        );
+    }
+
+    /** S3 HeadObject 결과가 URL 발급 당시 선언한 이미지 메타데이터와 일치하는지 확인 */
     private boolean matchesExpectedMetadata(PromptImage image, StoredObjectMetadata metadata) {
         return metadata != null
                 && metadata.contentLength() == image.getFileSize()
@@ -146,6 +170,7 @@ public class PromptImageUploadCommandService implements
                 .equals(image.getContentType().getMimeType());
     }
 
+    /** HTTP 검증을 우회한 호출에서도 업로더와 이미지 개수 정책을 보장 */
     private void validateIssueCommand(IssuePromptImageUploadUrlsCommand command) {
         if (command == null
                 || command.images() == null
