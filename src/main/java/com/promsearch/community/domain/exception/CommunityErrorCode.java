@@ -22,7 +22,9 @@ public enum CommunityErrorCode implements BaseCode {
     COMMENT_TARGET_PROMPT_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMUNITY-015", "댓글을 작성할 프롬프트를 찾을 수 없습니다."),
     COMMENT_AUTHOR_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMUNITY-016", "댓글 작성자를 찾을 수 없습니다."),
     REPLY_TO_REPLY_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "COMMUNITY-017", "답글에는 추가 답글을 작성할 수 없습니다."),
-    COMMENT_COUNT_UPDATE_FAILED(HttpStatus.CONFLICT, "COMMUNITY-018", "댓글 수를 갱신할 수 없습니다.");
+    COMMENT_COUNT_UPDATE_FAILED(HttpStatus.CONFLICT, "COMMUNITY-018", "댓글 수를 갱신할 수 없습니다."),
+    INTERACTION_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMUNITY-019", "상호작용할 수 있는 프롬프트를 찾을 수 없습니다."),
+    INTERACTION_COUNT_INCONSISTENT(HttpStatus.CONFLICT, "COMMUNITY-020", "프롬프트 상호작용 수가 올바르지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

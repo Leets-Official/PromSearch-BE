@@ -21,9 +21,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Admin | 신고함", description = "신고 목록 조회 및 처리 API | 신고 생성 API는 이번 범위에서 미구현")
 public interface AdminReportControllerDocs {
 
+    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
+
     @Operation(
             summary = "[ADMIN-REPORT-001] 신고 목록 조회",
-            description = "신고 대상 타입(POST, COMMENT)과 처리 상태로 필터링해 신고 목록을 페이지네이션 조회합니다."
+            description = NOT_IMPLEMENTED_BY_KALLIN1
+                    + "신고 대상 타입(POST, COMMENT)과 처리 상태로 필터링해 신고 목록을 페이지네이션 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 목록 조회 성공"),
@@ -50,7 +53,8 @@ public interface AdminReportControllerDocs {
 
     @Operation(
             summary = "[ADMIN-REPORT-002] 신고 처리 상태 변경",
-            description = "신고를 RESOLVED 또는 REJECTED 상태로 변경합니다. PENDING으로는 되돌릴 수 없습니다."
+            description = NOT_IMPLEMENTED_BY_KALLIN1
+                    + "신고를 RESOLVED 또는 REJECTED 상태로 변경합니다. PENDING으로는 되돌릴 수 없습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 처리 성공"),

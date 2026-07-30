@@ -28,7 +28,11 @@ class UserOpenApiContractTest {
     void getMyProfileIsDocumented() throws Exception {
         JsonNode document = openApiDocument();
 
-        assertThat(document.at("/paths/~1api~1v1~1users~1me/get").isMissingNode()).isFalse();
+        JsonNode operation = document.at("/paths/~1api~1v1~1users~1me/get");
+
+        assertThat(operation.isMissingNode()).isFalse();
+        assertThat(operation.path("description").asText())
+                .contains("작업자: kallin1", "구현 상태: 미구현");
     }
 
     @DisplayName("Swagger에 닉네임 중복 확인 API와 필수 query parameter를 노출한다")
@@ -40,6 +44,8 @@ class UserOpenApiContractTest {
         assertThat(operation.isMissingNode()).isFalse();
         assertThat(operation.at("/parameters/0/name").asText()).isEqualTo("nickname");
         assertThat(operation.at("/parameters/0/required").asBoolean()).isTrue();
+        assertThat(operation.path("description").asText())
+                .contains("작업자: 한하람", "구현 상태: 구현완료");
     }
 
     @DisplayName("프로필 조회 응답 스키마는 username, profileImageUrl, email, point, gradeName을 포함한다")

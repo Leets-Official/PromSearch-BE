@@ -24,9 +24,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 비밀번호 변경, 회원 탈퇴, 공개 프로필 조회 API")
 public interface UserControllerDocs {
 
+    String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
+    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
+    String IMPLEMENTED_BY_RUCHAN04 = "**작업자: ruchan04 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
             summary = "[USER-005] 닉네임 중복 확인",
-            description = "회원가입 또는 프로필 수정 전에 닉네임 사용 가능 여부를 확인합니다. "
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "회원가입 또는 프로필 수정 전에 닉네임 사용 가능 여부를 확인합니다. "
                     + "응답은 안내용이며 실제 저장 시 서버에서 중복 여부를 다시 검증합니다."
     )
     @ApiResponses({
@@ -43,7 +48,8 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-004] 내 프로필 조회",
-            description = "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
+            description = NOT_IMPLEMENTED_BY_KALLIN1
+                    + "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
@@ -57,7 +63,8 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-001] 내 프로필 수정",
-            description = "인증된 사용자의 이름, 닉네임, 이메일, 프로필 이미지를 수정합니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "인증된 사용자의 이름, 닉네임, 이메일, 프로필 이미지를 수정합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
@@ -74,7 +81,8 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-002] 내 비밀번호 변경",
-            description = "현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "현재 비밀번호를 확인한 뒤 새 비밀번호로 변경합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
@@ -90,7 +98,8 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-003] 회원 탈퇴",
-            description = "인증된 사용자를 논리 삭제하고 재가입 허용을 위해 재사용 가능한 개인정보를 익명화합니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "인증된 사용자를 논리 삭제하고 재가입 허용을 위해 재사용 가능한 개인정보를 익명화합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "회원 탈퇴 성공"),
@@ -103,7 +112,8 @@ public interface UserControllerDocs {
 
     @Operation(
             summary = "[USER-006] 상대 프로필 조회",
-            description = "프롬프트 카드에서 작성자 프로필을 열 때 필요한 공개 프로필 정보만 반환합니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "프롬프트 카드에서 작성자 프로필을 열 때 필요한 공개 프로필 정보만 반환합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "상대 프로필 조회 성공"),

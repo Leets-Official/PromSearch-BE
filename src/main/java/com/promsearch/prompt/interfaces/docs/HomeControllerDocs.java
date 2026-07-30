@@ -19,9 +19,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Home", description = "홈 프롬프트 카드 목록 API")
 public interface HomeControllerDocs {
 
+    String IMPLEMENTED_BY_RUCHAN04 = "**작업자: ruchan04 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
             summary = "[HOME-001] 인기 프롬프트 목록 조회",
-            description = "좋아요 수 기준으로 정렬된 홈 프롬프트 카드를 조회합니다. 로그인 사용자는 liked/bookmarked 상태도 함께 받습니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "좋아요 수 기준으로 정렬된 홈 프롬프트 카드를 조회합니다. 로그인 사용자는 liked/bookmarked 상태도 함께 받습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인기 프롬프트 목록 조회 성공"),
@@ -40,7 +43,8 @@ public interface HomeControllerDocs {
 
     @Operation(
             summary = "[HOME-002] 직군별 프롬프트 목록 조회",
-            description = "JOB 타입 태그로 필터링한 홈 프롬프트 카드를 최신순으로 조회합니다."
+            description = IMPLEMENTED_BY_RUCHAN04
+                    + "JOB 타입 태그로 필터링한 홈 프롬프트 카드를 최신순으로 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "직군별 프롬프트 목록 조회 성공"),

@@ -55,7 +55,7 @@ class PromptOpenApiContractTest {
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/get", "PROMPT-006", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/delete", "PROMPT-007", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts/post", "PROMPT-008", "한하람", "구현완료");
-        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "한하람", "구현중");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "한하람", "미구현");
     }
 
     @DisplayName("생성 요청 스키마는 가격 입력과 MASTER를 노출하지 않고 제목을 500자로 제한한다")
@@ -129,6 +129,8 @@ class PromptOpenApiContractTest {
 
         assertThat(document.at("/paths/~1api~1v1~1prompts~1me/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1me~1insights/get").isMissingNode()).isFalse();
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1me/get", "PROMPT-010", "kallin1", "미구현");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1me~1insights/get", "PROMPT-011", "kallin1", "미구현");
     }
 
     @DisplayName("게시완료 목록 응답은 목록 카드 필드만 포함하고 프롬프트 본문은 노출하지 않는다")

@@ -29,9 +29,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Comment | 댓글", description = "댓글 조회·작성·수정·삭제 및 대댓글 작성 API")
 public interface CommentControllerDocs {
 
+    String IMPLEMENTED_BY_LEE_GUNHEE = "**작업자: 이건희 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
             summary = "[COMMENT-001] 댓글 목록 조회",
-            description = """
+            description = IMPLEMENTED_BY_LEE_GUNHEE + """
                     프롬프트의 최상위 댓글을 작성 시간 내림차순으로 커서 조회합니다. 인증 토큰은 선택 사항입니다.
                     각 댓글은 활성 대댓글 수인 replyCount를 포함하며, 대댓글 목록은 별도 API로 조회합니다.
                     mine은 로그인 사용자 본인의 댓글 여부이고, promptAuthor는 프롬프트 작성자의 댓글 여부입니다.
@@ -114,7 +116,8 @@ public interface CommentControllerDocs {
 
     @Operation(
             summary = "[COMMENT-006] 대댓글 목록 조회",
-            description = "특정 최상위 댓글의 대댓글을 작성 시간 오름차순으로 커서 조회합니다."
+            description = IMPLEMENTED_BY_LEE_GUNHEE
+                    + "특정 최상위 댓글의 대댓글을 작성 시간 오름차순으로 커서 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -148,7 +151,10 @@ public interface CommentControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 
-    @Operation(summary = "[COMMENT-002] 댓글 작성", description = "인증된 사용자가 프롬프트에 최상위 댓글을 작성합니다.")
+    @Operation(
+            summary = "[COMMENT-002] 댓글 작성",
+            description = IMPLEMENTED_BY_LEE_GUNHEE + "인증된 사용자가 프롬프트에 최상위 댓글을 작성합니다."
+    )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "댓글 작성 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -187,7 +193,10 @@ public interface CommentControllerDocs {
             @Valid @RequestBody CreateCommentRequest request
     );
 
-    @Operation(summary = "[COMMENT-003] 댓글 수정", description = "댓글 작성자 본인이 댓글 내용을 수정합니다.")
+    @Operation(
+            summary = "[COMMENT-003] 댓글 수정",
+            description = IMPLEMENTED_BY_LEE_GUNHEE + "댓글 작성자 본인이 댓글 내용을 수정합니다."
+    )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -234,7 +243,10 @@ public interface CommentControllerDocs {
             @Valid @RequestBody UpdateCommentRequest request
     );
 
-    @Operation(summary = "[COMMENT-004] 댓글 삭제", description = "댓글 작성자 본인이 댓글을 논리 삭제합니다.")
+    @Operation(
+            summary = "[COMMENT-004] 댓글 삭제",
+            description = IMPLEMENTED_BY_LEE_GUNHEE + "댓글 작성자 본인이 댓글을 논리 삭제합니다."
+    )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "댓글 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(
@@ -273,7 +285,8 @@ public interface CommentControllerDocs {
 
     @Operation(
             summary = "[COMMENT-005] 대댓글 작성",
-            description = "인증된 사용자가 최상위 댓글에 대댓글을 작성합니다. 대댓글에는 추가 대댓글을 작성할 수 없습니다."
+            description = IMPLEMENTED_BY_LEE_GUNHEE
+                    + "인증된 사용자가 최상위 댓글에 대댓글을 작성합니다. 대댓글에는 추가 대댓글을 작성할 수 없습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "대댓글 작성 성공"),

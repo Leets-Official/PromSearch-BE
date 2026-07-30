@@ -45,7 +45,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PromptControllerDocs {
 
     String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
-    String IN_PROGRESS_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현중**\n\n";
+    String NOT_IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 미구현**\n\n";
+    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
     String IMPLEMENTED_BY_LEE_GUNHEE = "**작업자: 이건희 | 구현 상태: 구현완료 (PR #51)**\n\n";
 
     @Operation(
@@ -232,7 +233,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-009] 프롬프트 게시물 삭제",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = NOT_IMPLEMENTED_BY_HANHARAM
                     + "작성자 본인의 프롬프트를 즉시 일반 조회에서 제외하도록 논리 삭제합니다. "
                     + "deletedAt 기록 후 30일이 지나면 DB 데이터와 S3 이미지를 물리 삭제합니다."
     )
@@ -254,7 +255,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-010] 내 게시완료 목록 조회",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = NOT_IMPLEMENTED_BY_KALLIN1
                     + "인증된 사용자가 작성한 게시완료(status=ACTIVE) 프롬프트 목록을 최신순으로 페이지네이션 조회합니다. "
                     + "논리 삭제된 게시물은 제외하며, 목록 카드에 필요한 필드만 포함하고 프롬프트 본문은 포함하지 않습니다."
     )
@@ -286,7 +287,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-011] 내 게시글 인사이트 조회",
-            description = IN_PROGRESS_BY_HANHARAM
+            description = NOT_IMPLEMENTED_BY_KALLIN1
                     + "인증된 사용자가 작성한 전체 게시물(논리 삭제 제외) 기준으로 누적 조회수·추천수·복사수를 실시간 합산(SUM)해 반환합니다."
     )
     @ApiResponses({
