@@ -15,6 +15,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long> {
 
+    boolean existsByIdAndStatus(Long id, CommentStatus status);
+
     Optional<CommentJpaEntity> findByIdAndPostIdAndParentCommentIdIsNull(Long id, Long postId);
 
     Optional<CommentJpaEntity> findByIdAndParentCommentIdAndStatus(

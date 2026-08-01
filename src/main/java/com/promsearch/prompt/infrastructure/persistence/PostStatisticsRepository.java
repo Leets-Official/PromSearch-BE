@@ -6,9 +6,18 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.repository.query.Param;
 
 public interface PostStatisticsRepository extends JpaRepository<PostStatisticsJpaEntity, Long> {
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update PostStatisticsJpaEntity statistics
+            set statistics.reportCount = statistics.reportCount + 1
+            where statistics.postId = :promptId
+            """)
+    int incrementReportCount(@Param("promptId") Long promptId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

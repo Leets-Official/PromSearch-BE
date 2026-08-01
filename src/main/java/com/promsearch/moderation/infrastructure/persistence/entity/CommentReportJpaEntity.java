@@ -1,10 +1,10 @@
 package com.promsearch.moderation.infrastructure.persistence.entity;
 
 import com.promsearch.common.BaseEntity;
-import com.promsearch.moderation.domain.PostReport;
-import com.promsearch.moderation.domain.PostReport.PostReportId;
-import com.promsearch.moderation.domain.enums.ReportReason;
+import com.promsearch.moderation.domain.CommentReport;
+import com.promsearch.moderation.domain.CommentReport.CommentReportId;
 import com.promsearch.moderation.domain.enums.ReportStatus;
+import com.promsearch.moderation.domain.enums.ReportReason;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -20,11 +20,9 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(
-        name = "post_reports",
-        uniqueConstraints = @UniqueConstraint(name = "uk_post_reports_user_post", columnNames = {"reporter_id", "post_id"})
-)
-public class PostReportJpaEntity extends BaseEntity {
+@Table(name = "comment_reports", uniqueConstraints = @UniqueConstraint(
+        name = "uk_comment_reports_user_comment", columnNames = {"reporter_id", "comment_id"}))
+public class CommentReportJpaEntity extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,8 +32,8 @@ public class PostReportJpaEntity extends BaseEntity {
     @Column(name = "reporter_id", nullable = false)
     private Long reporterId;
 
-    @Column(name = "post_id", nullable = false)
-    private Long postId;
+    @Column(name = "comment_id", nullable = false)
+    private Long commentId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reason", nullable = false, length = 30)
@@ -49,25 +47,25 @@ public class PostReportJpaEntity extends BaseEntity {
     private ReportStatus status;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private PostReportJpaEntity(Long reporterId, Long postId, ReportReason reason, String description) {
+    private CommentReportJpaEntity(Long reporterId, Long commentId, ReportReason reason, String description) {
         this.reporterId = reporterId;
-        this.postId = postId;
+        this.commentId = commentId;
         this.reason = reason;
         this.description = description;
         this.status = ReportStatus.PENDING;
     }
 
-    public static PostReportJpaEntity from(PostReport report) {
-        return PostReportJpaEntity.builder()
+    public static CommentReportJpaEntity from(CommentReport report) {
+        return CommentReportJpaEntity.builder()
                 .reporterId(report.getReporterId())
-                .postId(report.getPostId())
+                .commentId(report.getCommentId())
                 .reason(report.getReason())
                 .description(report.getDescription())
                 .build();
     }
 
-    public PostReport toDomain() {
-        return PostReport.reconstruct(
-                new PostReportId(id), reporterId, postId, reason, description, status, getCreatedAt());
+    public CommentReport toDomain() {
+        return CommentReport.reconstruct(
+                new CommentReportId(id), reporterId, commentId, reason, description, status, getCreatedAt());
     }
 }
