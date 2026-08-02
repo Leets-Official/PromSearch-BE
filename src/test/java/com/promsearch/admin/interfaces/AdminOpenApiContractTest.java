@@ -32,6 +32,15 @@ class AdminOpenApiContractTest {
         assertThat(document.at("/paths/~1api~1v1~1admin~1reports~1{reportId}/patch").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests~1{requestId}/patch").isMissingNode()).isFalse();
+
+        assertThat(document.at("/paths/~1api~1v1~1admin~1reports/get/description").asText())
+                .contains("작업자: kallin1", "구현 상태: 미구현");
+        assertThat(document.at("/paths/~1api~1v1~1admin~1reports~1{reportId}/patch/description").asText())
+                .contains("작업자: kallin1", "구현 상태: 미구현");
+        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests/get/description").asText())
+                .contains("작업자: kallin1", "구현 상태: 미구현");
+        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests~1{requestId}/patch/description").asText())
+                .contains("작업자: kallin1", "구현 상태: 미구현");
     }
 
     @DisplayName("신고 생성 API 미구현 상태를 Swagger 설명에 명시한다")

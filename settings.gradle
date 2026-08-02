@@ -1,1 +1,3 @@
 rootProject.name = 'promsearch'
+
+include 'worker'

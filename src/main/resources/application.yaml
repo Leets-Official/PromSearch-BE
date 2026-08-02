@@ -1,6 +1,25 @@
 spring:
   application:
     name: promsearch
+  jackson:
+    time-zone: ${RESPONSE_TIME_ZONE:Asia/Seoul}
+  datasource:
+    # TODO: API 인스턴스 수 × Hikari maximum-pool-size가 PostgreSQL max_connections의
+    # 70~80% 이내가 되도록 부하 테스트 후 아래 항목을 활성화
+    # hikari:
+    #   maximum-pool-size: ${DB_API_MAXIMUM_POOL_SIZE:10}
+    #   minimum-idle: ${DB_API_MINIMUM_IDLE:2}
+    #   connection-timeout: ${DB_API_CONNECTION_TIMEOUT_MS:3000}
+    #   max-lifetime: ${DB_API_MAX_LIFETIME_MS:1800000}
+
+# TODO: API 요청 스레드는 DB 커넥션보다 크게 둘 수 있지만, DB 작업이 많은 API에서는
+# 대기열만 늘어나지 않도록 HTTP 지연·Hikari pending·CPU를 함께 보고 활성화
+# server:
+#   tomcat:
+#     threads:
+#       max: ${SERVER_TOMCAT_THREADS_MAX:200}
+#       min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:10}
+#     accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:100}
 
 springdoc:
   api-docs:
@@ -11,6 +30,10 @@ springdoc:
     path: /docs
     persist-authorization: true
     try-it-out-enabled: true
+
+prompt:
+  pricing:
+    premium-price-point: ${PROMPT_PREMIUM_PRICE_POINT:100}
 
 auth:
   jwt:
@@ -29,3 +52,34 @@ auth:
       client-secret: ${GOOGLE_CLIENT_SECRET:}
       token-uri: https://oauth2.googleapis.com/token
       user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+storage:
+  s3:
+    bucket: ${AWS_S3_BUCKET}
+    region: ${AWS_REGION:ap-northeast-2}
+    original-prefix: ${AWS_S3_ORIGINAL_PREFIX:prompt-images/original}
+    watermarked-prefix: ${AWS_S3_WATERMARKED_PREFIX:prompt-images/watermarked}
+    upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}
+
+# TODO: 이미지 조회 API 구현 시 S3 URL을 직접 노출하지 않고 CloudFront OAC를 통해
+# READY 상태의 watermarkedObjectKey만 전달하도록 아래 설정과 URL 생성 포트 추가
+# delivery:
+#   cloudfront:
+#     enabled: ${AWS_CLOUDFRONT_ENABLED:false}
+#     domain: ${AWS_CLOUDFRONT_DOMAIN:}
+#     signed-url-expiration: ${AWS_CLOUDFRONT_SIGNED_URL_EXPIRATION:10m}
+
+messaging:
+  sqs:
+    watermark:
+      enabled: ${AWS_SQS_WATERMARK_ENABLED:false}
+      queue-url: ${AWS_SQS_WATERMARK_QUEUE_URL:}
+      publisher-batch-size: ${AWS_SQS_WATERMARK_PUBLISHER_BATCH_SIZE:10}
+      # TODO: Outbox 적체량·SQS SendMessage 지연·DB 잠금 시간을 함께 관찰해 배치와 폴링 주기 조정
+      publisher-poll-delay-milliseconds: ${AWS_SQS_WATERMARK_PUBLISHER_POLL_DELAY_MS:1000}
+      claim-lease: ${AWS_SQS_WATERMARK_CLAIM_LEASE:60s}
+      initial-retry-delay: ${AWS_SQS_WATERMARK_INITIAL_RETRY_DELAY:5s}
+      maximum-retry-delay: ${AWS_SQS_WATERMARK_MAXIMUM_RETRY_DELAY:5m}
+      worker-poll-delay-milliseconds: ${AWS_SQS_WATERMARK_WORKER_POLL_DELAY_MS:200}
+      receive-wait-time-seconds: ${AWS_SQS_WATERMARK_RECEIVE_WAIT_SECONDS:20}
+      visibility-timeout-seconds: ${AWS_SQS_WATERMARK_VISIBILITY_TIMEOUT_SECONDS:120}

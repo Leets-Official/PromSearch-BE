@@ -58,6 +58,14 @@ public class PostInteractionJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public static PostInteractionJpaEntity from(PostInteraction postInteraction) {
+        return create(
+                postInteraction.getUserId(),
+                postInteraction.getPostId(),
+                postInteraction.getInteractionType()
+        );
+    }
+
     public PostInteraction toDomain() {
         return PostInteraction.reconstruct(
                 new PostInteractionId(id),

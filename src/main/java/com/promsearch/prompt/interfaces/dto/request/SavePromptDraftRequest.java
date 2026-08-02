@@ -1,6 +1,9 @@
 package com.promsearch.prompt.interfaces.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand;
+import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand.ImageReference;
+import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -8,14 +11,16 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.util.List;
+import java.util.Objects;
 
 @Schema(description = "내 최신 임시저장 생성 또는 교체 요청. 제목 외 필드는 생략할 수 있습니다.")
 public record SavePromptDraftRequest(
-        @Schema(description = "제목. 공백이 아닌 문자가 한 글자 이상 있어야 합니다.", example = "회의록 자동 정리", maxLength = 20)
+        @Schema(description = "제목. 공백이 아닌 문자가 한 글자 이상 있어야 합니다.", example = "회의록 자동 정리", maxLength = Prompt.MAX_TITLE_LENGTH)
         @NotBlank(message = "title must not be blank")
-        @Size(max = 20, message = "title must be 20 characters or less")
+        @Size(max = Prompt.MAX_TITLE_LENGTH, message = "title must be 500 characters or less")
         String title,
 
         @Schema(description = "프롬프트 설명. 별도 최대 글자 수 제한이 없는 TEXT 값입니다.")
@@ -47,7 +52,7 @@ public record SavePromptDraftRequest(
 
         @Schema(description = "업로드 완료 이미지. 최대 10장이며 imageId로만 연결합니다.")
         @Size(max = 10, message = "images must contain 10 items or less")
-        List<@Valid PromptImageRequest> images
+        List<@NotNull(message = "images must not contain null") @Valid PromptImageRequest> images
 ) {
 
     public SavePromptDraftRequest {
@@ -59,6 +64,36 @@ public record SavePromptDraftRequest(
     @Schema(hidden = true)
     @AssertTrue(message = "thumbnail can be selected for at most one image")
     public boolean hasAtMostOneThumbnail() {
-        return images == null || images.stream().filter(PromptImageRequest::thumbnail).limit(2).count() <= 1;
+        return images == null
+                || images.stream()
+                .filter(Objects::nonNull)
+                .filter(PromptImageRequest::thumbnail)
+                .limit(2)
+                .count() <= 1;
+    }
+
+    public SavePromptDraftCommand toCommand(Long userId) {
+        return new SavePromptDraftCommand(
+                userId,
+                title,
+                description,
+                outputType,
+                jobTagIds,
+                taskTagIds,
+                aiModelTagIds,
+                customAiModel,
+                contentType,
+                promptBody,
+                visibility,
+                images == null
+                        ? List.of()
+                        : images.stream()
+                                .map(image -> new ImageReference(
+                                        image.imageId(),
+                                        image.sortOrder(),
+                                        image.thumbnail()
+                                ))
+                                .toList()
+        );
     }
 }

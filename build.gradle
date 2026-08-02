@@ -21,6 +21,14 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	/* S3 Presigned URL 발급과 업로드 완료 검증에 AWS SDK for Java 2.x를 사용한다. */
+	implementation platform('software.amazon.awssdk:bom:2.49.3')
+	implementation 'software.amazon.awssdk:s3'
+	implementation 'software.amazon.awssdk:sqs'
+	/* 로컬에서는 IAM Identity Center 프로필, 배포 환경에서는 실행 Role을 기본 자격 증명 체인으로 읽는다. */
+	implementation 'software.amazon.awssdk:sso'
+	implementation 'software.amazon.awssdk:ssooidc'
+	implementation 'software.amazon.awssdk:url-connection-client'
 	/* Swagger 문서 경로만 Basic Auth로 보호하기 위해 Spring Security를 추가한다. */
 	implementation 'org.springframework.boot:spring-boot-starter-security'
 	/* /docs, /docs-json 문서 생성을 담당한다. 실제 노출 여부는 application.yaml의 SWAGGER_ENABLE로 제어한다. */
