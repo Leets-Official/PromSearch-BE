@@ -16,8 +16,16 @@ public interface PostStatisticsRepository extends JpaRepository<PostStatisticsJp
             update PostStatisticsJpaEntity statistics
             set statistics.reportCount = statistics.reportCount + 1
             where statistics.postId = :promptId
+              and exists (
+                    select post.id
+                    from PostJpaEntity post
+                    where post.id = statistics.postId
+                      and post.status = com.promsearch.prompt.domain.enums.PromptStatus.ACTIVE
+                      and post.visibility = com.promsearch.prompt.domain.enums.PromptVisibility.PUBLIC
+                      and post.deletedAt is null
+              )
             """)
-    int incrementReportCount(@Param("promptId") Long promptId);
+    int incrementReportCountIfReportable(@Param("promptId") Long promptId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

@@ -28,7 +28,7 @@ public class PromptReportTargetPersistenceAdapter
 
     @Override
     public void increase(Long postId) {
-        if (postStatisticsRepository.incrementReportCount(postId) != 1) {
+        if (postStatisticsRepository.incrementReportCountIfReportable(postId) != 1) {
             throw new ModerationDomainException(ModerationErrorCode.REPORT_COUNT_UPDATE_FAILED);
         }
     }
