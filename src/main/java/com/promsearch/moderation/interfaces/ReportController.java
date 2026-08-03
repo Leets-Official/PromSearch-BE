@@ -9,6 +9,8 @@ import com.promsearch.moderation.application.usecase.dto.CreateCommentReportComm
 import com.promsearch.moderation.application.usecase.dto.CreatePostReportCommand;
 import com.promsearch.moderation.interfaces.docs.ReportControllerDocs;
 import com.promsearch.moderation.interfaces.dto.request.CreateReportRequest;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Positive;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -32,8 +34,8 @@ public class ReportController implements ReportControllerDocs {
     @PostMapping("/posts/{postId}")
     public ResponseEntity<ApiResponse<Void>> reportPost(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @PathVariable Long postId,
-            @RequestBody CreateReportRequest request
+            @Positive @PathVariable Long postId,
+            @Valid @RequestBody CreateReportRequest request
     ) {
         createPostReportUseCase.create(
                 new CreatePostReportCommand(user.userId(), postId, request.reason(), request.description()));
@@ -44,8 +46,8 @@ public class ReportController implements ReportControllerDocs {
     @PostMapping("/comments/{commentId}")
     public ResponseEntity<ApiResponse<Void>> reportComment(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @PathVariable Long commentId,
-            @RequestBody CreateReportRequest request
+            @Positive @PathVariable Long commentId,
+            @Valid @RequestBody CreateReportRequest request
     ) {
         createCommentReportUseCase.create(
                 new CreateCommentReportCommand(user.userId(), commentId, request.reason(), request.description()));
