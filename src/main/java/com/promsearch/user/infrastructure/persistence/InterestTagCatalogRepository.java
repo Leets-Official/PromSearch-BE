@@ -10,5 +10,4 @@ public interface InterestTagCatalogRepository extends JpaRepository<TagJpaEntity
 
     List<TagJpaEntity> findAllByTagTypeAndTagNameIn(TagType tagType, Collection<String> tagNames);
 
-    boolean existsByTagTypeAndTagName(TagType tagType, String tagName);
 }

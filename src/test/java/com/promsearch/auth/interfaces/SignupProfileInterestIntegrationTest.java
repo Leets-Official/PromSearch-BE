@@ -8,8 +8,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.auth.infrastructure.external.oauth.GoogleOAuthAdapter;
 import com.promsearch.auth.infrastructure.external.oauth.KakaoOAuthAdapter;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
+import com.promsearch.prompt.domain.enums.TagType;
+import com.promsearch.prompt.infrastructure.persistence.entity.TagJpaEntity;
+import com.promsearch.user.infrastructure.persistence.InterestTagCatalogRepository;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -33,6 +37,9 @@ class SignupProfileInterestIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
+    private InterestTagCatalogRepository tagRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
@@ -40,6 +47,20 @@ class SignupProfileInterestIntegrationTest {
 
     @MockitoBean
     private GoogleOAuthAdapter googleOAuthAdapter;
+
+    @BeforeEach
+    void setUpInterestTags() {
+        saveTagIfMissing(TagType.JOB, "학생", "학생");
+        saveTagIfMissing(TagType.JOB, "개발자", "개발자");
+        saveTagIfMissing(TagType.TASK, "PPT", "ppt");
+        saveTagIfMissing(TagType.TASK, "이미지 생성", "이미지 생성");
+    }
+
+    private void saveTagIfMissing(TagType type, String name, String normalizedName) {
+        if (tagRepository.findAllByTagTypeAndTagNameIn(type, List.of(name)).isEmpty()) {
+            tagRepository.save(TagJpaEntity.create(type, name, normalizedName, false));
+        }
+    }
 
     @Test
     void signupSavesOptionalProfileImageAndInterestTags() throws Exception {
