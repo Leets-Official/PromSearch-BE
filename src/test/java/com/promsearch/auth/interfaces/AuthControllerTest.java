@@ -3,6 +3,7 @@ package com.promsearch.auth.interfaces;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -321,6 +322,36 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.name").value("새이름"))
                 .andExpect(jsonPath("$.result.nickname").value("gildong"));
+    }
+
+    @DisplayName("회원 탈퇴 시 10자를 초과하는 익명화 닉네임을 저장한다")
+    @Test
+    void deleteUserStoresAnonymizedNicknameLongerThanActiveNicknameLimit() throws Exception {
+        signup("gildong", "gildong@example.com", "password123");
+        Long userId = userJpaRepository.findByEmail("gildong@example.com")
+                .orElseThrow()
+                .getId();
+        String accessToken = loginAndGetResult("gildong@example.com", "password123")
+                .get("accessToken")
+                .asText();
+
+        mockMvc.perform(delete("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        String deletedNickname = jdbcTemplate.queryForObject(
+                "select nickname from users where user_id = ?",
+                String.class,
+                userId
+        );
+        assertThat(deletedNickname)
+                .startsWith("deleted_" + userId + "_")
+                .endsWith("_user")
+                .hasSizeGreaterThan(10);
     }
 
     @DisplayName("프로필 이메일이 인증 도메인 정책을 위반하면 수정에 실패한다")

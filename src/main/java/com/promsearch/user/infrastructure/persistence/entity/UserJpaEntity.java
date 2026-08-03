@@ -36,7 +36,7 @@ public class UserJpaEntity extends BaseEntity {
     @Column(name = "password", nullable = false, length = 255)
     private String password;
 
-    @Column(name = "nickname", nullable = false, unique = true, length = 10)
+    @Column(name = "nickname", nullable = false, unique = true, length = 100)
     private String nickname;
 
     @Column(name = "name", length = 100)
