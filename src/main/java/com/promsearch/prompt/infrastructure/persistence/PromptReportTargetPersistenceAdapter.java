@@ -5,6 +5,7 @@ import com.promsearch.moderation.application.port.out.target.LoadPostReportTarge
 import com.promsearch.moderation.domain.exception.ModerationDomainException;
 import com.promsearch.moderation.domain.exception.ModerationErrorCode;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -18,7 +19,11 @@ public class PromptReportTargetPersistenceAdapter
 
     @Override
     public boolean exists(Long postId) {
-        return promptRepository.findByIdAndStatusAndDeletedAtIsNull(postId, PromptStatus.ACTIVE).isPresent();
+        return promptRepository.findByIdAndStatusAndVisibilityAndDeletedAtIsNull(
+                postId,
+                PromptStatus.ACTIVE,
+                PromptVisibility.PUBLIC
+        ).isPresent();
     }
 
     @Override

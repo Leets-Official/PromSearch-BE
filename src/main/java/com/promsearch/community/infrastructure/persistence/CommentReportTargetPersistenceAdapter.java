@@ -1,6 +1,5 @@
 package com.promsearch.community.infrastructure.persistence;
 
-import com.promsearch.community.domain.enums.CommentStatus;
 import com.promsearch.moderation.application.port.out.target.LoadCommentReportTargetPort;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -13,6 +12,6 @@ public class CommentReportTargetPersistenceAdapter implements LoadCommentReportT
 
     @Override
     public boolean exists(Long commentId) {
-        return commentRepository.existsByIdAndStatus(commentId, CommentStatus.ACTIVE);
+        return commentRepository.existsReportableById(commentId);
     }
 }
