@@ -1,5 +1,6 @@
 package com.promsearch.user.application.service.command;
 
+import com.promsearch.user.application.port.out.tag.ResolveInterestTagIdsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
@@ -17,8 +18,11 @@ import com.promsearch.user.application.usecase.dto.UserInfo;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.InterestTagSelectionPolicy;
 import com.promsearch.user.domain.NicknamePolicy;
+import com.promsearch.user.domain.enums.InterestTagType;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +49,7 @@ public class UserCommandService implements
 
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
+    private final ResolveInterestTagIdsPort resolveInterestTagIdsPort;
     private final SaveUserInterestTagPort saveUserInterestTagPort;
     private final PasswordEncoder passwordEncoder;
 
@@ -64,7 +69,10 @@ public class UserCommandService implements
         );
 
         User savedUser = saveUserPort.create(user);
-        saveUserInterestTagPort.save(savedUser.getUserId().id(), command.jobTags(), command.taskTags());
+        List<Long> interestTagIds = new ArrayList<>();
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTags()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTags()));
+        saveUserInterestTagPort.save(savedUser.getUserId().id(), interestTagIds);
         SignupInfo signupInfo = SignupInfo.from(savedUser);
         log.info("user_signup_completed userId={}", signupInfo.userId());
         return signupInfo;

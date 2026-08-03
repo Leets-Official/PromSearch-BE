@@ -19,6 +19,7 @@ import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +37,8 @@ class UserCommandServiceTest {
         userCommandService = new UserCommandService(
                 userRepository,
                 userRepository,
-                (userId, jobTags, taskTags) -> {
+                (type, names) -> List.of(),
+                (userId, tagIds) -> {
                 },
                 new TestPasswordEncoder()
         );

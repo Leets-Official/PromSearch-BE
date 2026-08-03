@@ -9,8 +9,8 @@ import com.promsearch.auth.infrastructure.external.oauth.GoogleOAuthAdapter;
 import com.promsearch.auth.infrastructure.external.oauth.KakaoOAuthAdapter;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
 import com.promsearch.prompt.domain.enums.TagType;
+import com.promsearch.prompt.infrastructure.persistence.InterestTagLookupRepository;
 import com.promsearch.prompt.infrastructure.persistence.entity.TagJpaEntity;
-import com.promsearch.user.infrastructure.persistence.InterestTagCatalogRepository;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,7 +37,7 @@ class SignupProfileInterestIntegrationTest {
     private UserRepository userRepository;
 
     @Autowired
-    private InterestTagCatalogRepository tagRepository;
+    private InterestTagLookupRepository tagRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -57,7 +57,7 @@ class SignupProfileInterestIntegrationTest {
     }
 
     private void saveTagIfMissing(TagType type, String name, String normalizedName) {
-        if (tagRepository.findAllByTagTypeAndTagNameIn(type, List.of(name)).isEmpty()) {
+        if (tagRepository.findIdsByTypeAndNames(type, List.of(name)).isEmpty()) {
             tagRepository.save(TagJpaEntity.create(type, name, normalizedName, false));
         }
     }
