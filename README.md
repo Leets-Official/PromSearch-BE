@@ -47,7 +47,16 @@ Visibility Timeout 이후 재시도되고 큐의 Redrive Policy에 따라 DLQ로
 ```bash
 docker build -t promsearch .
 docker run -p 8080:8080 promsearch
+
+# 동일한 이미지에서 HTTP 서버 없이 이미지 Worker 실행
+docker run --no-healthcheck promsearch worker.jar
 ```
+
+API와 Worker 컨테이너에는 동일한 `SPRING_DATASOURCE_*`, `AWS_S3_BUCKET`,
+`AWS_SQS_WATERMARK_*` 환경변수를 전달해야 합니다. Flyway의 PostgreSQL 런타임 의존성은
+API 이미지에 포함되지만, 현재 `V1~V7`이 전체 초기 스키마가 아니므로 #21에서 baseline을 확정할 때까지
+`SPRING_FLYWAY_ENABLED=false`가 기본입니다. Worker는 Flyway를 실행하지 않으며 운영 배포는 API
+헬스체크 성공 후 Worker를 시작합니다.
 
 ## 배포된 서버 확인
 
@@ -88,7 +97,7 @@ feature/기능명   → 작업 브랜치, 예: feature/auth-login, feature/promp
                                     └ 실패 시 Discord #ci-cd 채널 알림
 ```
 
-- CI(`ci.yml`)는 `develop`, `main` 두 브랜치를 대상으로 push/PR 시 모두 실행됩니다.
+- CI(`ci.yml`)는 `develop`, `main` 두 브랜치를 대상으로 push/PR 시 Gradle 빌드·테스트와 Docker 이미지 빌드를 실행합니다.
 - 배포(`deploy.yml`)는 `workflow_run` + `branches: [main]` 조건으로 **`main`에서 CI가 성공했을 때만** 트리거됩니다. `develop`에서의 CI 성공은 배포를 트리거하지 않습니다.
 - CI가 실패한 커밋은 **절대 배포되지 않습니다** (`conclusion == 'success'` 조건으로 연결).
 - 배포된 컨테이너는 `--restart unless-stopped`로 EC2 재부팅 시에도 자동 기동됩니다.
