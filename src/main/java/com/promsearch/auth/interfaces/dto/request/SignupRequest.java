@@ -2,7 +2,9 @@ package com.promsearch.auth.interfaces.dto.request;
 
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import java.util.List;
@@ -33,21 +35,38 @@ public record SignupRequest(
 
         @Schema(description = "관심 태스크 태그 이름(최대 3개)", example = "[\"PPT\", \"이미지 생성\"]")
         @Size(max = 3, message = "관심 태스크는 최대 3개까지 선택할 수 있습니다.")
-        List<String> taskTags
+        List<String> taskTags,
+
+        @Schema(description = "약관 동의", requiredMode = Schema.RequiredMode.REQUIRED)
+        @Valid
+        @NotNull(message = "약관 동의는 필수입니다.")
+        SignupAgreementsRequest agreements
 ) {
 
     public SignupRequest(String nickname, String email, String password) {
-        this(nickname, email, password, null, List.of(), List.of());
+        this(nickname, email, password, null, List.of(), List.of(), SignupAgreementsRequest.requiredAndNoMarketing());
+    }
+
+    public SignupRequest(
+            String nickname,
+            String email,
+            String password,
+            String profileImageUrl,
+            List<String> jobTags,
+            List<String> taskTags
+    ) {
+        this(nickname, email, password, profileImageUrl, jobTags, taskTags,
+                SignupAgreementsRequest.requiredAndNoMarketing());
     }
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(nickname, email, password, profileImageUrl, jobTags, taskTags);
+        return SignupCommand.of(nickname, email, password, profileImageUrl, jobTags, taskTags, agreements.toCommand());
     }
 
     @Override
     public String toString() {
         return "SignupRequest[nickname=" + nickname + ", email=" + email
                 + ", password=***, profileImageUrl=" + profileImageUrl
-                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
+                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + ", agreements=" + agreements + "]";
     }
 }

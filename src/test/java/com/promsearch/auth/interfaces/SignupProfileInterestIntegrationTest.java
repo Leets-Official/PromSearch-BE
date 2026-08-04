@@ -7,6 +7,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.auth.infrastructure.external.oauth.GoogleOAuthAdapter;
 import com.promsearch.auth.infrastructure.external.oauth.KakaoOAuthAdapter;
+import com.promsearch.auth.interfaces.dto.request.SignupAgreementsRequest;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
 import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.infrastructure.persistence.InterestTagLookupRepository;
@@ -89,6 +90,39 @@ class SignupProfileInterestIntegrationTest {
                 user.toDomain().getUserId().id()
         );
         assertThat(tagCount).isEqualTo(4);
+
+        Integer agreementCount = jdbcTemplate.queryForObject(
+                "select count(*) from user_agreements where user_id = ?",
+                Integer.class,
+                user.toDomain().getUserId().id()
+        );
+        assertThat(agreementCount).isEqualTo(5);
+        Boolean marketingAgreed = jdbcTemplate.queryForObject(
+                "select agreed from user_agreements where user_id = ? and agreement_type = 'MARKETING'",
+                Boolean.class,
+                user.toDomain().getUserId().id()
+        );
+        assertThat(marketingAgreed).isFalse();
+    }
+
+    @Test
+    void signupRejectsWhenARequiredAgreementIsNotAccepted() throws Exception {
+        SignupRequest request = new SignupRequest(
+                "개발자4",
+                "required-agreement@example.com",
+                "password123",
+                null,
+                List.of(),
+                List.of(),
+                new SignupAgreementsRequest(false, true, true, true, false)
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest());
+
+        assertThat(userRepository.findByEmail("required-agreement@example.com")).isEmpty();
     }
 
     @Test

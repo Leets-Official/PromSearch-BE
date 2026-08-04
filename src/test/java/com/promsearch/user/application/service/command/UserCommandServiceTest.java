@@ -40,6 +40,8 @@ class UserCommandServiceTest {
                 (type, names) -> List.of(),
                 (userId, tagIds) -> {
                 },
+                (userId, agreements) -> {
+                },
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {
