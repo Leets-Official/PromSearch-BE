@@ -1,15 +1,16 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.UUID;
 
 @Schema(description = "워터마크 처리가 완료된 프롬프트 결과 이미지")
 public record PromptDetailImageResponse(
-        @Schema(description = "이미지 ID", example = "31")
-        Long imageId,
+        @Schema(description = "이미지 ID", example = "123e4567-e89b-12d3-a456-426614174000")
+        UUID imageId,
 
         @Schema(
                 description = "워터마크 이미지의 Presigned URL. 원본 이미지 경로는 제공하지 않습니다.",
-                example = "https://storage.example.com/final/prompts/10/31.webp?X-Amz-Signature=..."
+                example = "https://storage.example.com/final/prompts/10/31.jpg?X-Amz-Signature=..."
         )
         String imageUrl,
 

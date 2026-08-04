@@ -4,6 +4,8 @@ import com.promsearch.user.application.port.out.tag.ResolveInterestTagIdsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
+import com.promsearch.user.application.port.out.profileimage.ScheduleProfileImageDeletionPort;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
 import com.promsearch.user.application.usecase.RegisterSocialUserUseCase;
@@ -52,6 +54,8 @@ public class UserCommandService implements
     private final ResolveInterestTagIdsPort resolveInterestTagIdsPort;
     private final SaveUserInterestTagPort saveUserInterestTagPort;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileImageDeliveryPort profileImageDeliveryPort;
+    private final ScheduleProfileImageDeletionPort profileImageDeletionPort;
 
     @Override
     public SignupInfo signup(SignupCommand command) {
@@ -89,8 +93,6 @@ public class UserCommandService implements
                 UserErrorCode.INVALID_NICKNAME
         );
         String email = resolveRequiredProfileValue(command.email(), user.getEmail(), UserErrorCode.INVALID_EMAIL);
-        String profileImageUrl = resolveOptionalProfileValue(command.profileImageUrl(), user.getProfileImageUrl());
-
         if (!nickname.equals(user.getNickname())) {
             NicknamePolicy.validate(nickname);
             validateDuplicateNickname(nickname);
@@ -102,10 +104,10 @@ public class UserCommandService implements
         User updatedUser = user.updateProfile(
                 email,
                 nickname,
-                name,
-                profileImageUrl
+                name
         );
-        UserInfo userInfo = UserInfo.from(saveUserPort.update(updatedUser));
+        User savedUser = saveUserPort.update(updatedUser);
+        UserInfo userInfo = UserInfo.from(savedUser, resolveProfileImageUrl(savedUser));
         log.info("user_profile_updated userId={}", userInfo.userId());
         return userInfo;
     }
@@ -129,6 +131,7 @@ public class UserCommandService implements
     public void delete(Long userId) {
         User user = loadUserPort.getById(userId);
         saveUserPort.update(user.delete());
+        profileImageDeletionPort.afterCommit(user.getProfileImageObjectKey());
         log.info("user_deleted userId={}", userId);
     }
 
@@ -209,14 +212,11 @@ public class UserCommandService implements
         return password;
     }
 
-    private String resolveOptionalProfileValue(String requestedValue, String currentValue) {
-        if (requestedValue == null) {
-            return currentValue;
-        }
-        if (requestedValue.isBlank()) {
-            return null;
-        }
-        return requestedValue.trim();
+    private String resolveProfileImageUrl(User user) {
+        return profileImageDeliveryPort.resolve(
+                user.getProfileImageUrl(),
+                user.getProfileImageObjectKey()
+        );
     }
 
     private String normalizeOptional(String value) {

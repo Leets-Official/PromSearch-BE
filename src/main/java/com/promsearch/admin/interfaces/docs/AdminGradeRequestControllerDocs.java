@@ -23,9 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 )
 public interface AdminGradeRequestControllerDocs {
 
+    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
+
     @Operation(
             summary = "[ADMIN-GRADE-001] 등급업 신청 목록 조회",
-            description = "처리 상태로 필터링해 Origin 등급업 신청 목록을 페이지네이션 조회합니다."
+            description = NOT_IMPLEMENTED_BY_KALLIN1
+                    + "처리 상태로 필터링해 Origin 등급업 신청 목록을 페이지네이션 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "등급업 신청 목록 조회 성공"),
@@ -49,7 +52,8 @@ public interface AdminGradeRequestControllerDocs {
 
     @Operation(
             summary = "[ADMIN-GRADE-002] 등급업 신청 승인/반려",
-            description = "신청을 승인하거나 반려합니다. 승인 시 신청 상태 변경과 유저 등급 변경을 하나의 트랜잭션으로 처리하며, "
+            description = NOT_IMPLEMENTED_BY_KALLIN1
+                    + "신청을 승인하거나 반려합니다. 승인 시 신청 상태 변경과 유저 등급 변경을 하나의 트랜잭션으로 처리하며, "
                     + "반려 시 유저 등급은 변경하지 않습니다."
     )
     @ApiResponses({

@@ -19,6 +19,7 @@ public class User {
     private final String nickname;
     private final String name;
     private final String profileImageUrl;
+    private final String profileImageObjectKey;
     private final Long point;
     private final UserRole role;
     private final UserGrade grade;
@@ -34,6 +35,7 @@ public class User {
             String nickname,
             String name,
             String profileImageUrl,
+            String profileImageObjectKey,
             Long point,
             UserRole role,
             UserGrade grade,
@@ -47,6 +49,7 @@ public class User {
         this.nickname = nickname;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+        this.profileImageObjectKey = profileImageObjectKey;
         this.point = point;
         this.role = role;
         this.grade = grade;
@@ -65,6 +68,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(null)
                 .point(0L)
                 .role(UserRole.USER)
                 .grade(UserGrade.NORMAL)
@@ -81,6 +85,7 @@ public class User {
             String nickname,
             String name,
             String profileImageUrl,
+            String profileImageObjectKey,
             Long point,
             UserRole role,
             UserGrade grade,
@@ -97,6 +102,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -106,7 +112,7 @@ public class User {
                 .build();
     }
 
-    public User updateProfile(String email, String nickname, String name, String profileImageUrl) {
+    public User updateProfile(String email, String nickname, String name) {
         validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()
@@ -116,6 +122,60 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    /**
+     * 사용자가 직접 업로드한 이미지를 현재 프로필 이미지로 변경한다.
+     *
+     * <p>S3 관리 이미지를 선택한 시점부터 소셜 로그인 제공자의 외부 URL은 사용하지 않으므로
+     * 외부 URL을 제거하고 객체 키만 유지한다.</p>
+     *
+     * @param objectKey 검증이 끝난 프로필 이미지 객체 키
+     * @return S3 프로필 이미지 상태로 변경된 새 사용자 객체
+     */
+    public User changeProfileImage(String objectKey) {
+        if (objectKey == null || objectKey.isBlank()) {
+            throw new UserDomainException(UserErrorCode.PROFILE_IMAGE_UPLOAD_NOT_FOUND);
+        }
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(null)
+                .profileImageObjectKey(objectKey)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    /**
+     * 소셜 제공자 URL과 직접 업로드한 객체 키를 모두 제거한다.
+     *
+     * @return 프로필 이미지 연결이 없는 새 사용자 객체
+     */
+    public User removeProfileImage() {
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(null)
+                .profileImageObjectKey(null)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -135,6 +195,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -155,6 +216,7 @@ public class User {
                 .nickname(deletedPrefix + "_user")
                 .name("Deleted User")
                 .profileImageUrl(null)
+                .profileImageObjectKey(null)
                 .point(point)
                 .role(role)
                 .grade(grade)
