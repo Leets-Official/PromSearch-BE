@@ -72,7 +72,7 @@ public class UserCommandService implements
                 encodedPassword,
                 command.nickname(),
                 null,
-                normalizeOptional(command.profileImageUrl())
+                null
         );
 
         User savedUser = saveUserPort.create(user);

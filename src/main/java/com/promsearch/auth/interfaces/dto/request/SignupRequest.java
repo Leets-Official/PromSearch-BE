@@ -25,10 +25,6 @@ public record SignupRequest(
         @NotBlank(message = "비밀번호는 필수입니다.")
         String password,
 
-        @Schema(description = "프로필 이미지 URL(선택)", example = "https://cdn.promsearch.com/profiles/me.png")
-        @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
-        String profileImageUrl,
-
         @Schema(description = "관심 직군 태그 이름(최대 3개)", example = "[\"학생\", \"개발자\"]")
         @Size(max = 3, message = "관심 직군은 최대 3개까지 선택할 수 있습니다.")
         List<String> jobTags,
@@ -44,29 +40,28 @@ public record SignupRequest(
 ) {
 
     public SignupRequest(String nickname, String email, String password) {
-        this(nickname, email, password, null, List.of(), List.of(), SignupAgreementsRequest.requiredAndNoMarketing());
+        this(nickname, email, password, List.of(), List.of(), SignupAgreementsRequest.requiredAndNoMarketing());
     }
 
     public SignupRequest(
             String nickname,
             String email,
             String password,
-            String profileImageUrl,
+            String ignoredProfileImageUrl,
             List<String> jobTags,
             List<String> taskTags
     ) {
-        this(nickname, email, password, profileImageUrl, jobTags, taskTags,
+        this(nickname, email, password, jobTags, taskTags,
                 SignupAgreementsRequest.requiredAndNoMarketing());
     }
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(nickname, email, password, profileImageUrl, jobTags, taskTags, agreements.toCommand());
+        return SignupCommand.of(nickname, email, password, jobTags, taskTags, agreements.toCommand());
     }
 
     @Override
     public String toString() {
         return "SignupRequest[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl
-                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + ", agreements=" + agreements + "]";
+                + ", password=***, jobTags=" + jobTags + ", taskTags=" + taskTags + ", agreements=" + agreements + "]";
     }
 }

@@ -64,7 +64,7 @@ class SignupProfileInterestIntegrationTest {
     }
 
     @Test
-    void signupSavesOptionalProfileImageAndInterestTags() throws Exception {
+    void signupSavesInterestTagsWithoutAcceptingExternalProfileImageUrl() throws Exception {
         SignupRequest request = new SignupRequest(
                 "개발자1",
                 "interest@example.com",
@@ -81,8 +81,7 @@ class SignupProfileInterestIntegrationTest {
 
         var user = userRepository.findByEmail("interest@example.com").orElseThrow();
         assertThat(user.toDomain().getName()).isNull();
-        assertThat(user.toDomain().getProfileImageUrl())
-                .isEqualTo("https://cdn.promsearch.com/profiles/me.png");
+        assertThat(user.toDomain().getProfileImageUrl()).isNull();
 
         Integer tagCount = jdbcTemplate.queryForObject(
                 "select count(*) from user_interest_tags where user_id = ?",
@@ -111,7 +110,6 @@ class SignupProfileInterestIntegrationTest {
                 "개발자4",
                 "required-agreement@example.com",
                 "password123",
-                null,
                 List.of(),
                 List.of(),
                 new SignupAgreementsRequest(false, true, true, true, false)

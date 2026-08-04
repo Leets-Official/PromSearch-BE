@@ -204,14 +204,7 @@ class AuthControllerTest {
     @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
     void loginSuccess() throws Exception {
-        SignupRequest signupRequest = new SignupRequest(
-                "gildong",
-                "gildong@example.com",
-                "password123",
-                "https://cdn.promsearch.com/profiles/me.png",
-                List.of(),
-                List.of()
-        );
+        SignupRequest signupRequest = new SignupRequest("gildong", "gildong@example.com", "password123");
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
@@ -231,8 +224,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
                 .andExpect(jsonPath("$.result.name").doesNotExist())
-                .andExpect(jsonPath("$.result.profileImageUrl")
-                        .value("https://cdn.promsearch.com/profiles/me.png"))
+                .andExpect(jsonPath("$.result.profileImageUrl").doesNotExist())
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());

@@ -10,7 +10,6 @@ public record SignupCommand(
         String nickname,
         String email,
         String password,
-        String profileImageUrl,
         List<String> jobTags,
         List<String> taskTags,
         SignupAgreements agreements
@@ -28,18 +27,17 @@ public record SignupCommand(
     }
 
     public static SignupCommand of(String nickname, String email, String password) {
-        return new SignupCommand(nickname, email, password, null, List.of(), List.of(), SignupAgreements.requiredAndNoMarketing());
+        return new SignupCommand(nickname, email, password, List.of(), List.of(), SignupAgreements.requiredAndNoMarketing());
     }
 
     public static SignupCommand of(
             String nickname,
             String email,
             String password,
-            String profileImageUrl,
             List<String> jobTags,
             List<String> taskTags
     ) {
-        return new SignupCommand(nickname, email, password, profileImageUrl, jobTags, taskTags,
+        return new SignupCommand(nickname, email, password, jobTags, taskTags,
                 SignupAgreements.requiredAndNoMarketing());
     }
 
@@ -47,12 +45,11 @@ public record SignupCommand(
             String nickname,
             String email,
             String password,
-            String profileImageUrl,
             List<String> jobTags,
             List<String> taskTags,
             SignupAgreements agreements
     ) {
-        return new SignupCommand(nickname, email, password, profileImageUrl, jobTags, taskTags, agreements);
+        return new SignupCommand(nickname, email, password, jobTags, taskTags, agreements);
     }
 
     private static List<String> normalizeTags(List<String> tags) {
@@ -64,7 +61,6 @@ public record SignupCommand(
     @Override
     public String toString() {
         return "SignupCommand[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl
-                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + ", agreements=" + agreements + "]";
+                + ", password=***, jobTags=" + jobTags + ", taskTags=" + taskTags + ", agreements=" + agreements + "]";
     }
 }
