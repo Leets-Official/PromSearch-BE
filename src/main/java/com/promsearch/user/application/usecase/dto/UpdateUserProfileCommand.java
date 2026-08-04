@@ -8,8 +8,7 @@ import com.promsearch.auth.domain.CredentialPolicy;
 public record UpdateUserProfileCommand(
         Long userId,
         String nickname,
-        String email,
-        String profileImageUrl
+        String email
 ) {
 
     public UpdateUserProfileCommand {
@@ -22,9 +21,8 @@ public record UpdateUserProfileCommand(
     public static UpdateUserProfileCommand of(
             Long userId,
             String nickname,
-            String email,
-            String profileImageUrl
+            String email
     ) {
-        return new UpdateUserProfileCommand(userId, nickname, email, profileImageUrl);
+        return new UpdateUserProfileCommand(userId, nickname, email);
     }
 }

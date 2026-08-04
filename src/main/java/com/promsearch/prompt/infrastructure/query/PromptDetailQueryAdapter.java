@@ -17,6 +17,7 @@ import com.promsearch.prompt.infrastructure.persistence.entity.PostJpaEntity;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.UserStatus;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,7 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
     private final PromptImageRepository promptImageRepository;
     private final UserRepository userRepository;
     private final PostInteractionRepository postInteractionRepository;
+    private final ProfileImageDeliveryPort profileImageDeliveryPort;
 
     @Override
     public Optional<PromptDetailProjection> findPublicById(Long promptId, Long viewerId) {
@@ -85,7 +87,10 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
                 post.getUserId(),
                 post.getTitle(),
                 author.getNickname(),
-                author.getProfileImageUrl(),
+                profileImageDeliveryPort.resolve(
+                        author.getProfileImageUrl(),
+                        author.getProfileImageObjectKey()
+                ),
                 post.getOutputType(),
                 post.getContentType(),
                 post.getPricePoint(),

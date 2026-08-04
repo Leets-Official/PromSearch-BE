@@ -88,11 +88,12 @@ public class SwaggerSecurityConfig {
                                 "/api/v1/auth/oauth/**",
                                 "/api/v1/auth/swagger-token",
                                 /*
-                                 * 홈 목록과 상대 프로필은 서비스 탐색 흐름의 공개 조회 API입니다.
+                                 * 홈 목록, 태그 목록, 상대 프로필은 서비스 탐색 흐름의 공개 조회 API입니다.
                                  * 인증 토큰이 있으면 필터가 SecurityContext를 채워 liked/bookmarked 같은 개인화 필드를 만들 수 있고,
                                  * 토큰이 없으면 비회원용 응답으로 내려갑니다.
                                  */
                                 "/api/v1/home/**",
+                                "/api/v1/tags",
                                 "/api/v1/users/*/profile",
                                 "/api/v1/users/nicknames/availability",
                                 "/error"

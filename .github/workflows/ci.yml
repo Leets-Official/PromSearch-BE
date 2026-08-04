@@ -6,9 +6,17 @@ on:
   push:
     branches: [develop, main]
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
 
@@ -17,12 +25,13 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+          cache: gradle
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
 
       - name: Build and Test
-        run: ./gradlew build
+        run: ./gradlew --no-daemon build
 
       - name: Build Docker image
         run: docker build --tag promsearch:ci .

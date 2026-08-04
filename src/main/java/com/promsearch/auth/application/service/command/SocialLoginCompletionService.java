@@ -62,6 +62,7 @@ public class SocialLoginCompletionService {
                 refreshToken.value(),
                 accessToken.expiresInSeconds(),
                 authenticatedUser,
+                user.profileImageUrl(),
                 user.nickname()
         );
     }

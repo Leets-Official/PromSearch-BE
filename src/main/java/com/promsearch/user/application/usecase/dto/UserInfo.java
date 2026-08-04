@@ -19,12 +19,12 @@ public record UserInfo(
         Instant updatedAt
 ) {
 
-    public static UserInfo from(User user) {
+    public static UserInfo from(User user, String profileImageUrl) {
         return new UserInfo(
                 user.getUserId().id(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getProfileImageUrl(),
+                profileImageUrl,
                 user.getPoint(),
                 user.getRole(),
                 user.getGrade(),

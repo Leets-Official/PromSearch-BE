@@ -5,13 +5,18 @@ import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.ListHomePromptsUseCase;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
+import com.promsearch.prompt.application.usecase.dto.HomePromptSort;
+import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.interfaces.docs.HomeControllerDocs;
 import com.promsearch.prompt.interfaces.dto.response.HomePromptListResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -36,6 +41,43 @@ public class HomeController implements HomeControllerDocs {
 
     private final ListHomePromptsUseCase listHomePromptsUseCase;
 
+    @GetMapping
+    @SecurityRequirements
+    @Override
+    public ApiResponse<HomePromptListResponse> listPrompts(
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+            @RequestParam(required = false) @Positive Long jobTagId,
+            @RequestParam(required = false) @Size(max = HomePromptListQuery.MAX_FILTER_TAGS) List<@Positive Long> taskTagIds,
+            @RequestParam(required = false) @Positive Long aiModelTagId,
+            @RequestParam(required = false) PromptOutputType outputType,
+            @RequestParam(required = false)
+            @Pattern(
+                    regexp = "^\\s*$|^\\s*\\S[\\s\\S]*\\S\\s*$",
+                    message = "keyword must be blank or at least 2 characters after trim"
+            )
+            @Size(max = HomePromptListQuery.MAX_KEYWORD_LENGTH) String keyword,
+            @RequestParam(defaultValue = "LATEST") HomePromptSort sort,
+            @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
+            @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
+    ) {
+        /*
+         * 화면 필터 값은 그대로 서비스에 흘려보내지 않고 HomePromptListQuery로 한 번 묶습니다.
+         * 이렇게 하면 중복 태그 제거, 검색어 공백 정리, 페이지 범위 방어가 application 경계에서 한 번 더 적용됩니다.
+         */
+        HomePromptListInfo result = listHomePromptsUseCase.listPrompts(HomePromptListQuery.filtered(
+                viewerUserId(user),
+                jobTagId,
+                taskTagIds,
+                aiModelTagId,
+                outputType,
+                keyword,
+                sort,
+                page,
+                size
+        ));
+        return ApiResponse.onSuccess(HomePromptListResponse.from(result));
+    }
+
     @GetMapping("/popular")
     @SecurityRequirements
     @Override
@@ -45,9 +87,8 @@ public class HomeController implements HomeControllerDocs {
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     ) {
         /*
-         * 홈 목록은 비회원도 조회할 수 있습니다.
-         * 다만 로그인 사용자인 경우 카드마다 liked/bookmarked 상태를 내려줘야 하므로
-         * 인증 객체가 있으면 userId를 query에 포함하고, 없으면 null로 전달합니다.
+         * 인기 목록도 홈 탐색 영역이라 비회원 조회를 허용합니다.
+         * 로그인 사용자인 경우에만 userId를 넘겨 카드별 liked/bookmarked 상태를 함께 계산합니다.
          */
         HomePromptListInfo result = listHomePromptsUseCase.listPopularPrompts(
                 HomePromptListQuery.popular(viewerUserId(user), page, size)
@@ -65,8 +106,8 @@ public class HomeController implements HomeControllerDocs {
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
     ) {
         /*
-         * jobTagId는 단순 문자열이 아니라 tags 테이블의 JOB 타입 태그 ID입니다.
-         * 실제 타입 검증은 persistence query에서 tagType = JOB 조건으로 한 번 더 제한합니다.
+         * jobTagId는 화면 표시명("학생", "개발자")이 아니라 tags 테이블의 JOB 타입 태그 ID입니다.
+         * persistence query에서도 tagType = JOB 조건을 함께 걸어 다른 타입 태그 ID가 섞여 들어오는 일을 막습니다.
          */
         HomePromptListInfo result = listHomePromptsUseCase.listJobPrompts(
                 HomePromptListQuery.job(viewerUserId(user), jobTagId, page, size)
@@ -77,7 +118,7 @@ public class HomeController implements HomeControllerDocs {
     private Long viewerUserId(AuthenticatedUserPrincipal user) {
         /*
          * @AuthenticationPrincipal은 비회원 공개 API에서 null일 수 있습니다.
-         * null을 명시적으로 허용해 application 계층이 게스트 조회와 로그인 조회를 같은 query 모델로 처리하게 합니다.
+         * null을 명시적으로 허용해 게스트 조회와 로그인 조회가 같은 query 모델을 사용하게 합니다.
          */
         return user == null ? null : user.userId();
     }

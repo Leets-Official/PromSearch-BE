@@ -19,6 +19,7 @@ import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,26 +34,42 @@ class UserCommandServiceTest {
     @BeforeEach
     void setUp() {
         userRepository = new FakeUserRepository();
-        userCommandService = new UserCommandService(userRepository, userRepository, new TestPasswordEncoder());
+        userCommandService = new UserCommandService(
+                userRepository,
+                userRepository,
+                (type, names) -> List.of(),
+                (userId, tagIds) -> {
+                },
+                new TestPasswordEncoder(),
+                (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
+                objectKey -> {
+                }
+        );
     }
 
     @Test
     void updateProfileChangesMemberInformation() {
-        userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", null, UserStatus.ACTIVE));
+        userRepository.save(testUser(
+                1L,
+                "old@example.com",
+                "old-password",
+                "oldNick",
+                "oldName",
+                "https://image.test/original.png",
+                UserStatus.ACTIVE
+        ));
 
         UserInfo userInfo = userCommandService.updateProfile(
                 UpdateUserProfileCommand.of(
                         1L,
                         " newNick ",
-                        " new@example.com ",
-                        " https://image.test/me.png "
+                        " new@example.com "
                 )
         );
 
         assertThat(userInfo.nickname()).isEqualTo("newNick");
-        assertThat(userRepository.users.get(1L).getName()).isEqualTo("oldName");
         assertThat(userInfo.email()).isEqualTo("new@example.com");
-        assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/me.png");
+        assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/original.png");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
     }
 
@@ -61,7 +78,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, null)
+                UpdateUserProfileCommand.of(1L, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
@@ -76,7 +93,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, "two", null, null)
+                UpdateUserProfileCommand.of(1L, "two", null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -89,7 +106,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "user2@example.com", null)
+                UpdateUserProfileCommand.of(1L, null, "user2@example.com")
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -178,6 +195,7 @@ class UserCommandServiceTest {
                 nickname,
                 name,
                 profileImageUrl,
+                null,
                 0L,
                 UserRole.USER,
                 UserGrade.NORMAL,
@@ -207,6 +225,7 @@ class UserCommandServiceTest {
                     user.getNickname(),
                     user.getName(),
                     user.getProfileImageUrl(),
+                    user.getProfileImageObjectKey(),
                     user.getPoint(),
                     user.getRole(),
                     user.getGrade(),

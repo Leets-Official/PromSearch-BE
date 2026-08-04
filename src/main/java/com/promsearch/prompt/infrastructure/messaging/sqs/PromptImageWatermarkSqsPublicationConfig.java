@@ -6,7 +6,7 @@ import com.promsearch.prompt.application.port.out.promptimage.UpdatePromptImageW
 import com.promsearch.prompt.application.service.command.PromptImageWatermarkOutboxPublisher;
 import com.promsearch.prompt.application.service.command.PromptImageWatermarkOutboxPublisher.PublicationPolicy;
 import com.promsearch.prompt.application.usecase.PublishPendingPromptImageWatermarkJobsUseCase;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import java.time.Clock;
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -29,7 +29,7 @@ public class PromptImageWatermarkSqsPublicationConfig {
 
     /** 기본 AWS 자격 증명 체인과 서울 리전을 사용하는 SQS 동기 클라이언트 */
     @Bean
-    SqsClient watermarkPublisherSqsClient(S3StorageProperties storageProperties) {
+    SqsClient watermarkPublisherSqsClient(S3ObjectStorageProperties storageProperties) {
         // TODO: 발행 동시성을 높일 때 Apache HTTP 커넥션 풀로 전환하고
         // maxConnections를 Outbox 전송 동시성 이상으로 설정한 뒤 timeout·재시도 지표 검증
         return SqsClient.builder()

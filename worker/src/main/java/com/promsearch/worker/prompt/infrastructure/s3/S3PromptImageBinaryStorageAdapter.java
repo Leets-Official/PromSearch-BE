@@ -5,7 +5,7 @@ import com.promsearch.prompt.application.port.out.storage.SavePromptImageBinaryP
 import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +26,7 @@ public class S3PromptImageBinaryStorageAdapter
         implements LoadPromptImageBinaryPort, SavePromptImageBinaryPort {
 
     private final S3Client s3Client;
-    private final S3StorageProperties properties;
+    private final S3ObjectStorageProperties properties;
 
     /** 응답 스트림을 최대 허용 크기까지만 읽어 메모리 과다 사용 방지 */
     @Override
