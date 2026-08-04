@@ -38,6 +38,21 @@ public class TagPersistenceAdapter implements LoadTagPort, SaveTagPort {
     }
 
     @Override
+    public List<Tag> listByType(TagType tagType) {
+        if (tagType == null) {
+            return List.of();
+        }
+
+        /*
+         * 필터 드롭다운은 고정된 순서로 보여야 사용자가 매번 같은 위치에서 선택할 수 있습니다.
+         * 별도 displayOrder 컬럼이 생기기 전까지는 초기 시드/생성 순서에 가까운 ID 오름차순으로 반환합니다.
+         */
+        return tagRepository.findAllByTagTypeOrderByIdAsc(tagType).stream()
+                .map(TagJpaEntity::toDomain)
+                .toList();
+    }
+
+    @Override
     public Tag create(Tag tag) {
         try {
             return tagRepository.saveAndFlush(TagJpaEntity.from(tag)).toDomain();
