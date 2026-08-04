@@ -32,7 +32,7 @@ class UserOpenApiContractTest {
 
         assertThat(operation.isMissingNode()).isFalse();
         assertThat(operation.path("description").asText())
-                .contains("작업자: kallin1", "구현 상태: 미구현");
+                .contains("작업자: 한하람", "구현 상태: 구현완료");
     }
 
     @DisplayName("Swagger에 닉네임 중복 확인 API와 필수 query parameter를 노출한다")

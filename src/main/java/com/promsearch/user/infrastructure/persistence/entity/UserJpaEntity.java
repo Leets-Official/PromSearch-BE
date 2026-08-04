@@ -39,11 +39,14 @@ public class UserJpaEntity extends BaseEntity {
     @Column(name = "nickname", nullable = false, unique = true, length = 100)
     private String nickname;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name", length = 100)
     private String name;
 
     @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
+
+    @Column(name = "profile_image_object_key", length = 1024)
+    private String profileImageObjectKey;
 
     @Column(name = "points", nullable = false)
     private Long points;
@@ -61,36 +64,53 @@ public class UserJpaEntity extends BaseEntity {
     private UserStatus status;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserJpaEntity(String email, String password, String nickname, String name, String profileImageUrl) {
+    private UserJpaEntity(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl,
+            String profileImageObjectKey
+    ) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+        this.profileImageObjectKey = profileImageObjectKey;
         this.points = 0L;
         this.role = UserRole.USER;
         this.grade = UserGrade.NORMAL;
         this.status = UserStatus.ACTIVE;
     }
 
-    public static UserJpaEntity create(String email, String password, String nickname, String name, String profileImageUrl) {
+    public static UserJpaEntity create(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl,
+            String profileImageObjectKey
+    ) {
         return UserJpaEntity.builder()
                 .email(email)
                 .password(password)
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .build();
     }
 
     public void updateFrom(User user) {
-        validateProfile(user.getEmail(), user.getPassword(), user.getNickname(), user.getName());
+        validateProfile(user.getEmail(), user.getPassword(), user.getNickname());
 
         this.email = user.getEmail();
         this.password = user.getPassword();
         this.nickname = user.getNickname();
         this.name = user.getName();
         this.profileImageUrl = user.getProfileImageUrl();
+        this.profileImageObjectKey = user.getProfileImageObjectKey();
         this.points = user.getPoint();
         this.role = user.getRole();
         this.grade = user.getGrade();
@@ -109,6 +129,7 @@ public class UserJpaEntity extends BaseEntity {
                 nickname,
                 name,
                 profileImageUrl,
+                profileImageObjectKey,
                 points,
                 role,
                 grade,
@@ -122,7 +143,11 @@ public class UserJpaEntity extends BaseEntity {
         return password;
     }
 
-    private void validateProfile(String email, String password, String nickname, String name) {
+    public Long getId() {
+        return id;
+    }
+
+    private void validateProfile(String email, String password, String nickname) {
         if (email == null || email.isBlank()) {
             throw new UserDomainException(UserErrorCode.INVALID_EMAIL);
         }
@@ -131,9 +156,6 @@ public class UserJpaEntity extends BaseEntity {
         }
         if (nickname == null || nickname.isBlank()) {
             throw new UserDomainException(UserErrorCode.INVALID_NICKNAME);
-        }
-        if (name == null || name.isBlank()) {
-            throw new UserDomainException(UserErrorCode.INVALID_NAME);
         }
     }
 }

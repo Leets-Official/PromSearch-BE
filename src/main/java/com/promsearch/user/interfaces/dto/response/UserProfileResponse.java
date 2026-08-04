@@ -1,5 +1,6 @@
 package com.promsearch.user.interfaces.dto.response;
 
+import com.promsearch.user.application.usecase.dto.UserProfileInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "마이페이지 프로필 조회 응답")
@@ -15,4 +16,14 @@ public record UserProfileResponse(
         @Schema(description = "크리에이터 등급 이름", example = "ORIGIN")
         String gradeName
 ) {
+
+    public static UserProfileResponse from(UserProfileInfo info) {
+        return new UserProfileResponse(
+                info.username(),
+                info.profileImageUrl(),
+                info.email(),
+                info.point(),
+                info.gradeName()
+        );
+    }
 }

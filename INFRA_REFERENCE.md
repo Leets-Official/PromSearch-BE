@@ -38,7 +38,7 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
   - CI가 검증한 커밋 SHA 이미지로 API를 기동하고, API 헬스체크가 완료된 뒤 Worker를 시작합니다.
   - Worker의 첫 SQS Long Polling 성공 로그까지 확인한 뒤 배포를 완료합니다.
   - API 또는 Worker 검증이 실패하면 직전 컨테이너를 복구합니다.
-  - Flyway PostgreSQL 의존성은 포함하지만, 전체 baseline을 확정하는 #21 전까지 자동 마이그레이션은 비활성화합니다.
+  - API가 Flyway를 실행하며, 새 빈 PostgreSQL에는 V1 전체 초기 스키마를 적용합니다.
   - `--restart unless-stopped`: EC2가 재부팅되어도 컨테이너가 자동으로 다시 뜹니다.
   - `docker image prune -f`: 배포마다 쌓이는 이전 이미지를 정리합니다.
 - 배포(`deploy` job) 실패 시 Discord 웹훅으로 알림이 갑니다.
@@ -67,7 +67,7 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `SPRING_DATASOURCE_URL` | API와 Worker가 공유하는 PostgreSQL JDBC URL |
 | `SPRING_DATASOURCE_USERNAME` | PostgreSQL 사용자 이름 |
 | `SPRING_DATASOURCE_PASSWORD` | PostgreSQL 비밀번호 |
-| `SPRING_FLYWAY_ENABLED` | #21 baseline 확정 전에는 `false` |
+| `SPRING_FLYWAY_ENABLED` | 새 빈 운영 DB는 `true` |
 | `AWS_S3_BUCKET` | 원본·워터마크 이미지를 저장할 S3 버킷 |
 | `AWS_SQS_WATERMARK_ENABLED` | SQS 발행기와 Worker 활성화 여부 (`true`) |
 | `AWS_SQS_WATERMARK_QUEUE_URL` | 이미지 워터마크 작업 SQS Queue URL |

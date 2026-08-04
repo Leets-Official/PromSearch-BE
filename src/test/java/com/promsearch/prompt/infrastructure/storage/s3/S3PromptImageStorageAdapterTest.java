@@ -7,6 +7,8 @@ import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort.StoredObjectMetadata;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageUploadPort.PresignedUpload;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageOperations;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
 import java.net.URLDecoder;
@@ -41,17 +43,16 @@ class S3PromptImageStorageAdapterTest {
                         AwsBasicCredentials.create("test-access-key", "test-secret-key")
                 ))
                 .build();
-        adapter = new S3PromptImageStorageAdapter(
+        S3ObjectStorageOperations operations = new S3ObjectStorageOperations(
                 s3Client,
                 s3Presigner,
-                new S3StorageProperties(
+                new S3ObjectStorageProperties(
                         "promsearch-test-bucket",
                         "ap-northeast-2",
-                        "prompt-images/original",
-                        "prompt-images/watermarked",
                         Duration.ofMinutes(10)
                 )
         );
+        adapter = new S3PromptImageStorageAdapter(operations);
     }
 
     @AfterEach
@@ -64,7 +65,8 @@ class S3PromptImageStorageAdapterTest {
     void presignPutSignsContentType() {
         PresignedUpload result = adapter.presignPut(
                 "prompt-images/original/1/image.jpg",
-                "image/jpeg"
+                "image/jpeg",
+                1_024L
         );
 
         String decodedQuery = URLDecoder.decode(
@@ -72,8 +74,17 @@ class S3PromptImageStorageAdapterTest {
                 StandardCharsets.UTF_8
         );
         assertThat(decodedQuery).contains("X-Amz-Signature=");
-        assertThat(decodedQuery).contains("X-Amz-SignedHeaders=content-type;host");
+        assertThat(decodedQuery).contains("X-Amz-SignedHeaders=content-length;content-type;host");
         assertThat(result.expiresAt()).isAfter(Instant.now().plus(Duration.ofMinutes(9)));
+    }
+
+    @DisplayName("워터마크 이미지 조회 URL은 GET 요청용으로 짧게 서명한다")
+    @Test
+    void presignGetReturnsSignedUrl() {
+        String result = adapter.presignGet("prompt-images/watermarked/1/image.jpg");
+
+        assertThat(result).contains("X-Amz-Signature=");
+        assertThat(result).contains("prompt-images/watermarked/1/image.jpg");
     }
 
     @DisplayName("HeadObject 응답을 애플리케이션 스토리지 메타데이터로 변환한다")

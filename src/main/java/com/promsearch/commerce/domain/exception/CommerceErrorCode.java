@@ -14,7 +14,14 @@ public enum CommerceErrorCode implements BaseCode {
     INVALID_POINT_REFERENCE(HttpStatus.BAD_REQUEST, "COMMERCE-007", "포인트 참조 대상이 유효하지 않습니다."),
     INVALID_ID(HttpStatus.BAD_REQUEST, "COMMERCE-008", "식별자가 유효하지 않습니다."),
     INVALID_USER_ID(HttpStatus.BAD_REQUEST, "COMMERCE-009", "사용자 식별자가 유효하지 않습니다."),
-    INVALID_POST_ID(HttpStatus.BAD_REQUEST, "COMMERCE-010", "프롬프트 식별자가 유효하지 않습니다.");
+    INVALID_POST_ID(HttpStatus.BAD_REQUEST, "COMMERCE-010", "프롬프트 식별자가 유효하지 않습니다."),
+    PROMPT_NOT_ACCESSIBLE(HttpStatus.NOT_FOUND, "COMMERCE-011", "접근 가능한 프롬프트를 찾을 수 없습니다."),
+    PAID_PROMPT_ACCESS_DENIED(HttpStatus.FORBIDDEN, "COMMERCE-012", "유료 프롬프트 복사 권한이 없습니다."),
+    COPY_COUNT_UPDATE_FAILED(
+            HttpStatus.INTERNAL_SERVER_ERROR,
+            "COMMERCE-013",
+            "프롬프트 복사 횟수 갱신에 실패했습니다."
+    );
 
     private final HttpStatus httpStatus;
     private final String code;

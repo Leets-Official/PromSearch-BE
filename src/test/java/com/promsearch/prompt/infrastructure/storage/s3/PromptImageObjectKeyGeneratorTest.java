@@ -3,7 +3,7 @@ package com.promsearch.prompt.infrastructure.storage.s3;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
-import java.time.Duration;
+import com.promsearch.common.infrastructure.storage.StorageObjectKeyFactory;
 import java.util.UUID;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -15,12 +15,10 @@ class PromptImageObjectKeyGeneratorTest {
     void generateOriginalObjectKey() {
         PromptImageObjectKeyGenerator generator = new PromptImageObjectKeyGenerator(
                 new S3StorageProperties(
-                        "test-bucket",
-                        "ap-northeast-2",
                         "/prompt-images/original/",
-                        "/prompt-images/watermarked/",
-                        Duration.ofMinutes(10)
-                )
+                        "/prompt-images/watermarked/"
+                ),
+                new StorageObjectKeyFactory()
         );
         UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
@@ -35,12 +33,10 @@ class PromptImageObjectKeyGeneratorTest {
     void generateWatermarkedObjectKey() {
         PromptImageObjectKeyGenerator generator = new PromptImageObjectKeyGenerator(
                 new S3StorageProperties(
-                        "test-bucket",
-                        "ap-northeast-2",
                         "prompt-images/original",
-                        "/prompt-images/watermarked/",
-                        Duration.ofMinutes(10)
-                )
+                        "/prompt-images/watermarked/"
+                ),
+                new StorageObjectKeyFactory()
         );
         UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
 
