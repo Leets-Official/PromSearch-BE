@@ -5,7 +5,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.moderation.domain.enums.ReportReason;
 import com.promsearch.moderation.domain.enums.ReportStatus;
-import com.promsearch.moderation.domain.enums.ReportTargetType;
 import com.promsearch.moderation.domain.exception.ModerationDomainException;
 import com.promsearch.moderation.domain.exception.ModerationErrorCode;
 import org.junit.jupiter.api.Test;
@@ -14,24 +13,15 @@ class PostReportTest {
 
     @Test
     void createBuildsPendingReport() {
-        PostReport report = PostReport.create(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명");
+        PostReport report = PostReport.create(1L, 10L, ReportReason.SPAM, "설명");
 
         assertThat(report.getStatus()).isEqualTo(ReportStatus.PENDING);
-        assertThat(report.getTargetType()).isEqualTo(ReportTargetType.POST);
-        assertThat(report.getTargetId()).isEqualTo(10L);
-    }
-
-    @Test
-    void createRejectsReasonNotAllowedForCommentTarget() {
-        assertThatThrownBy(() -> PostReport.create(1L, ReportTargetType.COMMENT, 10L, ReportReason.COPYRIGHT, null))
-                .isInstanceOf(ModerationDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(ModerationErrorCode.INVALID_REPORT_REASON);
+        assertThat(report.getPostId()).isEqualTo(10L);
     }
 
     @Test
     void updateStatusAllowsResolvedOrRejected() {
-        PostReport report = PostReport.create(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, null);
+        PostReport report = PostReport.create(1L, 10L, ReportReason.SPAM, "설명");
 
         PostReport resolved = report.updateStatus(ReportStatus.RESOLVED);
 
@@ -40,7 +30,7 @@ class PostReportTest {
 
     @Test
     void updateStatusRejectsPending() {
-        PostReport report = PostReport.create(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, null);
+        PostReport report = PostReport.create(1L, 10L, ReportReason.SPAM, "설명");
 
         assertThatThrownBy(() -> report.updateStatus(ReportStatus.PENDING))
                 .isInstanceOf(ModerationDomainException.class)

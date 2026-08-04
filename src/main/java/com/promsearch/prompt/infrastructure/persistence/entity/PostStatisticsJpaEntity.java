@@ -59,6 +59,23 @@ public class PostStatisticsJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public long increaseLikeCount() {
+        likeCount = Math.incrementExact(likeCount);
+        return likeCount;
+    }
+
+    public long decreaseLikeCount() {
+        if (likeCount <= 0) {
+            throw new IllegalStateException("좋아요 수는 0보다 작아질 수 없습니다.");
+        }
+        likeCount--;
+        return likeCount;
+    }
+
+    public long getLikeCount() {
+        return likeCount;
+    }
+
     public PostStatistics toDomain() {
         return PostStatistics.reconstruct(
                 postId,

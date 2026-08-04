@@ -6,9 +6,21 @@ on:
     types: [completed]
     branches: [main]
 
+concurrency:
+  group: promsearch-production-deploy
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
 jobs:
   build-and-push:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      ${{
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.event == 'push' &&
+        github.event.workflow_run.head_branch == 'main'
+      }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,9 +45,11 @@ jobs:
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    environment: production
     steps:
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.0.3
+        uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
         env:
           JWT_ACCESS_SECRET: ${{ secrets.JWT_ACCESS_SECRET }}
           JWT_REFRESH_SECRET: ${{ secrets.JWT_REFRESH_SECRET }}
@@ -46,17 +60,85 @@ jobs:
           KAKAO_CLIENT_SECRET: ${{ secrets.KAKAO_CLIENT_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          SPRING_DATASOURCE_URL: ${{ secrets.SPRING_DATASOURCE_URL }}
+          SPRING_DATASOURCE_USERNAME: ${{ secrets.SPRING_DATASOURCE_USERNAME }}
+          SPRING_DATASOURCE_PASSWORD: ${{ secrets.SPRING_DATASOURCE_PASSWORD }}
+          SPRING_FLYWAY_ENABLED: ${{ secrets.SPRING_FLYWAY_ENABLED }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
+          AWS_REGION: ap-northeast-2
+          AWS_SQS_WATERMARK_ENABLED: ${{ secrets.AWS_SQS_WATERMARK_ENABLED }}
+          AWS_SQS_WATERMARK_QUEUE_URL: ${{ secrets.AWS_SQS_WATERMARK_QUEUE_URL }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: JWT_ACCESS_SECRET,JWT_REFRESH_SECRET,SWAGGER_ENABLE,SWAGGER_AUTH_USERNAME,SWAGGER_AUTH_PASSWORD,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET
+          timeout: 30s
+          command_timeout: 12m
+          envs: JWT_ACCESS_SECRET,JWT_REFRESH_SECRET,SWAGGER_ENABLE,SWAGGER_AUTH_USERNAME,SWAGGER_AUTH_PASSWORD,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,SPRING_FLYWAY_ENABLED,AWS_S3_BUCKET,AWS_REGION,AWS_SQS_WATERMARK_ENABLED,AWS_SQS_WATERMARK_QUEUE_URL
           script: |
-            docker pull ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
-            docker stop promsearch || true
-            docker rm promsearch || true
-            docker run -d --name promsearch --restart unless-stopped -p 8080:8080 \
+            set -eu
+
+            if [ "$AWS_SQS_WATERMARK_ENABLED" != "true" ] || [ -z "$AWS_SQS_WATERMARK_QUEUE_URL" ]; then
+              echo "Worker deployment requires enabled SQS watermark configuration."
+              exit 1
+            fi
+
+            IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/promsearch:${{ github.event.workflow_run.head_sha }}
+            API_PREVIOUS=false
+            API_NEW=false
+            WORKER_PREVIOUS=false
+            WORKER_NEW=false
+            ROLLBACK_REQUIRED=false
+
+            rollback() {
+              if [ "$API_NEW" = "true" ]; then
+                docker rm -f promsearch || true
+              fi
+              if [ "$WORKER_NEW" = "true" ]; then
+                docker rm -f promsearch-worker || true
+              fi
+              if [ "$API_PREVIOUS" = "true" ]; then
+                docker rename promsearch-previous promsearch || true
+                docker start promsearch || true
+              fi
+              if [ "$WORKER_PREVIOUS" = "true" ]; then
+                docker rename promsearch-worker-previous promsearch-worker || true
+                docker start promsearch-worker || true
+              fi
+            }
+
+            rollback_on_exit() {
+              exit_status=$?
+              if [ "$ROLLBACK_REQUIRED" = "true" ]; then
+                rollback
+              fi
+              exit "$exit_status"
+            }
+            trap rollback_on_exit EXIT
+            trap 'exit 1' HUP INT TERM
+
+            timeout 4m docker pull "$IMAGE"
+            docker rm -f promsearch-previous promsearch-worker-previous || true
+            ROLLBACK_REQUIRED=true
+            if docker container inspect promsearch >/dev/null 2>&1; then
+              docker rename promsearch promsearch-previous
+              API_PREVIOUS=true
+              docker stop --time 20 promsearch-previous
+            fi
+            if docker container inspect promsearch-worker >/dev/null 2>&1; then
+              docker rename promsearch-worker promsearch-worker-previous
+              WORKER_PREVIOUS=true
+              docker stop --time 20 promsearch-worker-previous
+            fi
+
+            API_NEW=true
+            if ! docker run -d --name promsearch --restart unless-stopped \
+              --log-opt max-size=10m --log-opt max-file=3 -p 8080:8080 \
               -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$SPRING_DATASOURCE_PASSWORD" \
+              -e SPRING_FLYWAY_ENABLED="${SPRING_FLYWAY_ENABLED:-false}" \
               -e JWT_ACCESS_SECRET="$JWT_ACCESS_SECRET" \
               -e JWT_REFRESH_SECRET="$JWT_REFRESH_SECRET" \
               -e SWAGGER_ENABLE="$SWAGGER_ENABLE" \
@@ -66,8 +148,73 @@ jobs:
               -e KAKAO_CLIENT_SECRET="$KAKAO_CLIENT_SECRET" \
               -e GOOGLE_CLIENT_ID="$GOOGLE_CLIENT_ID" \
               -e GOOGLE_CLIENT_SECRET="$GOOGLE_CLIENT_SECRET" \
-              ${{ secrets.DOCKERHUB_USERNAME }}/promsearch:latest
-            docker image prune -f
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e AWS_REGION="$AWS_REGION" \
+              -e AWS_SQS_WATERMARK_ENABLED="$AWS_SQS_WATERMARK_ENABLED" \
+              -e AWS_SQS_WATERMARK_QUEUE_URL="$AWS_SQS_WATERMARK_QUEUE_URL" \
+              "$IMAGE"; then
+              exit 1
+            fi
+
+            API_HEALTH=starting
+            for attempt in $(seq 1 18); do
+              API_RUNNING=$(timeout 5s docker inspect --format='{{.State.Running}}' promsearch 2>/dev/null || true)
+              if [ "$API_RUNNING" != "true" ]; then
+                break
+              fi
+              API_HEALTH=$(timeout 5s docker inspect --format='{{.State.Health.Status}}' promsearch 2>/dev/null || true)
+              if [ "$API_HEALTH" = "healthy" ]; then
+                break
+              fi
+              if [ "$API_HEALTH" = "unhealthy" ]; then
+                break
+              fi
+              sleep 5
+            done
+            if [ "$API_HEALTH" != "healthy" ]; then
+              timeout 10s docker logs --tail 100 promsearch || true
+              exit 1
+            fi
+
+            WORKER_NEW=true
+            if ! docker run -d --name promsearch-worker --restart unless-stopped --no-healthcheck \
+              --log-opt max-size=10m --log-opt max-file=3 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$SPRING_DATASOURCE_PASSWORD" \
+              -e SPRING_JPA_HIBERNATE_DDL_AUTO=none \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e AWS_REGION="$AWS_REGION" \
+              -e AWS_SQS_WATERMARK_ENABLED="$AWS_SQS_WATERMARK_ENABLED" \
+              -e AWS_SQS_WATERMARK_QUEUE_URL="$AWS_SQS_WATERMARK_QUEUE_URL" \
+              "$IMAGE" worker.jar; then
+              exit 1
+            fi
+
+            WORKER_READY=false
+            for attempt in $(seq 1 12); do
+              WORKER_RUNNING=$(timeout 5s docker inspect --format='{{.State.Running}}' promsearch-worker 2>/dev/null || true)
+              if [ "$WORKER_RUNNING" != "true" ]; then
+                break
+              fi
+              WORKER_LOGS=$(timeout 5s docker logs --tail 200 promsearch-worker 2>&1 || true)
+              if printf '%s\n' "$WORKER_LOGS" | grep -q 'prompt_image_watermark_sqs_poll_ready'; then
+                WORKER_READY=true
+                break
+              fi
+              echo "Worker readiness check ${attempt}/12"
+              sleep 5
+            done
+            if [ "$WORKER_READY" != "true" ]; then
+              timeout 10s docker logs --tail 200 promsearch-worker || true
+              exit 1
+            fi
+
+            ROLLBACK_REQUIRED=false
+            trap - EXIT
+            docker rm promsearch-previous promsearch-worker-previous || true
+            timeout 1m docker image prune -f || true
 
       - name: Notify Discord on failure
         if: failure()

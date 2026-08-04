@@ -3,11 +3,16 @@ package com.promsearch.moderation.application.service.command;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.promsearch.moderation.application.port.out.commentreport.CommentReportPageResult;
+import com.promsearch.moderation.application.port.out.commentreport.LoadCommentReportPort;
+import com.promsearch.moderation.application.port.out.commentreport.SaveCommentReportPort;
 import com.promsearch.moderation.application.port.out.postreport.LoadPostReportPort;
 import com.promsearch.moderation.application.port.out.postreport.ReportPageResult;
 import com.promsearch.moderation.application.port.out.postreport.SavePostReportPort;
 import com.promsearch.moderation.application.usecase.dto.ReportInfo;
 import com.promsearch.moderation.application.usecase.dto.UpdateReportStatusCommand;
+import com.promsearch.moderation.domain.CommentReport;
+import com.promsearch.moderation.domain.CommentReport.CommentReportId;
 import com.promsearch.moderation.domain.PostReport;
 import com.promsearch.moderation.domain.PostReport.PostReportId;
 import com.promsearch.moderation.domain.enums.ReportReason;
@@ -24,33 +29,49 @@ import org.junit.jupiter.api.Test;
 
 class PostReportCommandServiceTest {
 
-    private FakePostReportRepository repository;
+    private FakePostReportRepository postReportRepository;
+    private FakeCommentReportRepository commentReportRepository;
     private PostReportCommandService postReportCommandService;
 
     @BeforeEach
     void setUp() {
-        repository = new FakePostReportRepository();
-        postReportCommandService = new PostReportCommandService(repository, repository);
+        postReportRepository = new FakePostReportRepository();
+        commentReportRepository = new FakeCommentReportRepository();
+        postReportCommandService = new PostReportCommandService(
+                postReportRepository, postReportRepository, commentReportRepository, commentReportRepository
+        );
     }
 
     @Test
-    void updateStatusResolvesReport() {
-        repository.save(testReport(1L, ReportStatus.PENDING));
+    void updateStatusResolvesPostReport() {
+        postReportRepository.save(testPostReport(1L, ReportStatus.PENDING));
 
         ReportInfo reportInfo = postReportCommandService.updateStatus(
-                UpdateReportStatusCommand.of(1L, ReportStatus.RESOLVED)
+                UpdateReportStatusCommand.of(1L, ReportTargetType.POST, ReportStatus.RESOLVED)
         );
 
         assertThat(reportInfo.status()).isEqualTo(ReportStatus.RESOLVED);
-        assertThat(repository.reports.get(1L).getStatus()).isEqualTo(ReportStatus.RESOLVED);
+        assertThat(postReportRepository.reports.get(1L).getStatus()).isEqualTo(ReportStatus.RESOLVED);
+    }
+
+    @Test
+    void updateStatusResolvesCommentReport() {
+        commentReportRepository.save(testCommentReport(1L, ReportStatus.PENDING));
+
+        ReportInfo reportInfo = postReportCommandService.updateStatus(
+                UpdateReportStatusCommand.of(1L, ReportTargetType.COMMENT, ReportStatus.RESOLVED)
+        );
+
+        assertThat(reportInfo.status()).isEqualTo(ReportStatus.RESOLVED);
+        assertThat(commentReportRepository.reports.get(1L).getStatus()).isEqualTo(ReportStatus.RESOLVED);
     }
 
     @Test
     void updateStatusRejectsPending() {
-        repository.save(testReport(1L, ReportStatus.PENDING));
+        postReportRepository.save(testPostReport(1L, ReportStatus.PENDING));
 
         assertThatThrownBy(() -> postReportCommandService.updateStatus(
-                UpdateReportStatusCommand.of(1L, ReportStatus.PENDING)
+                UpdateReportStatusCommand.of(1L, ReportTargetType.POST, ReportStatus.PENDING)
         ))
                 .isInstanceOf(ModerationDomainException.class)
                 .extracting("baseCode")
@@ -60,16 +81,23 @@ class PostReportCommandServiceTest {
     @Test
     void updateStatusRejectsMissingReport() {
         assertThatThrownBy(() -> postReportCommandService.updateStatus(
-                UpdateReportStatusCommand.of(999L, ReportStatus.RESOLVED)
+                UpdateReportStatusCommand.of(999L, ReportTargetType.POST, ReportStatus.RESOLVED)
         ))
                 .isInstanceOf(ModerationDomainException.class)
                 .extracting("baseCode")
                 .isEqualTo(ModerationErrorCode.REPORT_NOT_FOUND);
     }
 
-    private PostReport testReport(Long reportId, ReportStatus status) {
+    private PostReport testPostReport(Long reportId, ReportStatus status) {
         return PostReport.reconstruct(
-                new PostReportId(reportId), 5L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명",
+                new PostReportId(reportId), 5L, 10L, ReportReason.SPAM, "설명",
+                status, Instant.now()
+        );
+    }
+
+    private CommentReport testCommentReport(Long reportId, ReportStatus status) {
+        return CommentReport.reconstruct(
+                new CommentReportId(reportId), 5L, 20L, ReportReason.SPAM, "설명",
                 status, Instant.now()
         );
     }
@@ -92,7 +120,7 @@ class PostReportCommandServiceTest {
         }
 
         @Override
-        public ReportPageResult search(ReportTargetType targetType, ReportStatus status, int page, int size) {
+        public ReportPageResult search(ReportStatus status, int page, int size) {
             return new ReportPageResult(List.copyOf(reports.values()), reports.size());
         }
 
@@ -100,6 +128,35 @@ class PostReportCommandServiceTest {
         public PostReport update(PostReport postReport) {
             reports.put(postReport.getPostReportId().id(), postReport);
             return postReport;
+        }
+    }
+
+    private static class FakeCommentReportRepository implements LoadCommentReportPort, SaveCommentReportPort {
+
+        private final Map<Long, CommentReport> reports = new HashMap<>();
+
+        void save(CommentReport report) {
+            reports.put(report.getCommentReportId().id(), report);
+        }
+
+        @Override
+        public CommentReport getById(Long reportId) {
+            CommentReport report = reports.get(reportId);
+            if (report == null) {
+                throw new ModerationDomainException(ModerationErrorCode.REPORT_NOT_FOUND);
+            }
+            return report;
+        }
+
+        @Override
+        public CommentReportPageResult search(ReportStatus status, int page, int size) {
+            return new CommentReportPageResult(List.copyOf(reports.values()), reports.size());
+        }
+
+        @Override
+        public CommentReport update(CommentReport commentReport) {
+            reports.put(commentReport.getCommentReportId().id(), commentReport);
+            return commentReport;
         }
     }
 }

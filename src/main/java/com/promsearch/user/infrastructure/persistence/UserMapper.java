@@ -14,7 +14,8 @@ public final class UserMapper {
                 user.getPassword(),
                 user.getNickname(),
                 user.getName(),
-                user.getProfileImageUrl()
+                user.getProfileImageUrl(),
+                user.getProfileImageObjectKey()
         );
     }
 

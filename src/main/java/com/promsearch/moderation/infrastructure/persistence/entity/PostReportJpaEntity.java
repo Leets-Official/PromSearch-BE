@@ -5,7 +5,6 @@ import com.promsearch.moderation.domain.PostReport;
 import com.promsearch.moderation.domain.PostReport.PostReportId;
 import com.promsearch.moderation.domain.enums.ReportReason;
 import com.promsearch.moderation.domain.enums.ReportStatus;
-import com.promsearch.moderation.domain.enums.ReportTargetType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -24,8 +23,8 @@ import lombok.NoArgsConstructor;
 @Table(
         name = "post_reports",
         uniqueConstraints = @UniqueConstraint(
-                name = "uk_post_reports_reporter_target",
-                columnNames = {"reporter_id", "target_type", "target_id"}
+                name = "uk_post_reports_user_post",
+                columnNames = {"reporter_id", "post_id"}
         )
 )
 public class PostReportJpaEntity extends BaseEntity {
@@ -38,18 +37,14 @@ public class PostReportJpaEntity extends BaseEntity {
     @Column(name = "reporter_id", nullable = false)
     private Long reporterId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false, length = 20)
-    private ReportTargetType targetType;
-
-    @Column(name = "target_id", nullable = false)
-    private Long targetId;
+    @Column(name = "post_id", nullable = false)
+    private Long postId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "reason", nullable = false, length = 30)
     private ReportReason reason;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -59,32 +54,23 @@ public class PostReportJpaEntity extends BaseEntity {
     @Builder(access = AccessLevel.PRIVATE)
     private PostReportJpaEntity(
             Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
+            Long postId,
             ReportReason reason,
             String description
     ) {
         this.reporterId = reporterId;
-        this.targetType = targetType;
-        this.targetId = targetId;
+        this.postId = postId;
         this.reason = reason;
         this.description = description;
         this.status = ReportStatus.PENDING;
     }
 
-    public static PostReportJpaEntity create(
-            Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
-            ReportReason reason,
-            String description
-    ) {
+    public static PostReportJpaEntity from(PostReport report) {
         return PostReportJpaEntity.builder()
-                .reporterId(reporterId)
-                .targetType(targetType)
-                .targetId(targetId)
-                .reason(reason)
-                .description(description)
+                .reporterId(report.getReporterId())
+                .postId(report.getPostId())
+                .reason(report.getReason())
+                .description(report.getDescription())
                 .build();
     }
 
@@ -94,14 +80,6 @@ public class PostReportJpaEntity extends BaseEntity {
 
     public PostReport toDomain() {
         return PostReport.reconstruct(
-                new PostReportId(id),
-                reporterId,
-                targetType,
-                targetId,
-                reason,
-                description,
-                status,
-                getCreatedAt()
-        );
+                new PostReportId(id), reporterId, postId, reason, description, status, getCreatedAt());
     }
 }

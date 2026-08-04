@@ -1,5 +1,7 @@
 package com.promsearch.moderation.application.service.query;
 
+import com.promsearch.moderation.application.port.out.commentreport.CommentReportPageResult;
+import com.promsearch.moderation.application.port.out.commentreport.LoadCommentReportPort;
 import com.promsearch.moderation.application.port.out.postreport.LoadPostReportPort;
 import com.promsearch.moderation.application.port.out.postreport.ReportPageResult;
 import com.promsearch.moderation.application.usecase.SearchReportsUseCase;
@@ -16,15 +18,27 @@ import org.springframework.transaction.annotation.Transactional;
 public class PostReportQueryService implements SearchReportsUseCase {
 
     private final LoadPostReportPort loadPostReportPort;
+    private final LoadCommentReportPort loadCommentReportPort;
 
     @Override
     public ReportPageInfo searchReports(SearchReportsQuery query) {
-        ReportPageResult result = loadPostReportPort.search(
-                query.targetType(),
-                query.status(),
-                query.page(),
-                query.size()
+        return switch (query.targetType()) {
+            case POST -> searchPostReports(query);
+            case COMMENT -> searchCommentReports(query);
+        };
+    }
+
+    private ReportPageInfo searchPostReports(SearchReportsQuery query) {
+        ReportPageResult result = loadPostReportPort.search(query.status(), query.page(), query.size());
+
+        return new ReportPageInfo(
+                result.content().stream().map(ReportInfo::from).toList(),
+                result.totalElements()
         );
+    }
+
+    private ReportPageInfo searchCommentReports(SearchReportsQuery query) {
+        CommentReportPageResult result = loadCommentReportPort.search(query.status(), query.page(), query.size());
 
         return new ReportPageInfo(
                 result.content().stream().map(ReportInfo::from).toList(),

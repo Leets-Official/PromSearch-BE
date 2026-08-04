@@ -60,7 +60,7 @@ class AdminReportControllerTest {
     void getReportsRejectsNonAdmin() throws Exception {
         authenticateAs("USER");
 
-        mockMvc.perform(get("/api/v1/admin/reports"))
+        mockMvc.perform(get("/api/v1/admin/reports").param("targetType", "POST"))
                 .andExpect(status().isForbidden());
     }
 
@@ -86,6 +86,15 @@ class AdminReportControllerTest {
                 .andExpect(jsonPath("$.result.totalElements").value(1));
     }
 
+    @DisplayName("targetType이 없으면 400을 반환한다")
+    @Test
+    void getReportsRejectsMissingTargetType() throws Exception {
+        authenticateAs("ADMIN");
+
+        mockMvc.perform(get("/api/v1/admin/reports"))
+                .andExpect(status().isBadRequest());
+    }
+
     @DisplayName("targetType 값이 유효하지 않으면 400을 반환한다")
     @Test
     void getReportsRejectsInvalidTargetType() throws Exception {
@@ -104,7 +113,7 @@ class AdminReportControllerTest {
         mockMvc.perform(patch("/api/v1/admin/reports/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"RESOLVED"}
+                                {"targetType":"POST","status":"RESOLVED"}
                                 """))
                 .andExpect(status().isForbidden());
     }
@@ -114,13 +123,13 @@ class AdminReportControllerTest {
     void updateReportStatusResolvesReport() throws Exception {
         authenticateAs("ADMIN");
         Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
-        given(updateReportStatusUseCase.updateStatus(UpdateReportStatusCommand.of(1L, ReportStatus.RESOLVED)))
+        given(updateReportStatusUseCase.updateStatus(UpdateReportStatusCommand.of(1L, ReportTargetType.POST, ReportStatus.RESOLVED)))
                 .willReturn(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.RESOLVED, 5L, createdAt));
 
         mockMvc.perform(patch("/api/v1/admin/reports/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"RESOLVED"}
+                                {"targetType":"POST","status":"RESOLVED"}
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.status").value("RESOLVED"));
@@ -134,7 +143,21 @@ class AdminReportControllerTest {
         mockMvc.perform(patch("/api/v1/admin/reports/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"status":"PENDING"}
+                                {"targetType":"POST","status":"PENDING"}
+                                """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("COMMON-001"));
+    }
+
+    @DisplayName("신고 처리 요청에 targetType이 없으면 400을 반환한다")
+    @Test
+    void updateReportStatusRejectsMissingTargetType() throws Exception {
+        authenticateAs("ADMIN");
+
+        mockMvc.perform(patch("/api/v1/admin/reports/1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"status":"RESOLVED"}
                                 """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COMMON-001"));

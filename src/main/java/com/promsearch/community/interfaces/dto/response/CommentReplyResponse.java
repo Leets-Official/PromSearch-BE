@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.dto.response;
 
+import com.promsearch.community.application.usecase.dto.CommentReplyInfo;
 import com.promsearch.community.domain.enums.CommentStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
@@ -27,10 +28,23 @@ public record CommentReplyResponse(
         @Schema(description = "프롬프트 작성자가 작성한 대댓글인지 여부", example = "false")
         boolean promptAuthor,
 
-        @Schema(description = "작성 시각", example = "2026-07-23T03:10:00Z")
+        @Schema(description = "작성 시각", example = "2026-07-23T12:10:00+09:00")
         Instant createdAt,
 
-        @Schema(description = "수정 시각", example = "2026-07-23T03:10:00Z")
+        @Schema(description = "수정 시각", example = "2026-07-23T12:10:00+09:00")
         Instant updatedAt
 ) {
+    public static CommentReplyResponse from(CommentReplyInfo info) {
+        return new CommentReplyResponse(
+                info.commentId(),
+                info.parentCommentId(),
+                CommentAuthorResponse.from(info.author()),
+                info.content(),
+                info.status(),
+                info.mine(),
+                info.promptAuthor(),
+                info.createdAt(),
+                info.updatedAt()
+        );
+    }
 }

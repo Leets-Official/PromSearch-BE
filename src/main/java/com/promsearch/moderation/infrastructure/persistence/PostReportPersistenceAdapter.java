@@ -5,7 +5,6 @@ import com.promsearch.moderation.application.port.out.postreport.ReportPageResul
 import com.promsearch.moderation.application.port.out.postreport.SavePostReportPort;
 import com.promsearch.moderation.domain.PostReport;
 import com.promsearch.moderation.domain.enums.ReportStatus;
-import com.promsearch.moderation.domain.enums.ReportTargetType;
 import com.promsearch.moderation.domain.exception.ModerationDomainException;
 import com.promsearch.moderation.domain.exception.ModerationErrorCode;
 import com.promsearch.moderation.infrastructure.persistence.entity.PostReportJpaEntity;
@@ -27,9 +26,8 @@ public class PostReportPersistenceAdapter implements LoadPostReportPort, SavePos
     }
 
     @Override
-    public ReportPageResult search(ReportTargetType targetType, ReportStatus status, int page, int size) {
+    public ReportPageResult search(ReportStatus status, int page, int size) {
         Page<PostReportJpaEntity> result = postReportRepository.search(
-                targetType,
                 status,
                 PageRequest.of(page, size)
         );

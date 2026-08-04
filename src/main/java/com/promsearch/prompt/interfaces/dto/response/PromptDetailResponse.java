@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.application.usecase.dto.PromptDetailInfo;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -43,7 +44,7 @@ public record PromptDetailResponse(
         @Schema(description = "요청 사용자 기준 본문 접근 상태")
         PromptAccessResponse access,
 
-        @Schema(description = "요청 사용자 기준 좋아요 및 북마크 상태. 비로그인 사용자는 모두 false입니다.")
+        @Schema(description = "요청 사용자 기준 추천 및 북마크 상태. 비로그인 사용자는 모두 false입니다.")
         PromptViewerInteractionResponse viewerInteraction,
 
         @Schema(description = "워터마크 처리가 완료된 결과 이미지 목록")
@@ -55,10 +56,47 @@ public record PromptDetailResponse(
         @Schema(description = "공개 통계")
         PromptStatisticsResponse statistics,
 
-        @Schema(description = "생성 시각", example = "2026-07-23T01:30:00Z")
+        @Schema(description = "생성 시각", example = "2026-07-23T10:30:00+09:00")
         Instant createdAt,
 
-        @Schema(description = "수정 시각", example = "2026-07-23T02:00:00Z")
+        @Schema(description = "수정 시각", example = "2026-07-23T11:00:00+09:00")
         Instant updatedAt
 ) {
+    public static PromptDetailResponse from(PromptDetailInfo info) {
+        return new PromptDetailResponse(
+                info.promptId(),
+                info.title(),
+                new PromptAuthorResponse(
+                        info.author().userId(),
+                        info.author().nickname(),
+                        info.author().profileImageUrl()),
+                info.outputType(),
+                info.contentType(),
+                info.pricePoint(),
+                info.promptBody(),
+                info.description(),
+                new PromptAccessResponse(
+                        info.access().locked(),
+                        info.access().reason() == null
+                                ? null
+                                : PromptAccessReason.valueOf(info.access().reason().name())),
+                new PromptViewerInteractionResponse(
+                        info.viewerInteraction().recommended(),
+                        info.viewerInteraction().bookmarked()),
+                info.images().stream()
+                        .map(image -> new PromptDetailImageResponse(
+                                image.imageId(), image.imageUrl(), image.sortOrder(), image.thumbnail()))
+                        .toList(),
+                info.tags().stream()
+                        .map(tag -> new PromptTagResponse(tag.tagId(), tag.tagType(), tag.name()))
+                        .toList(),
+                new PromptStatisticsResponse(
+                        info.statistics().viewCount(),
+                        info.statistics().copyCount(),
+                        info.statistics().recommendCount(),
+                        info.statistics().commentCount()),
+                info.createdAt(),
+                info.updatedAt()
+        );
+    }
 }

@@ -15,8 +15,7 @@ public class PostReport {
 
     private final PostReportId postReportId;
     private final Long reporterId;
-    private final ReportTargetType targetType;
-    private final Long targetId;
+    private final Long postId;
     private final ReportReason reason;
     private final String description;
     private final ReportStatus status;
@@ -26,8 +25,7 @@ public class PostReport {
     private PostReport(
             PostReportId postReportId,
             Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
+            Long postId,
             ReportReason reason,
             String description,
             ReportStatus status,
@@ -35,54 +33,43 @@ public class PostReport {
     ) {
         this.postReportId = postReportId;
         this.reporterId = reporterId;
-        this.targetType = targetType;
-        this.targetId = targetId;
+        this.postId = postId;
         this.reason = reason;
         this.description = description;
         this.status = status;
         this.createdAt = createdAt;
     }
 
-    public static PostReport create(
-            Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
-            ReportReason reason,
-            String description
-    ) {
-        validateRequired(reporterId, targetType, targetId, reason);
+    public static PostReport create(Long reporterId, Long postId, ReportReason reason, String description) {
+        validateRequired(reporterId, postId, reason, description);
 
         return PostReport.builder()
                 .reporterId(reporterId)
-                .targetType(targetType)
-                .targetId(targetId)
+                .postId(postId)
                 .reason(reason)
-                .description(description)
+                .description(description.trim())
                 .status(ReportStatus.PENDING)
                 .createdAt(Instant.now())
                 .build();
     }
 
     public static PostReport reconstruct(
-            PostReportId postReportId,
+            PostReportId id,
             Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
+            Long postId,
             ReportReason reason,
             String description,
             ReportStatus status,
             Instant createdAt
     ) {
-        validateRequired(reporterId, targetType, targetId, reason);
+        validateRequired(reporterId, postId, reason, description);
         if (status == null) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_STATUS);
         }
-
         return PostReport.builder()
-                .postReportId(postReportId)
+                .postReportId(id)
                 .reporterId(reporterId)
-                .targetType(targetType)
-                .targetId(targetId)
+                .postId(postId)
                 .reason(reason)
                 .description(description)
                 .status(status)
@@ -98,8 +85,7 @@ public class PostReport {
         return PostReport.builder()
                 .postReportId(postReportId)
                 .reporterId(reporterId)
-                .targetType(targetType)
-                .targetId(targetId)
+                .postId(postId)
                 .reason(reason)
                 .description(description)
                 .status(newStatus)
@@ -109,21 +95,21 @@ public class PostReport {
 
     private static void validateRequired(
             Long reporterId,
-            ReportTargetType targetType,
-            Long targetId,
-            ReportReason reason
+            Long postId,
+            ReportReason reason,
+            String description
     ) {
         if (reporterId == null || reporterId <= 0) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORTER_ID);
         }
-        if (targetType == null) {
-            throw new ModerationDomainException(ModerationErrorCode.INVALID_ID);
-        }
-        if (targetId == null || targetId <= 0) {
+        if (postId == null || postId <= 0) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_POST_ID);
         }
-        if (reason == null || !reason.isAllowedFor(targetType)) {
+        if (reason == null || !reason.isAllowedFor(ReportTargetType.POST)) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_REASON);
+        }
+        if (description == null || description.isBlank()) {
+            throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_DESCRIPTION);
         }
     }
 
