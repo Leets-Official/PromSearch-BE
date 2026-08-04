@@ -15,10 +15,10 @@ public interface ObjectStorageOperations {
      * 클라이언트가 지정된 객체를 직접 업로드할 수 있는 서명된 PUT URL을 발급한다.
      *
      * @param objectKey 저장할 객체의 버킷 내 경로
-     * @param contentType 업로드 요청에 포함할 MIME 타입
+     * @param options 업로드 요청에 서명할 파일 조건과 덮어쓰기 정책
      * @return 업로드 URL과 만료 시각
      */
-    PresignedUpload presignPut(String objectKey, String contentType);
+    PresignedUpload presignPut(String objectKey, PresignedPutOptions options);
 
     /**
      * 클라이언트가 비공개 객체를 읽을 수 있는 서명된 GET URL을 발급한다.
@@ -50,6 +50,48 @@ public interface ObjectStorageOperations {
      * @param expiresAt URL 만료 시각
      */
     record PresignedUpload(URI uploadUrl, Instant expiresAt) {
+    }
+
+    /**
+     * Presigned PUT URL에 포함할 업로드 제약 조건입니다.
+     *
+     * @param contentType 업로드 요청에 포함할 MIME 타입
+     * @param contentLength 업로드할 정확한 객체 크기(byte)
+     * @param preventOverwrite 기존 Object Key 덮어쓰기를 차단할지 여부
+     */
+    record PresignedPutOptions(
+            String contentType,
+            long contentLength,
+            boolean preventOverwrite
+    ) {
+
+        public PresignedPutOptions {
+            if (contentType == null || contentType.isBlank()) {
+                throw new IllegalArgumentException("Presigned PUT Content-Type은 필수입니다.");
+            }
+            if (contentLength <= 0) {
+                throw new IllegalArgumentException("Presigned PUT Content-Length는 0보다 커야 합니다.");
+            }
+            contentType = contentType.trim();
+        }
+
+        /**
+         * @param contentType 업로드 MIME 타입
+         * @param contentLength 업로드할 정확한 객체 크기(byte)
+         * @return 기존 객체 덮어쓰기를 차단하는 업로드 옵션
+         */
+        public static PresignedPutOptions immutable(String contentType, long contentLength) {
+            return new PresignedPutOptions(contentType, contentLength, true);
+        }
+
+        /**
+         * @param contentType 업로드 MIME 타입
+         * @param contentLength 업로드할 정확한 객체 크기(byte)
+         * @return 기존 객체 덮어쓰기 조건을 추가하지 않는 업로드 옵션
+         */
+        public static PresignedPutOptions replaceable(String contentType, long contentLength) {
+            return new PresignedPutOptions(contentType, contentLength, false);
+        }
     }
 
     /**

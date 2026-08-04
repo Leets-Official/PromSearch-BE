@@ -87,7 +87,8 @@ public class PromptImageUploadCommandService implements
             );
             PresignedUpload presignedUpload = presignPromptImageUploadPort.presignPut(
                     objectKey,
-                    contentType.getMimeType()
+                    contentType.getMimeType(),
+                    file.fileSize()
             );
 
             images.add(image);

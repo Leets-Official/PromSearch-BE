@@ -16,9 +16,10 @@ public interface ProfileImageStoragePort {
      *
      * @param objectKey 업로드 대상 객체 키
      * @param contentType 업로드할 이미지 MIME 타입
+     * @param contentLength 업로드할 정확한 이미지 크기(byte)
      * @return 업로드 URL과 만료 시각
      */
-    PresignedUpload presignPut(String objectKey, String contentType);
+    PresignedUpload presignPut(String objectKey, String contentType, long contentLength);
 
     /**
      * 저장된 프로필 이미지를 조회할 수 있는 서명 URL을 발급한다.

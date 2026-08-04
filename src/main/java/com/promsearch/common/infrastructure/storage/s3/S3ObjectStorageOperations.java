@@ -35,12 +35,16 @@ public class S3ObjectStorageOperations implements ObjectStorageOperations {
     private final S3ObjectStorageProperties properties;
 
     @Override
-    public PresignedUpload presignPut(String objectKey, String contentType) {
-        PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+    public PresignedUpload presignPut(String objectKey, PresignedPutOptions options) {
+        PutObjectRequest.Builder putObjectRequestBuilder = PutObjectRequest.builder()
                 .bucket(properties.bucket())
                 .key(objectKey)
-                .contentType(contentType)
-                .build();
+                .contentType(options.contentType())
+                .contentLength(options.contentLength());
+        if (options.preventOverwrite()) {
+            putObjectRequestBuilder.ifNoneMatch("*");
+        }
+        PutObjectRequest putObjectRequest = putObjectRequestBuilder.build();
         PutObjectPresignRequest request = PutObjectPresignRequest.builder()
                 .signatureDuration(properties.uploadUrlExpiration())
                 .putObjectRequest(putObjectRequest)

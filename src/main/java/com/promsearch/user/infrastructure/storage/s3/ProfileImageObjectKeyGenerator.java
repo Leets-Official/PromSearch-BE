@@ -18,7 +18,7 @@ public class ProfileImageObjectKeyGenerator implements GenerateProfileImageObjec
     private final StorageObjectKeyFactory objectKeyFactory;
 
     /**
-     * {@code profile-images/{userId}/{uuid}.{extension}} 형식의 고유 키를 생성한다.
+     * {@code profiles/{userId}/{uuid}.{extension}} 형식의 고유 키를 생성한다.
      */
     @Override
     public String generate(Long userId, ProfileImageContentType contentType) {

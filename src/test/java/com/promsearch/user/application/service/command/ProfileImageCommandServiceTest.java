@@ -64,11 +64,11 @@ class ProfileImageCommandServiceTest {
     @Test
     void issueUsesProfilePathStrategyAndCommonStoragePort() {
         User user = socialUser(null);
-        String objectKey = "profile-images/1/123e4567-e89b-12d3-a456-426614174000.jpg";
+        String objectKey = "profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg";
         Instant expiresAt = Instant.parse("2026-07-30T12:10:00Z");
         when(loadUserPort.getById(1L)).thenReturn(user);
         when(objectKeyGenerator.generate(1L, ProfileImageContentType.JPEG)).thenReturn(objectKey);
-        when(imageStorage.presignPut(objectKey, "image/jpeg"))
+        when(imageStorage.presignPut(objectKey, "image/jpeg", 1_024L))
                 .thenReturn(new PresignedUpload(URI.create("https://upload.test"), expiresAt));
 
         ProfileImageUploadUrlInfo result = service.issue(
@@ -77,12 +77,14 @@ class ProfileImageCommandServiceTest {
 
         assertThat(result.objectKey()).isEqualTo(objectKey);
         assertThat(result.uploadUrl()).isEqualTo(URI.create("https://upload.test"));
+        assertThat(result.contentType()).isEqualTo("image/jpeg");
+        assertThat(result.contentLength()).isEqualTo(1_024L);
         assertThat(result.expiresAt()).isEqualTo(expiresAt);
     }
 
     @Test
     void completeReplacesSocialUrlWithManagedObjectKey() {
-        String objectKey = "profile-images/1/123e4567-e89b-12d3-a456-426614174000.jpg";
+        String objectKey = "profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg";
         User user = socialUser(null);
         when(objectKeyGenerator.isOwnedBy(objectKey, 1L)).thenReturn(true);
         when(imageStorage.getMetadata(objectKey))
@@ -92,7 +94,7 @@ class ProfileImageCommandServiceTest {
         when(imageDelivery.resolve(null, objectKey)).thenReturn("https://signed.test/profile");
 
         UserInfo result = service.complete(
-                CompleteProfileImageUploadCommand.of(1L, objectKey, "image/jpeg", 1_024)
+                new CompleteProfileImageUploadCommand(1L, objectKey)
         );
 
         assertThat(result.profileImageUrl()).isEqualTo("https://signed.test/profile");
@@ -104,11 +106,11 @@ class ProfileImageCommandServiceTest {
 
     @Test
     void completeRejectsAnotherUsersObjectKeyBeforeStorageLookup() {
-        String objectKey = "profile-images/2/123e4567-e89b-12d3-a456-426614174000.jpg";
+        String objectKey = "profiles/2/123e4567-e89b-12d3-a456-426614174000.jpg";
         when(objectKeyGenerator.isOwnedBy(objectKey, 1L)).thenReturn(false);
 
         assertThatThrownBy(() -> service.complete(
-                CompleteProfileImageUploadCommand.of(1L, objectKey, "image/jpeg", 1_024)
+                new CompleteProfileImageUploadCommand(1L, objectKey)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -117,8 +119,25 @@ class ProfileImageCommandServiceTest {
     }
 
     @Test
+    void completeRejectsAndDeletesUploadWhoseMetadataDoesNotMatchObjectKey() {
+        String objectKey = "profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg";
+        when(objectKeyGenerator.isOwnedBy(objectKey, 1L)).thenReturn(true);
+        when(imageStorage.getMetadata(objectKey))
+                .thenReturn(new StoredObjectMetadata(1_024, "image/png"));
+
+        assertThatThrownBy(() -> service.complete(
+                new CompleteProfileImageUploadCommand(1L, objectKey)
+        ))
+                .isInstanceOf(UserDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(UserErrorCode.PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH);
+        verify(imageStorage).delete(objectKey);
+        verify(saveUserPort, never()).update(any());
+    }
+
+    @Test
     void removeSchedulesManagedObjectDeletionAfterUserUpdate() {
-        String objectKey = "profile-images/1/123e4567-e89b-12d3-a456-426614174000.jpg";
+        String objectKey = "profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg";
         User user = socialUser(objectKey);
         when(loadUserPort.getById(1L)).thenReturn(user);
         when(saveUserPort.update(any(User.class))).thenAnswer(invocation -> invocation.getArgument(0));

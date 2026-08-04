@@ -65,7 +65,8 @@ class S3PromptImageStorageAdapterTest {
     void presignPutSignsContentType() {
         PresignedUpload result = adapter.presignPut(
                 "prompt-images/original/1/image.jpg",
-                "image/jpeg"
+                "image/jpeg",
+                1_024L
         );
 
         String decodedQuery = URLDecoder.decode(
@@ -73,7 +74,7 @@ class S3PromptImageStorageAdapterTest {
                 StandardCharsets.UTF_8
         );
         assertThat(decodedQuery).contains("X-Amz-Signature=");
-        assertThat(decodedQuery).contains("X-Amz-SignedHeaders=content-type;host");
+        assertThat(decodedQuery).contains("X-Amz-SignedHeaders=content-length;content-type;host");
         assertThat(result.expiresAt()).isAfter(Instant.now().plus(Duration.ofMinutes(9)));
     }
 

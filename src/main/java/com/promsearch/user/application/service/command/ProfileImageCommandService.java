@@ -19,8 +19,10 @@ import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.ProfileImageContentType;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.util.Arrays;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
  * 커밋된 후 기존 저장 객체가 삭제되도록 예약한다.</p>
  */
 @Service
+@Slf4j
 @RequiredArgsConstructor
 @Transactional
 public class ProfileImageCommandService implements
@@ -56,14 +59,24 @@ public class ProfileImageCommandService implements
      */
     @Override
     public ProfileImageUploadUrlInfo issue(IssueProfileImageUploadUrlCommand command) {
-        validateFile(command.contentType(), command.fileSize());
+        validateIssueCommand(command);
         loadUserPort.getById(command.userId());
 
         ProfileImageContentType contentType =
                 ProfileImageContentType.fromMimeType(command.contentType());
         String objectKey = objectKeyGenerator.generate(command.userId(), contentType);
-        PresignedUpload upload = imageStorage.presignPut(objectKey, contentType.getMimeType());
-        return new ProfileImageUploadUrlInfo(objectKey, upload.uploadUrl(), upload.expiresAt());
+        PresignedUpload upload = imageStorage.presignPut(
+                objectKey,
+                contentType.getMimeType(),
+                command.fileSize()
+        );
+        return new ProfileImageUploadUrlInfo(
+                objectKey,
+                upload.uploadUrl(),
+                contentType.getMimeType(),
+                command.fileSize(),
+                upload.expiresAt()
+        );
     }
 
     /**
@@ -74,23 +87,13 @@ public class ProfileImageCommandService implements
      */
     @Override
     public UserInfo complete(CompleteProfileImageUploadCommand command) {
-        validateFile(command.contentType(), command.fileSize());
         if (!objectKeyGenerator.isOwnedBy(command.objectKey(), command.userId())) {
             throw new UserDomainException(UserErrorCode.PROFILE_IMAGE_NOT_OWNED);
         }
 
-        ProfileImageContentType contentType =
-                ProfileImageContentType.fromMimeType(command.contentType());
-        if (!command.objectKey().endsWith("." + contentType.getExtension())) {
-            imageStorage.delete(command.objectKey());
-            throw new UserDomainException(UserErrorCode.PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH);
-        }
         StoredObjectMetadata metadata = imageStorage.getMetadata(command.objectKey());
-        if (metadata.contentLength() != command.fileSize()
-                || metadata.contentType() == null
-                || !metadata.contentType().trim().toLowerCase(Locale.ROOT)
-                .equals(contentType.getMimeType())) {
-            imageStorage.delete(command.objectKey());
+        if (!matchesExpectedMetadata(command.objectKey(), metadata)) {
+            deleteInvalidUpload(command.objectKey());
             throw new UserDomainException(UserErrorCode.PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH);
         }
 
@@ -121,6 +124,38 @@ public class ProfileImageCommandService implements
         ProfileImageContentType.fromMimeType(contentType);
         if (fileSize <= 0 || fileSize > MAX_FILE_SIZE) {
             throw new UserDomainException(UserErrorCode.INVALID_PROFILE_IMAGE_FILE_SIZE);
+        }
+    }
+
+    private void validateIssueCommand(IssueProfileImageUploadUrlCommand command) {
+        if (command == null || command.userId() == null || command.userId() <= 0) {
+            throw new UserDomainException(UserErrorCode.INVALID_ID);
+        }
+        validateFile(command.contentType(), command.fileSize());
+    }
+
+    /**
+     * Object Key 확장자와 실제 S3 메타데이터가 허용된 형식·최대 크기 정책을 만족하는지 확인한다.
+     */
+    private boolean matchesExpectedMetadata(String objectKey, StoredObjectMetadata metadata) {
+        if (metadata == null
+                || metadata.contentLength() <= 0
+                || metadata.contentLength() > MAX_FILE_SIZE
+                || metadata.contentType() == null) {
+            return false;
+        }
+        String normalizedContentType = metadata.contentType().trim().toLowerCase(Locale.ROOT);
+        return Arrays.stream(ProfileImageContentType.values())
+                .anyMatch(type -> objectKey.endsWith("." + type.getExtension())
+                        && normalizedContentType.equals(type.getMimeType()));
+    }
+
+    private void deleteInvalidUpload(String objectKey) {
+        try {
+            imageStorage.delete(objectKey);
+        } catch (RuntimeException exception) {
+            log.warn("invalid_profile_image_cleanup_failed objectKey={} errorType={}",
+                    objectKey, exception.getClass().getSimpleName());
         }
     }
 

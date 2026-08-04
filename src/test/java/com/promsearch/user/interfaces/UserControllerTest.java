@@ -1,6 +1,9 @@
 package com.promsearch.user.interfaces;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.mockito.ArgumentMatchers.any;
@@ -19,9 +22,14 @@ import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityInfo;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityQuery;
 import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
+import com.promsearch.user.application.usecase.dto.ProfileImageUploadUrlInfo;
+import com.promsearch.user.application.usecase.dto.UserInfo;
 import com.promsearch.user.application.usecase.dto.UserProfileInfo;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.domain.enums.UserGrade;
+import com.promsearch.user.domain.enums.UserRole;
+import com.promsearch.user.domain.enums.UserStatus;
+import java.net.URI;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,6 +38,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -103,7 +112,7 @@ class UserControllerTest {
     void getMyProfileReturnsProfile() throws Exception {
         when(getMyProfileUseCase.getMyProfile(1L)).thenReturn(new UserProfileInfo(
                 "nickname",
-                "https://cdn.test/profile.png",
+                "https://s3.test/signed-profile.png",
                 "user@test.com",
                 100L,
                 "NORMAL"
@@ -118,7 +127,81 @@ class UserControllerTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.username").value("nickname"))
-                    .andExpect(jsonPath("$.result.profileImageUrl").value("https://cdn.test/profile.png"));
+                    .andExpect(jsonPath("$.result.profileImageUrl").value("https://s3.test/signed-profile.png"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @DisplayName("프로필 이미지 업로드 URL은 서명 조건과 Object Key를 반환한다")
+    @Test
+    void issueProfileImageUploadUrlReturnsSignedConditions() throws Exception {
+        when(issueProfileImageUploadUrlUseCase.issue(any())).thenReturn(new ProfileImageUploadUrlInfo(
+                "profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg",
+                URI.create("https://s3.test/upload"),
+                "image/jpeg",
+                1_024L,
+                Instant.parse("2026-08-04T12:10:00Z")
+        ));
+
+        authenticate();
+        try {
+            mockMvc.perform(post("/api/v1/users/me/profile-image/upload-url")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"contentType":"image/jpeg","fileSize":1024}
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.objectKey")
+                            .value("profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg"))
+                    .andExpect(jsonPath("$.result.contentType").value("image/jpeg"))
+                    .andExpect(jsonPath("$.result.contentLength").value(1024))
+                    .andExpect(jsonPath("$.result.ifNoneMatch").value("*"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @DisplayName("업로드 완료 API는 Object Key만 받아 프로필 이미지를 교체한다")
+    @Test
+    void completeProfileImageUploadAcceptsObjectKeyOnly() throws Exception {
+        Instant now = Instant.parse("2026-08-04T12:00:00Z");
+        when(completeProfileImageUploadUseCase.complete(any())).thenReturn(new UserInfo(
+                1L,
+                "user@test.com",
+                "nickname",
+                "name",
+                "https://s3.test/signed-profile",
+                100L,
+                UserRole.USER,
+                UserGrade.NORMAL,
+                UserStatus.ACTIVE,
+                now,
+                now
+        ));
+
+        authenticate();
+        try {
+            mockMvc.perform(put("/api/v1/users/me/profile-image")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"objectKey":"profiles/1/123e4567-e89b-12d3-a456-426614174000.jpg"}
+                                    """))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.profileImageUrl")
+                            .value("https://s3.test/signed-profile"));
+        } finally {
+            SecurityContextHolder.clearContext();
+        }
+    }
+
+    @DisplayName("프로필 이미지 삭제 API는 이미지가 없어도 성공한다")
+    @Test
+    void removeProfileImageIsIdempotent() throws Exception {
+        authenticate();
+        try {
+            mockMvc.perform(delete("/api/v1/users/me/profile-image"))
+                    .andExpect(status().isOk());
         } finally {
             SecurityContextHolder.clearContext();
         }
@@ -130,7 +213,7 @@ class UserControllerTest {
         when(getPublicUserProfileUseCase.getProfile(12L)).thenReturn(new PublicUserProfileInfo(
                 12L,
                 "prompt-maker",
-                "https://cdn.promsearch.com/profiles/12.jpg",
+                "https://s3.test/signed-profiles/12.jpg",
                 UserGrade.PRIME,
                 8,
                 124,
@@ -143,5 +226,13 @@ class UserControllerTest {
                 .andExpect(jsonPath("$.result.userId").value(12))
                 .andExpect(jsonPath("$.result.nickname").value("prompt-maker"))
                 .andExpect(jsonPath("$.result.name").doesNotExist());
+    }
+
+    private void authenticate() {
+        SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
+                new AuthenticatedUserPrincipal(1L, "USER"),
+                null,
+                java.util.List.of()
+        ));
     }
 }

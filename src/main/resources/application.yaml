@@ -62,7 +62,7 @@ storage:
     region: ${AWS_REGION:ap-northeast-2}
     original-prefix: ${AWS_S3_ORIGINAL_PREFIX:prompt-images/original}
     watermarked-prefix: ${AWS_S3_WATERMARKED_PREFIX:prompt-images/watermarked}
-    profile-prefix: ${AWS_S3_PROFILE_PREFIX:profile-images}
+    profile-prefix: ${AWS_S3_PROFILE_PREFIX:profiles}
     upload-url-expiration: ${AWS_S3_UPLOAD_URL_EXPIRATION:10m}
 
 # TODO: 이미지 조회 API 구현 시 S3 URL을 직접 노출하지 않고 CloudFront OAC를 통해

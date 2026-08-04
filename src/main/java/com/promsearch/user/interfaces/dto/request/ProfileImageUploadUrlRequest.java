@@ -6,6 +6,12 @@ import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 
+/**
+ * 프로필 이미지 직접 업로드 URL 발급 요청입니다.
+ *
+ * @param contentType 업로드할 이미지 MIME 타입
+ * @param fileSize 업로드할 이미지의 정확한 크기(byte)
+ */
 @Schema(description = "프로필 이미지 업로드 URL 발급 요청")
 public record ProfileImageUploadUrlRequest(
         @Schema(description = "이미지 MIME 타입", example = "image/jpeg")

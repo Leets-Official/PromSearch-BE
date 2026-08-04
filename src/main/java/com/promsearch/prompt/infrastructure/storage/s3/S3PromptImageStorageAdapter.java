@@ -2,6 +2,7 @@ package com.promsearch.prompt.infrastructure.storage.s3;
 
 import com.promsearch.common.infrastructure.storage.ObjectStorageException;
 import com.promsearch.common.infrastructure.storage.ObjectStorageOperations;
+import com.promsearch.common.infrastructure.storage.ObjectStorageOperations.PresignedPutOptions;
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageDownloadPort;
@@ -25,10 +26,13 @@ public class S3PromptImageStorageAdapter implements
     private final ObjectStorageOperations objectStorage;
 
     @Override
-    public PresignedUpload presignPut(String objectKey, String contentType) {
+    public PresignedUpload presignPut(String objectKey, String contentType, long contentLength) {
         try {
             ObjectStorageOperations.PresignedUpload upload =
-                    objectStorage.presignPut(objectKey, contentType);
+                    objectStorage.presignPut(
+                            objectKey,
+                            PresignedPutOptions.replaceable(contentType, contentLength)
+                    );
             return new PresignedUpload(upload.uploadUrl(), upload.expiresAt());
         } catch (ObjectStorageException exception) {
             throw translate(exception);

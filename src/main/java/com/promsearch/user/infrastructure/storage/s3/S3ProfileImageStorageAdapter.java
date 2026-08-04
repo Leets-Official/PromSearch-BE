@@ -2,6 +2,7 @@ package com.promsearch.user.infrastructure.storage.s3;
 
 import com.promsearch.common.infrastructure.storage.ObjectStorageException;
 import com.promsearch.common.infrastructure.storage.ObjectStorageOperations;
+import com.promsearch.common.infrastructure.storage.ObjectStorageOperations.PresignedPutOptions;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageStoragePort;
 import com.promsearch.user.domain.exception.UserDomainException;
@@ -22,10 +23,13 @@ public class S3ProfileImageStorageAdapter implements ProfileImageStoragePort, Pr
      * 공통 저장소의 업로드 결과를 프로필 이미지 포트의 결과 타입으로 변환한다.
      */
     @Override
-    public PresignedUpload presignPut(String objectKey, String contentType) {
+    public PresignedUpload presignPut(String objectKey, String contentType, long contentLength) {
         try {
             ObjectStorageOperations.PresignedUpload upload =
-                    objectStorage.presignPut(objectKey, contentType);
+                    objectStorage.presignPut(
+                            objectKey,
+                            PresignedPutOptions.immutable(contentType, contentLength)
+                    );
             return new PresignedUpload(upload.uploadUrl(), upload.expiresAt());
         } catch (ObjectStorageException exception) {
             throw unavailable();

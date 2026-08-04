@@ -24,6 +24,9 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
+/**
+ * 사용자 API의 OpenAPI 명세를 정의합니다.
+ */
 @Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 비밀번호 변경, 회원 탈퇴, 공개 프로필 조회 API")
 public interface UserControllerDocs {
 
@@ -83,7 +86,8 @@ public interface UserControllerDocs {
     @Operation(
             summary = "[USER-007] 프로필 이미지 업로드 URL 발급",
             description = IMPLEMENTED_BY_HANHARAM
-                    + "JPEG, PNG, WEBP 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned PUT URL을 발급합니다."
+                    + "JPEG, PNG, WEBP 프로필 이미지를 S3에 직접 업로드할 수 있는 Presigned PUT URL을 발급합니다. "
+                    + "응답의 Content-Type, Content-Length, If-None-Match 조건을 지켜 PUT 요청해야 합니다."
     )
     ApiResponse<ProfileImageUploadUrlResponse> issueProfileImageUploadUrl(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user,
@@ -93,7 +97,7 @@ public interface UserControllerDocs {
     @Operation(
             summary = "[USER-008] 프로필 이미지 업로드 완료",
             description = IMPLEMENTED_BY_HANHARAM
-                    + "S3 객체의 소유권과 메타데이터를 검증한 후 사용자 프로필 이미지로 연결합니다."
+                    + "발급 응답의 Object Key 소유권과 실제 S3 객체 메타데이터를 검증한 후 사용자 프로필 이미지로 연결합니다."
     )
     ApiResponse<UserResponse> completeProfileImageUpload(
             @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user,
