@@ -3,6 +3,7 @@ package com.promsearch.auth.interfaces;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -25,6 +26,7 @@ import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
 import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import jakarta.persistence.EntityManager;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -71,7 +73,6 @@ class AuthControllerTest {
     @Test
     void signupSuccess() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password123"
@@ -83,10 +84,7 @@ class AuthControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
-                .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value("홍길동"))
-                .andExpect(jsonPath("$.result.nickname").value("gildong"))
-                .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
+                .andExpect(jsonPath("$.result").doesNotExist())
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
         UserJpaEntity savedUser = userJpaRepository.findByEmail("gildong@example.com").orElseThrow();
@@ -97,10 +95,9 @@ class AuthControllerTest {
     @DisplayName("이미 사용 중인 닉네임이면 회원가입에 실패한다")
     @Test
     void signupFailWhenNicknameDuplicated() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedNicknameRequest = new SignupRequest(
-                "김길동",
                 "gildong",
                 "another@example.com",
                 "password123"
@@ -117,10 +114,9 @@ class AuthControllerTest {
     @DisplayName("이미 사용 중인 이메일이면 회원가입에 실패한다")
     @Test
     void signupFailWhenEmailDuplicated() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedEmailRequest = new SignupRequest(
-                "김길동",
                 "another",
                 "gildong@example.com",
                 "password123"
@@ -138,10 +134,9 @@ class AuthControllerTest {
     @DisplayName("이메일과 닉네임이 모두 중복이면 이메일 중복 에러를 우선 반환한다")
     @Test
     void signupFailWithEmailErrorWhenEmailAndNicknameDuplicated() throws Exception {
-        signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedRequest = new SignupRequest(
-            "Kim Gil Dong",
             "gildong",
             "gildong@example.com",
             "password123"
@@ -160,7 +155,6 @@ class AuthControllerTest {
     void signupFailWhenRequestInvalid() throws Exception {
         SignupRequest invalidRequest = new SignupRequest(
                 "",
-                "",
                 "invalid-email",
                 "short"
         );
@@ -177,7 +171,6 @@ class AuthControllerTest {
     @Test
     void signupFailWhenEmailViolatesCredentialPolicy() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "invalid-email",
                 "password123"
@@ -195,7 +188,6 @@ class AuthControllerTest {
     @Test
     void signupFailWhenPasswordViolatesCredentialPolicy() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password"
@@ -212,7 +204,18 @@ class AuthControllerTest {
     @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
     void loginSuccess() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        SignupRequest signupRequest = new SignupRequest(
+                "gildong",
+                "gildong@example.com",
+                "password123",
+                "https://cdn.promsearch.com/profiles/me.png",
+                List.of(),
+                List.of()
+        );
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(signupRequest)))
+                .andExpect(status().isCreated());
 
         LoginRequest request = new LoginRequest("gildong@example.com", "password123");
 
@@ -227,7 +230,9 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.profileImageUrl")
+                        .value("https://cdn.promsearch.com/profiles/me.png"))
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
@@ -236,7 +241,7 @@ class AuthControllerTest {
     @DisplayName("refresh token으로 access token 재발급에 성공한다")
     @Test
     void reissueSuccess() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
 
         LoginRequest loginRequest = new LoginRequest("gildong@example.com", "password123");
 
@@ -302,7 +307,7 @@ class AuthControllerTest {
     @DisplayName("보호된 API는 access token의 사용자 ID를 사용하고 X-User-Id 헤더를 신뢰하지 않는다")
     @Test
     void protectedApiUsesAuthenticatedPrincipal() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
@@ -319,10 +324,40 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.nickname").value("gildong"));
     }
 
+    @DisplayName("회원 탈퇴 시 10자를 초과하는 익명화 닉네임을 저장한다")
+    @Test
+    void deleteUserStoresAnonymizedNicknameLongerThanActiveNicknameLimit() throws Exception {
+        signup("gildong", "gildong@example.com", "password123");
+        Long userId = userJpaRepository.findByEmail("gildong@example.com")
+                .orElseThrow()
+                .getId();
+        String accessToken = loginAndGetResult("gildong@example.com", "password123")
+                .get("accessToken")
+                .asText();
+
+        mockMvc.perform(delete("/api/v1/users/me")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        entityManager.flush();
+        entityManager.clear();
+
+        String deletedNickname = jdbcTemplate.queryForObject(
+                "select nickname from users where user_id = ?",
+                String.class,
+                userId
+        );
+        assertThat(deletedNickname)
+                .startsWith("deleted_" + userId + "_")
+                .endsWith("_user")
+                .hasSizeGreaterThan(10);
+    }
+
     @DisplayName("프로필 이메일이 인증 도메인 정책을 위반하면 수정에 실패한다")
     @Test
     void updateProfileFailWhenEmailViolatesCredentialPolicy() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
@@ -340,7 +375,7 @@ class AuthControllerTest {
     @DisplayName("새 비밀번호가 인증 도메인 정책을 위반하면 변경에 실패한다")
     @Test
     void changePasswordFailWhenNewPasswordViolatesCredentialPolicy() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
@@ -384,7 +419,7 @@ class AuthControllerTest {
     @DisplayName("비밀번호가 일치하지 않으면 로그인에 실패한다")
     @Test
     void loginFailWhenPasswordMismatch() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
 
         LoginRequest request = new LoginRequest("gildong@example.com", "wrong-password");
 
@@ -399,7 +434,7 @@ class AuthControllerTest {
     @DisplayName("ACTIVE 상태가 아닌 사용자는 로그인에 실패한다")
     @Test
     void loginFailWhenUserIsNotActive() throws Exception {
-        signup("홍길동", "gildong", "gildong@example.com", "password123");
+        signup("gildong", "gildong@example.com", "password123");
         jdbcTemplate.update("UPDATE users SET status = 'BANNED' WHERE email = ?", "gildong@example.com");
         entityManager.clear();
 
@@ -445,7 +480,12 @@ class AuthControllerTest {
     void socialLoginSuccessWithNewKakaoAccount() throws Exception {
         given(kakaoOAuthAdapter.provider()).willReturn(SocialProvider.KAKAO);
         given(kakaoOAuthAdapter.exchangeCodeAndFetchUserInfo("auth-code", "https://promsearch.com/callback"))
-                .willReturn(new SocialLoginResult("kakao-1", "kakao-user@example.com", "카카오유저", null));
+                .willReturn(new SocialLoginResult(
+                        "kakao-1",
+                        "kakao-user@example.com",
+                        "카카오유저",
+                        "https://cdn.promsearch.com/profiles/kakao.png"
+                ));
 
         SocialLoginRequest request = new SocialLoginRequest("auth-code", "https://promsearch.com/callback");
 
@@ -459,6 +499,9 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("kakao-user@example.com"))
                 .andExpect(jsonPath("$.result.nickname").value("카카오유저"))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.profileImageUrl")
+                        .value("https://cdn.promsearch.com/profiles/kakao.png"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
         assertThat(userJpaRepository.existsByEmail("kakao-user@example.com")).isTrue();
@@ -604,8 +647,8 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
-    private void signup(String name, String nickname, String email, String password) throws Exception {
-        SignupRequest request = new SignupRequest(name, nickname, email, password);
+    private void signup(String nickname, String email, String password) throws Exception {
+        SignupRequest request = new SignupRequest(nickname, email, password);
 
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)

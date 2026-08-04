@@ -41,7 +41,7 @@ public class PostReportJpaEntity extends BaseEntity {
     @Column(name = "reason", nullable = false, length = 30)
     private ReportReason reason;
 
-    @Column(name = "description", columnDefinition = "TEXT")
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -57,24 +57,17 @@ public class PostReportJpaEntity extends BaseEntity {
         this.status = ReportStatus.PENDING;
     }
 
-    public static PostReportJpaEntity create(Long reporterId, Long postId, ReportReason reason, String description) {
+    public static PostReportJpaEntity from(PostReport report) {
         return PostReportJpaEntity.builder()
-                .reporterId(reporterId)
-                .postId(postId)
-                .reason(reason)
-                .description(description)
+                .reporterId(report.getReporterId())
+                .postId(report.getPostId())
+                .reason(report.getReason())
+                .description(report.getDescription())
                 .build();
     }
 
     public PostReport toDomain() {
         return PostReport.reconstruct(
-                new PostReportId(id),
-                reporterId,
-                postId,
-                reason,
-                description,
-                status,
-                getCreatedAt()
-        );
+                new PostReportId(id), reporterId, postId, reason, description, status, getCreatedAt());
     }
 }
