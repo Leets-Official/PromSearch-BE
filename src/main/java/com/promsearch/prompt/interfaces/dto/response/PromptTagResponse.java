@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.application.usecase.dto.PromptTagInfo;
 import com.promsearch.prompt.domain.enums.TagType;
 import io.swagger.v3.oas.annotations.media.Schema;
 
@@ -14,4 +15,8 @@ public record PromptTagResponse(
         @Schema(description = "태그 이름", example = "ChatGPT")
         String name
 ) {
+
+    public static PromptTagResponse from(PromptTagInfo info) {
+        return new PromptTagResponse(info.tagId(), info.tagType(), info.name());
+    }
 }

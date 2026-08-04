@@ -78,6 +78,15 @@ class S3PromptImageStorageAdapterTest {
         assertThat(result.expiresAt()).isAfter(Instant.now().plus(Duration.ofMinutes(9)));
     }
 
+    @DisplayName("워터마크 이미지 조회 URL은 GET 요청용으로 짧게 서명한다")
+    @Test
+    void presignGetReturnsSignedUrl() {
+        String result = adapter.presignGet("prompt-images/watermarked/1/image.jpg");
+
+        assertThat(result).contains("X-Amz-Signature=");
+        assertThat(result).contains("prompt-images/watermarked/1/image.jpg");
+    }
+
     @DisplayName("HeadObject 응답을 애플리케이션 스토리지 메타데이터로 변환한다")
     @Test
     void getMetadataMapsHeadObjectResponse() {

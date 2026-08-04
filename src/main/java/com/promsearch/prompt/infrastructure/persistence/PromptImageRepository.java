@@ -30,6 +30,20 @@ public interface PromptImageRepository extends JpaRepository<PromptImageJpaEntit
 
     List<PromptImageJpaEntity> findAllByPromptIdOrderBySortOrderAsc(Long promptId);
 
+    @Query("""
+            select image
+            from PromptImageJpaEntity image
+            where image.promptId in :promptIds
+              and image.status = com.promsearch.prompt.domain.enums.PromptImageStatus.READY
+              and image.thumbnail = true
+              and image.watermarkedObjectKey is not null
+              and image.deletedAt is null
+            order by image.promptId asc, image.sortOrder asc, image.id asc
+            """)
+    List<PromptImageJpaEntity> findReadyThumbnailsByPromptIds(
+            @Param("promptIds") Collection<Long> promptIds
+    );
+
     List<PromptImageJpaEntity> findAllByPromptIdAndStatusAndDeletedAtIsNullOrderBySortOrderAsc(
             Long promptId,
             PromptImageStatus status

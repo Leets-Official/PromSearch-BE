@@ -7,6 +7,7 @@ import com.promsearch.community.interfaces.CommentController;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.interfaces.HomeController;
 import com.promsearch.prompt.interfaces.PromptController;
+import com.promsearch.prompt.interfaces.TagController;
 import com.promsearch.user.interfaces.UserController;
 import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -72,6 +73,10 @@ class OpenApiDocumentationTest {
                 new HomeController(null),
                 HomeController.class.getMethod("listPopularPrompts", AuthenticatedUserPrincipal.class, int.class, int.class)
         ));
+        Operation tagOperation = customizer.customize(new Operation(), handlerMethod(
+                new TagController(null),
+                TagController.class.getMethod("listTags", com.promsearch.prompt.domain.enums.TagType.class)
+        ));
         Operation publicProfileOperation = customizer.customize(new Operation(), handlerMethod(
                 new UserController(null, null, null, null, null, null, null, null, null),
                 UserController.class.getMethod("getPublicProfile", Long.class)
@@ -105,6 +110,7 @@ class OpenApiDocumentationTest {
         assertThat(promptDetailOperation.getSecurity().get(1))
                 .containsKey("jwtBearerAuth");
         assertThat(homeOperation.getSecurity()).isNull();
+        assertThat(tagOperation.getSecurity()).isNull();
         assertThat(publicProfileOperation.getSecurity()).isNull();
         assertThat(commentListOperation.getSecurity()).hasSize(2);
         assertThat(commentListOperation.getSecurity().get(0)).isEmpty();

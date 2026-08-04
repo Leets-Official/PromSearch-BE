@@ -70,6 +70,7 @@ class SocialAuthenticationServiceTest {
                 SocialLoginCommand.of("KAKAO", "auth-code", "https://promsearch.com/callback"));
 
         assertThat(loginInfo.email()).isEqualTo("new@example.com");
+        assertThat(loginInfo.profileImageUrl()).isEqualTo("https://image.test/a.png");
         assertThat(loginInfo.accessToken()).isNotBlank();
         assertThat(loginInfo.refreshToken()).isNotBlank();
         assertThat(socialAccountRepository.findByProviderAndProviderUserId(SocialProvider.KAKAO, "kakao-1"))
@@ -190,7 +191,8 @@ class SocialAuthenticationServiceTest {
 
         Long seed(String email, String nickname, boolean active) {
             Long userId = nextId++;
-            usersById.put(userId, new AuthUserInfo(userId, email, "encoded-placeholder", nickname, nickname, "USER", active));
+            usersById.put(userId, new AuthUserInfo(
+                    userId, email, "encoded-placeholder", nickname, null, "USER", active));
             return userId;
         }
 
@@ -215,7 +217,14 @@ class SocialAuthenticationServiceTest {
             }
             Long userId = nextId++;
             usersById.put(userId, new AuthUserInfo(
-                    userId, command.email(), "encoded-placeholder", command.nickname(), command.name(), "USER", true));
+                    userId,
+                    command.email(),
+                    "encoded-placeholder",
+                    command.nickname(),
+                    command.profileImageUrl(),
+                    "USER",
+                    true
+            ));
             return new SignupInfo(userId, command.name(), command.nickname(), command.email());
         }
     }

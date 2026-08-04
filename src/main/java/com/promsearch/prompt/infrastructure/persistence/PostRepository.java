@@ -3,6 +3,8 @@ package com.promsearch.prompt.infrastructure.persistence;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.infrastructure.persistence.entity.PostJpaEntity;
+import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -12,6 +14,23 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostRepository extends JpaRepository<PostJpaEntity, Long> {
+
+    boolean existsByIdAndStatusAndVisibilityAndDeletedAtIsNull(
+            Long id,
+            PromptStatus status,
+            PromptVisibility visibility
+    );
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select post
+            from PostJpaEntity post
+            where post.id = :postId
+              and post.status = com.promsearch.prompt.domain.enums.PromptStatus.ACTIVE
+              and post.visibility = com.promsearch.prompt.domain.enums.PromptVisibility.PUBLIC
+              and post.deletedAt is null
+            """)
+    Optional<PostJpaEntity> findAccessibleByIdForUpdate(@Param("postId") Long postId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
