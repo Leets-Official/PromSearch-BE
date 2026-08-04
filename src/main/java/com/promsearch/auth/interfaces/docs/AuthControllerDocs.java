@@ -29,7 +29,8 @@ public interface AuthControllerDocs {
             summary = "[AUTH-001] 회원가입",
             description = IMPLEMENTED_BY_LEE_GUNHEE
                     + "이메일, 비밀번호, 닉네임으로 신규 사용자를 생성합니다. "
-                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 태그 ID로 각각 최대 3개까지 선택할 수 있습니다."
+                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 태그 ID로 각각 최대 3개까지 선택할 수 있습니다. "
+                    + "필수 약관 4개는 모두 동의해야 하며, 마케팅 정보 수신은 선택입니다. 개인정보 처리방침은 별도 동의 값으로 받지 않습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),

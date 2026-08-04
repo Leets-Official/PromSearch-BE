@@ -49,6 +49,8 @@ class UserCommandServiceTest {
                     public void replace(Long userId, List<Long> tagIds) {
                     }
                 },
+                (userId, agreements) -> {
+                },
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {

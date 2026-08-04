@@ -3,6 +3,7 @@ package com.promsearch.user.application.service.command;
 import com.promsearch.user.application.port.out.tag.ResolveInterestTagIdsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.LoadUserInterestTagPort;
+import com.promsearch.user.application.port.out.user.SaveUserAgreementPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
@@ -25,6 +26,7 @@ import com.promsearch.user.domain.NicknamePolicy;
 import com.promsearch.user.domain.enums.InterestTagType;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -56,6 +58,7 @@ public class UserCommandService implements
     private final SaveUserPort saveUserPort;
     private final ResolveInterestTagIdsPort resolveInterestTagIdsPort;
     private final SaveUserInterestTagPort saveUserInterestTagPort;
+    private final SaveUserAgreementPort saveUserAgreementPort;
     private final PasswordEncoder passwordEncoder;
     private final ProfileImageDeliveryPort profileImageDeliveryPort;
     private final ScheduleProfileImageDeletionPort profileImageDeletionPort;
@@ -72,10 +75,11 @@ public class UserCommandService implements
                 encodedPassword,
                 command.nickname(),
                 null,
-                normalizeOptional(command.profileImageUrl())
+                null
         );
 
         User savedUser = saveUserPort.create(user);
+        saveUserAgreementPort.saveAll(savedUser.getUserId().id(), command.agreements().toUserAgreements(Instant.now()));
         List<Long> interestTagIds = new ArrayList<>();
         interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.interestJobTagIds()));
         interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.interestTaskTagIds()));

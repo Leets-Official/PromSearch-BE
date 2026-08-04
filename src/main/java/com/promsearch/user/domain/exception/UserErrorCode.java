@@ -24,7 +24,9 @@ public enum UserErrorCode implements BaseCode {
     PROFILE_IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "USER-017", "다른 사용자의 프로필 이미지에는 접근할 수 없습니다."),
     PROFILE_IMAGE_UPLOAD_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER-018", "업로드된 프로필 이미지를 찾을 수 없습니다."),
     PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH(HttpStatus.BAD_REQUEST, "USER-019", "업로드된 프로필 이미지 정보가 요청과 일치하지 않습니다."),
-    PROFILE_IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "USER-020", "프로필 이미지 저장소를 사용할 수 없습니다.");
+    PROFILE_IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "USER-020", "프로필 이미지 저장소를 사용할 수 없습니다."),
+    INVALID_AGREEMENT(HttpStatus.BAD_REQUEST, "USER-021", "약관 동의 값이 유효하지 않습니다."),
+    REQUIRED_AGREEMENT_NOT_ACCEPTED(HttpStatus.BAD_REQUEST, "USER-022", "필수 약관에 모두 동의해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
