@@ -185,6 +185,33 @@ public class User {
                 .build();
     }
 
+    /**
+     * Origin 등급으로 승급한다. 관리자가 Origin 심사 대기 항목을 승인했을 때만 호출되며,
+     * Prime 등급 유저만 승급 대상이다.
+     *
+     * @return Origin 등급으로 변경된 새 사용자 객체
+     */
+    public User promoteToOrigin() {
+        if (grade != UserGrade.PRIME) {
+            throw new UserDomainException(UserErrorCode.INVALID_GRADE_TRANSITION);
+        }
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
+                .point(point)
+                .role(role)
+                .grade(UserGrade.ORIGIN)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
     public User changePassword(String password) {
         validateRequired(email, password, nickname, point, role, grade, status);
 

@@ -24,7 +24,10 @@ public enum UserErrorCode implements BaseCode {
     PROFILE_IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "USER-017", "다른 사용자의 프로필 이미지에는 접근할 수 없습니다."),
     PROFILE_IMAGE_UPLOAD_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER-018", "업로드된 프로필 이미지를 찾을 수 없습니다."),
     PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH(HttpStatus.BAD_REQUEST, "USER-019", "업로드된 프로필 이미지 정보가 요청과 일치하지 않습니다."),
-    PROFILE_IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "USER-020", "프로필 이미지 저장소를 사용할 수 없습니다.");
+    PROFILE_IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "USER-020", "프로필 이미지 저장소를 사용할 수 없습니다."),
+    GRADE_REQUEST_NOT_FOUND(HttpStatus.NOT_FOUND, "USER-021", "등급업 심사 대기 항목을 찾을 수 없습니다."),
+    GRADE_REQUEST_ALREADY_PROCESSED(HttpStatus.CONFLICT, "USER-022", "이미 처리된 등급업 심사 대기 항목입니다."),
+    INVALID_GRADE_TRANSITION(HttpStatus.BAD_REQUEST, "USER-023", "Origin 등급은 Prime 등급에서만 승급할 수 있습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
