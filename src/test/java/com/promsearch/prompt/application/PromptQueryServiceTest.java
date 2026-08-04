@@ -31,8 +31,8 @@ class PromptQueryServiceTest {
                         1L,
                         2L,
                         List.of(3L, 4L, 3L),
-                        5L,
-                        PromptOutputType.IMAGE,
+                        List.of(5L, 6L),
+                        List.of(PromptOutputType.IMAGE, PromptOutputType.TEXT),
                         "  썸네일  ",
                         HomePromptSort.POPULAR,
                         0,
@@ -43,8 +43,8 @@ class PromptQueryServiceTest {
         assertThat(homePromptReader.lastListQuery.viewerUserId()).isEqualTo(1L);
         assertThat(homePromptReader.lastListQuery.jobTagId()).isEqualTo(2L);
         assertThat(homePromptReader.lastListQuery.taskTagIds()).containsExactly(3L, 4L);
-        assertThat(homePromptReader.lastListQuery.aiModelTagId()).isEqualTo(5L);
-        assertThat(homePromptReader.lastListQuery.outputType()).isEqualTo(PromptOutputType.IMAGE);
+        assertThat(homePromptReader.lastListQuery.aiModelTagIds()).containsExactly(5L, 6L);
+        assertThat(homePromptReader.lastListQuery.outputTypes()).containsExactly(PromptOutputType.IMAGE, PromptOutputType.TEXT);
         assertThat(homePromptReader.lastListQuery.keyword()).isEqualTo("썸네일");
         assertThat(homePromptReader.lastListQuery.sort()).isEqualTo(HomePromptSort.POPULAR);
         assertThat(result.prompts()).isEmpty();
@@ -80,20 +80,20 @@ class PromptQueryServiceTest {
     }
 
     @Test
-    void homePromptListQueryRejectsShortKeywordAfterTrim() {
-        assertThatThrownBy(() -> HomePromptListQuery.filtered(
+    void homePromptListQueryTrimsSingleCharacterKeyword() {
+        HomePromptListQuery query = HomePromptListQuery.filtered(
                 null,
                 null,
                 List.of(),
-                null,
-                null,
+                List.of(),
+                List.of(),
                 " a ",
                 HomePromptSort.LATEST,
                 0,
                 12
-        ))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("keyword");
+        );
+
+        assertThat(query.keyword()).isEqualTo("a");
     }
 
     private static class FakeHomePromptReader implements HomePromptReader {
