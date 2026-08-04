@@ -11,40 +11,38 @@ import lombok.Builder;
 import lombok.Getter;
 
 @Getter
-public class PostReport {
+public class CommentReport {
 
-    private final PostReportId postReportId;
+    private final CommentReportId commentReportId;
     private final Long reporterId;
-    private final Long postId;
+    private final Long commentId;
     private final ReportReason reason;
     private final String description;
     private final ReportStatus status;
     private final Instant createdAt;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private PostReport(
-            PostReportId postReportId,
-            Long reporterId,
-            Long postId,
-            ReportReason reason,
-            String description,
-            ReportStatus status,
-            Instant createdAt
-    ) {
-        this.postReportId = postReportId;
+    private CommentReport(CommentReportId commentReportId, Long reporterId, Long commentId, ReportReason reason,
+                          String description, ReportStatus status, Instant createdAt) {
+        this.commentReportId = commentReportId;
         this.reporterId = reporterId;
-        this.postId = postId;
+        this.commentId = commentId;
         this.reason = reason;
         this.description = description;
         this.status = status;
         this.createdAt = createdAt;
     }
 
-    public static PostReport create(Long reporterId, Long postId, ReportReason reason, String description) {
-        validateRequired(reporterId, postId, reason, description);
-        return PostReport.builder()
+    public static CommentReport create(
+            Long reporterId,
+            Long commentId,
+            ReportReason reason,
+            String description
+    ) {
+        validateRequired(reporterId, commentId, reason, description);
+        return CommentReport.builder()
                 .reporterId(reporterId)
-                .postId(postId)
+                .commentId(commentId)
                 .reason(reason)
                 .description(description.trim())
                 .status(ReportStatus.PENDING)
@@ -52,23 +50,16 @@ public class PostReport {
                 .build();
     }
 
-    public static PostReport reconstruct(
-            PostReportId id,
-            Long reporterId,
-            Long postId,
-            ReportReason reason,
-            String description,
-            ReportStatus status,
-            Instant createdAt
-    ) {
-        validateRequired(reporterId, postId, reason, description);
+    public static CommentReport reconstruct(CommentReportId id, Long reporterId, Long commentId, ReportReason reason,
+                                            String description, ReportStatus status, Instant createdAt) {
+        validateRequired(reporterId, commentId, reason, description);
         if (status == null) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_STATUS);
         }
-        return PostReport.builder()
-                .postReportId(id)
+        return CommentReport.builder()
+                .commentReportId(id)
                 .reporterId(reporterId)
-                .postId(postId)
+                .commentId(commentId)
                 .reason(reason)
                 .description(description)
                 .status(status)
@@ -78,17 +69,17 @@ public class PostReport {
 
     private static void validateRequired(
             Long reporterId,
-            Long postId,
+            Long commentId,
             ReportReason reason,
             String description
     ) {
         if (reporterId == null || reporterId <= 0) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORTER_ID);
         }
-        if (postId == null || postId <= 0) {
-            throw new ModerationDomainException(ModerationErrorCode.INVALID_POST_ID);
+        if (commentId == null || commentId <= 0) {
+            throw new ModerationDomainException(ModerationErrorCode.INVALID_COMMENT_ID);
         }
-        if (reason == null || !reason.isAllowedFor(ReportTargetType.POST)) {
+        if (reason == null || !reason.isAllowedFor(ReportTargetType.COMMENT)) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_REASON);
         }
         if (description == null || description.isBlank()) {
@@ -96,8 +87,8 @@ public class PostReport {
         }
     }
 
-    public record PostReportId(Long id) {
-        public PostReportId {
+    public record CommentReportId(Long id) {
+        public CommentReportId {
             if (id == null || id <= 0) {
                 throw new ModerationDomainException(ModerationErrorCode.INVALID_ID);
             }

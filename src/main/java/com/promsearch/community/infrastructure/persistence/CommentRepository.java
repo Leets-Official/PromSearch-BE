@@ -15,6 +15,23 @@ import org.springframework.data.repository.query.Param;
 
 public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long> {
 
+    @Query("""
+            select count(comment) > 0
+            from CommentJpaEntity comment
+            where comment.id = :commentId
+              and comment.status = com.promsearch.community.domain.enums.CommentStatus.ACTIVE
+              and comment.deletedAt is null
+              and exists (
+                    select post.id
+                    from PostJpaEntity post
+                    where post.id = comment.postId
+                      and post.status = com.promsearch.prompt.domain.enums.PromptStatus.ACTIVE
+                      and post.visibility = com.promsearch.prompt.domain.enums.PromptVisibility.PUBLIC
+                      and post.deletedAt is null
+              )
+            """)
+    boolean existsReportableById(@Param("commentId") Long commentId);
+
     Optional<CommentJpaEntity> findByIdAndPostIdAndParentCommentIdIsNull(Long id, Long postId);
 
     Optional<CommentJpaEntity> findByIdAndParentCommentIdAndStatus(
