@@ -265,6 +265,7 @@ class BookmarkQueryIntegrationTest {
                 "password",
                 suffix,
                 suffix,
+                null,
                 null
         ));
         return user.toDomain().getUserId().id();

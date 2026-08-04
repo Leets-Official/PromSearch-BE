@@ -6,6 +6,7 @@ import com.promsearch.prompt.application.usecase.ProcessPromptImageWatermarkUseC
 import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -36,6 +37,7 @@ public class SqsPromptImageWatermarkJobConsumer {
     private final ObjectMapper objectMapper;
     private final ProcessPromptImageWatermarkUseCase processWatermarkUseCase;
     private final WatermarkSqsProperties properties;
+    private final AtomicBoolean connectivityConfirmed = new AtomicBoolean();
 
     /** 한 번의 Long Polling이 끝난 후 짧게 쉬고 다음 메시지를 조회 */
     @Scheduled(
@@ -45,6 +47,9 @@ public class SqsPromptImageWatermarkJobConsumer {
     public void pollAvailableMessage() {
         try {
             List<Message> messages = receiveMessages();
+            if (connectivityConfirmed.compareAndSet(false, true)) {
+                log.info("prompt_image_watermark_sqs_poll_ready");
+            }
             messages.forEach(this::processMessage);
         } catch (RuntimeException exception) {
             log.warn("prompt_image_watermark_sqs_poll_failed", exception);

@@ -20,9 +20,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Auth | 인증", description = "회원가입, 로그인, Access Token 재발급 API")
 public interface AuthControllerDocs {
 
+    String IMPLEMENTED_BY_LEE_GUNHEE = "**작업자: 이건희 | 구현 상태: 구현완료**\n\n";
+    String IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
             summary = "[AUTH-001] 회원가입",
-            description = "이름, 닉네임, 이메일, 비밀번호로 신규 사용자를 생성합니다."
+            description = IMPLEMENTED_BY_LEE_GUNHEE
+                    + "이름, 닉네임, 이메일, 비밀번호로 신규 사용자를 생성합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
@@ -33,7 +37,8 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "[AUTH-002] 로그인",
-            description = "이메일과 비밀번호를 검증한 뒤 Access Token과 Refresh Token을 발급합니다."
+            description = IMPLEMENTED_BY_LEE_GUNHEE
+                    + "이메일과 비밀번호를 검증한 뒤 Access Token과 Refresh Token을 발급합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그인 성공"),
@@ -44,7 +49,8 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "[AUTH-003] 토큰 재발급",
-            description = "유효한 Refresh Token을 검증하고 새 Access Token과 Refresh Token을 발급합니다."
+            description = IMPLEMENTED_BY_LEE_GUNHEE
+                    + "유효한 Refresh Token을 검증하고 새 Access Token과 Refresh Token을 발급합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "재발급 성공"),
@@ -55,7 +61,8 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "[AUTH-004] 소셜 로그인",
-            description = "프론트엔드에서 전달받은 OAuth 인가 코드로 소셜 로그인 또는 자동 회원가입을 수행하고 "
+            description = IMPLEMENTED_BY_KALLIN1
+                    + "프론트엔드에서 전달받은 OAuth 인가 코드로 소셜 로그인 또는 자동 회원가입을 수행하고 "
                     + "Access Token과 Refresh Token을 발급합니다."
     )
     @ApiResponses({
