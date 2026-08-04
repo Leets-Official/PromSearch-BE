@@ -33,7 +33,10 @@ public record HomePromptSummaryResponse(
         @Schema(description = "카드 공개 통계")
         HomePromptStatisticsResponse statistics,
 
-        @Schema(description = "현재 조회자의 상호작용 상태. 비회원은 모든 값이 false입니다.")
+        @Schema(
+                description = "현재 조회자의 상호작용 상태. 비로그인 사용자에게도 null이 아닌 { liked: false, bookmarked: false } 객체를 반환합니다.",
+                requiredMode = Schema.RequiredMode.REQUIRED
+        )
         HomePromptViewerInteractionResponse viewerInteraction,
 
         @Schema(description = "카드에 표시할 태그 목록")
