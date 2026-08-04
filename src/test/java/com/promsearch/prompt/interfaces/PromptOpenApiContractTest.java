@@ -85,19 +85,19 @@ class PromptOpenApiContractTest {
         assertThat(properties.has("updatedAt")).isTrue();
     }
 
-    @DisplayName("상세 조회 응답은 추천 여부와 전체 추천 수를 분리한다")
+    @DisplayName("상세 조회 응답은 좋아요 여부와 전체 좋아요 수를 분리한다")
     @Test
-    void promptDetailUsesRecommendationNaming() throws Exception {
+    void promptDetailUsesLikeNaming() throws Exception {
         JsonNode document = openApiDocument();
         JsonNode interaction = document.at(
                 "/components/schemas/PromptViewerInteractionResponse/properties");
         JsonNode statistics = document.at(
                 "/components/schemas/PromptStatisticsResponse/properties");
 
-        assertThat(interaction.has("recommended")).isTrue();
-        assertThat(interaction.has("liked")).isFalse();
-        assertThat(statistics.has("recommendCount")).isTrue();
-        assertThat(statistics.has("likeCount")).isFalse();
+        assertThat(interaction.has("liked")).isTrue();
+        assertThat(interaction.has("recommended")).isFalse();
+        assertThat(statistics.has("likeCount")).isTrue();
+        assertThat(statistics.has("recommendCount")).isFalse();
     }
 
     @DisplayName("상세 조회 접근 사유는 잠금과 해제 원인을 모두 구분한다")
@@ -150,8 +150,17 @@ class PromptOpenApiContractTest {
         assertThat(properties.has("title")).isTrue();
         assertThat(properties.has("publishedAt")).isTrue();
         assertThat(properties.has("viewCount")).isTrue();
-        assertThat(properties.has("recommendCount")).isTrue();
+        assertThat(properties.has("likeCount")).isTrue();
         assertThat(properties.has("promptBody")).isFalse();
+    }
+
+    @DisplayName("내 게시글 인사이트 응답은 좋아요 수를 likeCount로 노출한다")
+    @Test
+    void promptInsightSchemaUsesLikeCount() throws Exception {
+        JsonNode properties = openApiDocument().at("/components/schemas/PromptInsightResponse/properties");
+
+        assertThat(properties.has("likeCount")).isTrue();
+        assertThat(properties.has("totalRecommends")).isFalse();
     }
 
     private JsonNode openApiDocument() throws Exception {

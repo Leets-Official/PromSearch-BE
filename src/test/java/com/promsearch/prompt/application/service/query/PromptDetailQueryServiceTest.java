@@ -48,21 +48,21 @@ class PromptDetailQueryServiceTest {
     }
 
     @Test
-    @DisplayName("비회원에게는 본문을 숨기고 전체 추천 수는 공개한다")
+    @DisplayName("비회원에게는 본문을 숨기고 전체 좋아요 수는 공개한다")
     void anonymousDetail() {
         PromptDetailInfo result = service.get(10L, null);
 
         assertThat(result.promptBody()).isEmpty();
         assertThat(result.access().locked()).isTrue();
         assertThat(result.access().reason()).isEqualTo(AccessReason.ANONYMOUS);
-        assertThat(result.viewerInteraction().recommended()).isFalse();
+        assertThat(result.viewerInteraction().liked()).isFalse();
         assertThat(result.customAiModels()).containsExactly("GPT 4.1 Mini");
-        assertThat(result.statistics().recommendCount()).isEqualTo(7L);
+        assertThat(result.statistics().likeCount()).isEqualTo(7L);
     }
 
     @Test
-    @DisplayName("미구매 사용자의 추천 여부와 프리미엄 미리보기를 반환한다")
-    void lockedPremiumDetailWithRecommendation() {
+    @DisplayName("미구매 사용자의 좋아요 여부와 프리미엄 미리보기를 반환한다")
+    void lockedPremiumDetailWithLike() {
         projection = projection(
                 "12345678901234567890",
                 PromptContentType.PREMIUM,
@@ -74,8 +74,8 @@ class PromptDetailQueryServiceTest {
 
         assertThat(result.promptBody()).isEqualTo("12");
         assertThat(result.access().reason()).isEqualTo(AccessReason.PREMIUM);
-        assertThat(result.viewerInteraction().recommended()).isTrue();
-        assertThat(result.statistics().recommendCount()).isEqualTo(7L);
+        assertThat(result.viewerInteraction().liked()).isTrue();
+        assertThat(result.statistics().likeCount()).isEqualTo(7L);
     }
 
     @Test
@@ -131,7 +131,7 @@ class PromptDetailQueryServiceTest {
     private PromptDetailProjection projection(
             String promptBody,
             PromptContentType contentType,
-            boolean recommended
+            boolean liked
     ) {
         return new PromptDetailProjection(
                 10L,
@@ -144,7 +144,7 @@ class PromptDetailQueryServiceTest {
                 contentType == PromptContentType.FREE ? 0L : 500L,
                 promptBody,
                 "회의 내용을 정리합니다.",
-                recommended,
+                liked,
                 false,
                 List.of(),
                 List.of(),

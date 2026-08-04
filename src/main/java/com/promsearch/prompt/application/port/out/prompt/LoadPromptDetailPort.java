@@ -23,7 +23,7 @@ public interface LoadPromptDetailPort {
             Long pricePoint,
             String promptBody,
             String description,
-            boolean recommended,
+            boolean liked,
             boolean bookmarked,
             List<ImageProjection> images,
             List<TagProjection> tags,
@@ -48,7 +48,7 @@ public interface LoadPromptDetailPort {
     record StatisticsProjection(
             long viewCount,
             long copyCount,
-            long recommendCount,
+            long likeCount,
             long commentCount
     ) {
     }
