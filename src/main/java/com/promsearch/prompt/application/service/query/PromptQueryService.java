@@ -21,6 +21,15 @@ public class PromptQueryService implements ListHomePromptsUseCase {
     private final HomePromptReader homePromptReader;
 
     @Override
+    public HomePromptListInfo listPrompts(HomePromptListQuery query) {
+        /*
+         * 홈 필터 목록은 직군, 태스크, AI 모델, 결과물 타입, 검색어가 한 번에 조합됩니다.
+         * application 계층은 조건 객체만 전달하고, 실제 JPQL 조합은 infrastructure 어댑터가 담당합니다.
+         */
+        return homePromptReader.listPrompts(query);
+    }
+
+    @Override
     public HomePromptListInfo listPopularPrompts(HomePromptListQuery query) {
         /*
          * 5주차 회의록 기준으로 인기 목록은 북마크가 아니라 좋아요 기반 정렬입니다.

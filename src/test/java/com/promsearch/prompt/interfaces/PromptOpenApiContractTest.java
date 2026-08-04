@@ -127,8 +127,16 @@ class PromptOpenApiContractTest {
     void promptQueryEndpointsAreDocumented() throws Exception {
         JsonNode document = openApiDocument();
 
+        assertThat(document.at("/paths/~1api~1v1~1home~1prompts/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1home~1prompts~1popular/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1home~1prompts~1jobs~1{jobTagId}/get").isMissingNode()).isFalse();
+        assertThat(document.at("/paths/~1api~1v1~1tags/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1me/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1prompts~1me~1insights/get").isMissingNode()).isFalse();
+        assertOperationMetadata(document, "/paths/~1api~1v1~1home~1prompts/get", "HOME-001", "ruchan04", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1home~1prompts~1popular/get", "HOME-002", "ruchan04", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1home~1prompts~1jobs~1{jobTagId}/get", "HOME-003", "ruchan04", "구현완료");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1tags/get", "TAG-001", "ruchan04", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1me/get", "PROMPT-010", "kallin1", "미구현");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1me~1insights/get", "PROMPT-011", "kallin1", "미구현");
     }
