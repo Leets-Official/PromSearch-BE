@@ -43,4 +43,5 @@ storage:
     region: ap-northeast-2
     original-prefix: prompt-images/original
     watermarked-prefix: prompt-images/watermarked
+    profile-prefix: profiles
     upload-url-expiration: 10m

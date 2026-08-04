@@ -17,7 +17,13 @@ public enum UserErrorCode implements BaseCode {
     INVALID_NAME(HttpStatus.BAD_REQUEST, "USER-010", "이름이 유효하지 않습니다."),
     INVALID_USER_ROLE(HttpStatus.BAD_REQUEST, "USER-011", "사용자 권한이 유효하지 않습니다."),
     INVALID_USER_GRADE(HttpStatus.BAD_REQUEST, "USER-012", "사용자 등급이 유효하지 않습니다."),
-    INVALID_POINT(HttpStatus.BAD_REQUEST, "USER-013", "보유 포인트가 유효하지 않습니다.");
+    INVALID_POINT(HttpStatus.BAD_REQUEST, "USER-013", "보유 포인트가 유효하지 않습니다."),
+    INVALID_PROFILE_IMAGE_CONTENT_TYPE(HttpStatus.BAD_REQUEST, "USER-014", "지원하지 않는 프로필 이미지 형식입니다."),
+    INVALID_PROFILE_IMAGE_FILE_SIZE(HttpStatus.BAD_REQUEST, "USER-015", "프로필 이미지 파일 크기가 유효하지 않습니다."),
+    PROFILE_IMAGE_NOT_OWNED(HttpStatus.FORBIDDEN, "USER-016", "다른 사용자의 프로필 이미지에는 접근할 수 없습니다."),
+    PROFILE_IMAGE_UPLOAD_NOT_FOUND(HttpStatus.BAD_REQUEST, "USER-017", "업로드된 프로필 이미지를 찾을 수 없습니다."),
+    PROFILE_IMAGE_UPLOAD_METADATA_MISMATCH(HttpStatus.BAD_REQUEST, "USER-018", "업로드된 프로필 이미지 정보가 요청과 일치하지 않습니다."),
+    PROFILE_IMAGE_STORAGE_UNAVAILABLE(HttpStatus.SERVICE_UNAVAILABLE, "USER-019", "프로필 이미지 저장소를 사용할 수 없습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;

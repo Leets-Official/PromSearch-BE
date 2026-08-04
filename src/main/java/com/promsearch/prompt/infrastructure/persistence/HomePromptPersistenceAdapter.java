@@ -14,6 +14,7 @@ import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.user.domain.enums.UserStatus;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.TypedQuery;
 import java.time.Instant;
@@ -47,7 +48,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
      */
     private static final String CARD_SELECT = """
             select p.id, p.title, p.thumbnailImageUrl, p.outputType, p.contentType, p.pricePoint,
-                   p.createdAt, u.id, u.nickname, u.profileImageUrl,
+                   p.createdAt, u.id, u.nickname, u.profileImageUrl, u.profileImageObjectKey,
                    coalesce(s.viewCount, 0), coalesce(s.likeCount, 0),
                    coalesce(s.commentCount, 0), coalesce(s.copyCount, 0)
             """;
@@ -70,6 +71,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
             """;
 
     private final EntityManager entityManager;
+    private final ProfileImageDeliveryPort profileImageDeliveryPort;
 
     @Override
     public HomePromptListInfo listPopularPrompts(HomePromptListQuery query) {
@@ -212,7 +214,14 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                 row.outputType(),
                 row.contentType(),
                 row.pricePoint(),
-                new HomePromptAuthorInfo(row.authorUserId(), row.authorNickname(), row.authorProfileImageUrl()),
+                new HomePromptAuthorInfo(
+                        row.authorUserId(),
+                        row.authorNickname(),
+                        profileImageDeliveryPort.resolve(
+                                row.authorProfileImageUrl(),
+                                row.authorProfileImageObjectKey()
+                        )
+                ),
                 new HomePromptStatisticsInfo(
                         row.viewCount(),
                         row.likeCount(),
@@ -350,6 +359,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
             Long authorUserId,
             String authorNickname,
             String authorProfileImageUrl,
+            String authorProfileImageObjectKey,
             long viewCount,
             long likeCount,
             long commentCount,
@@ -372,10 +382,11 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                     number(row[7]),
                     (String) row[8],
                     (String) row[9],
-                    count(row[10]),
+                    (String) row[10],
                     count(row[11]),
                     count(row[12]),
-                    count(row[13])
+                    count(row[13]),
+                    count(row[14])
             );
         }
     }
