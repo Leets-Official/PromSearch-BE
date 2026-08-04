@@ -76,6 +76,16 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
+    @DisplayName("홈 프롬프트 목록은 trim 후 두 글자 미만인 검색어를 400으로 거절한다")
+    @Test
+    void listPromptsRejectsShortKeyword() throws Exception {
+        mockMvc.perform(get("/api/v1/home/prompts")
+                        .param("keyword", " a "))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("COMMON-400"));
+    }
+
     @DisplayName("인기 프롬프트 목록은 offset overflow가 가능한 page를 400으로 거절한다")
     @Test
     void listPopularPromptsRejectsPageBeyondOffsetBoundary() throws Exception {

@@ -119,6 +119,25 @@ class HomePromptPersistenceAdapterTest {
                 .containsExactly(jobTag.getId(), taskTag.getId(), aiModelTag.getId());
     }
 
+    @DisplayName("홈 필터 검색어는 LIKE 와일드카드 문자를 일반 문자로 검색한다")
+    @Test
+    void listPromptsEscapesKeywordWildcards() {
+        Long authorId = saveUser("wildcard-author@example.com", "검색작성자");
+        Long percentPromptId = savePrompt(authorId, "100% 실전 프롬프트", PromptVisibility.PUBLIC, List.of());
+        savePrompt(authorId, "100점 실전 프롬프트", PromptVisibility.PUBLIC, List.of());
+        Long underscorePromptId = savePrompt(authorId, "a_b 프롬프트", PromptVisibility.PUBLIC, List.of());
+        savePrompt(authorId, "axb 프롬프트", PromptVisibility.PUBLIC, List.of());
+        Long backslashPromptId = savePrompt(authorId, "경로\\파일 프롬프트", PromptVisibility.PUBLIC, List.of());
+        savePrompt(authorId, "경로파일 프롬프트", PromptVisibility.PUBLIC, List.of());
+
+        entityManager.flush();
+        entityManager.clear();
+
+        assertThat(searchPromptIds("100%")).containsExactly(percentPromptId);
+        assertThat(searchPromptIds("a_b")).containsExactly(underscorePromptId);
+        assertThat(searchPromptIds("경로\\파일")).containsExactly(backslashPromptId);
+    }
+
     private Long saveUser(String email, String nickname) {
         UserJpaEntity user = userRepository.saveAndFlush(
                 UserJpaEntity.create(email, "encoded-password", nickname, nickname, null)
@@ -128,6 +147,24 @@ class HomePromptPersistenceAdapterTest {
 
     private TagJpaEntity saveTag(TagType tagType, String tagName, String normalizedName) {
         return tagRepository.saveAndFlush(TagJpaEntity.create(tagType, tagName, normalizedName, false));
+    }
+
+    private List<Long> searchPromptIds(String keyword) {
+        return homePromptPersistenceAdapter.listPrompts(HomePromptListQuery.filtered(
+                        null,
+                        null,
+                        List.of(),
+                        null,
+                        null,
+                        keyword,
+                        HomePromptSort.LATEST,
+                        0,
+                        12
+                ))
+                .prompts()
+                .stream()
+                .map(HomePromptSummaryInfo::promptId)
+                .toList();
     }
 
     private Long savePrompt(

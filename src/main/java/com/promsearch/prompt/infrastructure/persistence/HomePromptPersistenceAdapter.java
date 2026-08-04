@@ -37,6 +37,8 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class HomePromptPersistenceAdapter implements HomePromptReader {
 
+    private static final char LIKE_ESCAPE = '\\';
+
     /*
      * 홈 화면은 비회원도 접근 가능한 공개 영역입니다.
      * FREE/PREMIUM만 노출해 추후 enum 값이 추가되더라도 의도하지 않은 콘텐츠가 섞이지 않게 합니다.
@@ -181,13 +183,13 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
              */
             filters.append("""
                     and (
-                        lower(p.title) like :keyword
-                        or lower(coalesce(p.description, '')) like :keyword
+                        lower(p.title) like :keyword escape '\\'
+                        or lower(coalesce(p.description, '')) like :keyword escape '\\'
                         or exists (
                             select keywordPostTag.id
                             from PostTagJpaEntity keywordPostTag
                             where keywordPostTag.post.id = p.id
-                              and lower(keywordPostTag.tag.tagName) like :keyword
+                              and lower(keywordPostTag.tag.tagName) like :keyword escape '\\'
                         )
                     )
                     """);
@@ -238,9 +240,9 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
         if (query.hasKeyword()) {
             /*
              * DB lower(...) 비교와 맞추기 위해 애플리케이션에서도 소문자로 변환합니다.
-             * keyword는 HomePromptListQuery에서 이미 trim 처리되어 여기서는 like 패턴만 붙입니다.
+             * 사용자가 입력한 %, _, \ 문자가 LIKE 와일드카드로 해석되지 않도록 escape한 뒤 포함 검색 패턴을 만듭니다.
              */
-            typedQuery.setParameter("keyword", "%" + query.keyword().toLowerCase(Locale.ROOT) + "%");
+            typedQuery.setParameter("keyword", toEscapedContainsKeyword(query.keyword()));
         }
     }
 
@@ -422,6 +424,20 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
             case TASK -> 1;
             case AI_MODEL -> 2;
         };
+    }
+
+    private static String toEscapedContainsKeyword(String keyword) {
+        String lowerKeyword = keyword.toLowerCase(Locale.ROOT);
+        StringBuilder pattern = new StringBuilder(lowerKeyword.length() + 2)
+                .append('%');
+        for (int index = 0; index < lowerKeyword.length(); index++) {
+            char character = lowerKeyword.charAt(index);
+            if (character == LIKE_ESCAPE || character == '%' || character == '_') {
+                pattern.append(LIKE_ESCAPE);
+            }
+            pattern.append(character);
+        }
+        return pattern.append('%').toString();
     }
 
     private static long count(Object value) {

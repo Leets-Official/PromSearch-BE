@@ -62,8 +62,9 @@ public record HomePromptListQuery(
 ) {
 
     public static final int MAX_SIZE = 50;
-    public static final int MAX_PAGE = 1_000_000;
+    public static final int MAX_PAGE = 1_000;
     public static final int MAX_FILTER_TAGS = 10;
+    public static final int MIN_KEYWORD_LENGTH = 2;
     public static final int MAX_KEYWORD_LENGTH = 100;
 
     public HomePromptListQuery {
@@ -148,6 +149,9 @@ public record HomePromptListQuery(
          * 의미 있는 검색어만 persistence 계층으로 내려보내 불필요한 like 조건 생성을 막습니다.
          */
         String trimmed = keyword.trim();
+        if (trimmed.length() < MIN_KEYWORD_LENGTH) {
+            throw new IllegalArgumentException("keyword must be at least " + MIN_KEYWORD_LENGTH + " characters");
+        }
         if (trimmed.length() > MAX_KEYWORD_LENGTH) {
             throw new IllegalArgumentException("keyword must be " + MAX_KEYWORD_LENGTH + " characters or less");
         }
@@ -171,8 +175,8 @@ public record HomePromptListQuery(
             throw new IllegalArgumentException("size must be between 1 and " + MAX_SIZE);
         }
         /*
-         * JPA setFirstResult는 int offset을 받습니다.
-         * page와 size가 각각 유효하더라도 곱셈 결과가 int 범위를 넘으면 조회 전에 차단합니다.
+         * offset pagination은 page가 커질수록 DB가 건너뛰어야 하는 row가 늘어납니다.
+         * 공개 홈 API가 과도한 page 요청으로 느려지지 않도록 현재 서비스 규모에 맞는 상한을 둡니다.
          */
         if ((long) page * size > Integer.MAX_VALUE) {
             throw new IllegalArgumentException("page offset is too large");

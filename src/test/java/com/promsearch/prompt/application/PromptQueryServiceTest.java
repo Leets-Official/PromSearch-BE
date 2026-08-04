@@ -79,6 +79,23 @@ class PromptQueryServiceTest {
                 .hasMessageContaining("page");
     }
 
+    @Test
+    void homePromptListQueryRejectsShortKeywordAfterTrim() {
+        assertThatThrownBy(() -> HomePromptListQuery.filtered(
+                null,
+                null,
+                List.of(),
+                null,
+                null,
+                " a ",
+                HomePromptSort.LATEST,
+                0,
+                12
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("keyword");
+    }
+
     private static class FakeHomePromptReader implements HomePromptReader {
 
         private HomePromptListQuery lastListQuery;
