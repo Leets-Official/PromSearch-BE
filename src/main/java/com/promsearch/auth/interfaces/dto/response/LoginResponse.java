@@ -8,7 +8,7 @@ public record LoginResponse(
         String tokenType,
         Long expiresIn,
         Long userId,
-        String name,
+        String profileImageUrl,
         String nickname,
         String email
 ) {
@@ -20,7 +20,7 @@ public record LoginResponse(
                 info.tokenType(),
                 info.expiresIn(),
                 info.userId(),
-                info.name(),
+                info.profileImageUrl(),
                 info.nickname(),
                 info.email()
         );

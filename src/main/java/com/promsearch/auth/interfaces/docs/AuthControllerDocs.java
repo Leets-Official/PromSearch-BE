@@ -5,7 +5,6 @@ import com.promsearch.auth.interfaces.dto.response.LoginResponse;
 import com.promsearch.auth.interfaces.dto.request.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.response.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
-import com.promsearch.auth.interfaces.dto.response.SignupResponse;
 import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.global.response.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -26,14 +25,15 @@ public interface AuthControllerDocs {
     @Operation(
             summary = "[AUTH-001] 회원가입",
             description = IMPLEMENTED_BY_LEE_GUNHEE
-                    + "이름, 닉네임, 이메일, 비밀번호로 신규 사용자를 생성합니다."
+                    + "이메일, 비밀번호, 닉네임으로 신규 사용자를 생성합니다. "
+                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 각각 최대 3개까지 선택할 수 있습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이메일 또는 닉네임 중복")
     })
-    ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request);
+    ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest request);
 
     @Operation(
             summary = "[AUTH-002] 로그인",

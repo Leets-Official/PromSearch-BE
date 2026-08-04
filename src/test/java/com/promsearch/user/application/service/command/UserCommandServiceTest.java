@@ -19,6 +19,7 @@ import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,6 +37,9 @@ class UserCommandServiceTest {
         userCommandService = new UserCommandService(
                 userRepository,
                 userRepository,
+                (type, names) -> List.of(),
+                (userId, tagIds) -> {
+                },
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {
@@ -169,7 +173,7 @@ class UserCommandServiceTest {
 
         userCommandService.delete(1L);
         SignupInfo signupInfo = userCommandService.signup(
-                SignupCommand.of("newName", "oldNick", "old@example.com", "new-password")
+                SignupCommand.of("oldNick", "old@example.com", "new-password")
         );
 
         assertThat(signupInfo.userId()).isEqualTo(2L);
