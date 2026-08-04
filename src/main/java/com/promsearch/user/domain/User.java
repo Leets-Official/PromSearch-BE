@@ -112,7 +112,7 @@ public class User {
                 .build();
     }
 
-    public User updateProfile(String email, String nickname, String name) {
+    public User updateProfile(String email, String nickname) {
         validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()

@@ -57,20 +57,23 @@ class SignupProfileInterestIntegrationTest {
     }
 
     private void saveTagIfMissing(TagType type, String name, String normalizedName) {
-        if (tagRepository.findIdsByTypeAndNames(type, List.of(name)).isEmpty()) {
+        if (tagRepository.findAll().stream().noneMatch(tag -> tag.getTagType() == type && tag.getTagName().equals(name))) {
             tagRepository.save(TagJpaEntity.create(type, name, normalizedName, false));
         }
     }
 
     @Test
-    void signupSavesOptionalProfileImageAndInterestTags() throws Exception {
+    void signupSavesInterestTags() throws Exception {
+        Long studentId = tagRepository.findAll().stream().filter(tag -> tag.getTagName().equals("학생")).findFirst().orElseThrow().getId();
+        Long developerId = tagRepository.findAll().stream().filter(tag -> tag.getTagName().equals("개발자")).findFirst().orElseThrow().getId();
+        Long pptId = tagRepository.findAll().stream().filter(tag -> tag.getTagName().equals("PPT")).findFirst().orElseThrow().getId();
+        Long imageId = tagRepository.findAll().stream().filter(tag -> tag.getTagName().equals("이미지 생성")).findFirst().orElseThrow().getId();
         SignupRequest request = new SignupRequest(
                 "개발자1",
                 "interest@example.com",
                 "password123",
-                "https://cdn.promsearch.com/profiles/me.png",
-                List.of("학생", "개발자"),
-                List.of("PPT", "이미지 생성")
+                List.of(studentId, developerId),
+                List.of(pptId, imageId)
         );
 
         mockMvc.perform(post("/api/v1/auth/signup")
@@ -80,8 +83,7 @@ class SignupProfileInterestIntegrationTest {
 
         var user = userRepository.findByEmail("interest@example.com").orElseThrow();
         assertThat(user.toDomain().getName()).isNull();
-        assertThat(user.toDomain().getProfileImageUrl())
-                .isEqualTo("https://cdn.promsearch.com/profiles/me.png");
+        assertThat(user.toDomain().getProfileImageUrl()).isNull();
 
         Integer tagCount = jdbcTemplate.queryForObject(
                 "select count(*) from user_interest_tags where user_id = ?",
@@ -97,8 +99,7 @@ class SignupProfileInterestIntegrationTest {
                 "개발자2",
                 "duplicate-interest@example.com",
                 "password123",
-                null,
-                List.of("개발자", "개발자"),
+                List.of(1L, 1L),
                 List.of()
         );
 
@@ -114,8 +115,7 @@ class SignupProfileInterestIntegrationTest {
                 "개발자3",
                 "invalid-interest@example.com",
                 "password123",
-                null,
-                List.of("존재하지 않는 직군"),
+                List.of(999999L),
                 List.of()
         );
 
