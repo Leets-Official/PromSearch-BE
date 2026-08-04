@@ -36,6 +36,7 @@ class InitialSchemaMigrationTest {
                     "social_accounts",
                     "posts",
                     "tags",
+                    "user_interest_tags",
                     "post_tags",
                     "prompt_images",
                     "prompt_image_watermark_outbox",
@@ -44,7 +45,9 @@ class InitialSchemaMigrationTest {
                     "post_interactions",
                     "point_histories",
                     "post_unlocks",
+                    "post_copies",
                     "post_reports",
+                    "comment_reports",
                     "event_logs"
             );
 
@@ -52,6 +55,8 @@ class InitialSchemaMigrationTest {
                     "refresh_token_sessions.user_id->users.user_id",
                     "social_accounts.user_id->users.user_id",
                     "posts.user_id->users.user_id",
+                    "user_interest_tags.user_id->users.user_id",
+                    "user_interest_tags.tag_id->tags.tag_id",
                     "post_tags.post_id->posts.post_id",
                     "post_tags.tag_id->tags.tag_id",
                     "prompt_images.uploader_id->users.user_id",
@@ -67,8 +72,12 @@ class InitialSchemaMigrationTest {
                     "post_unlocks.post_id->posts.post_id",
                     "post_unlocks.user_id->users.user_id",
                     "post_unlocks.creator_user_id->users.user_id",
+                    "post_copies.user_id->users.user_id",
+                    "post_copies.post_id->posts.post_id",
                     "post_reports.reporter_id->users.user_id",
-                    "post_reports.post_id->posts.post_id"
+                    "post_reports.post_id->posts.post_id",
+                    "comment_reports.reporter_id->users.user_id",
+                    "comment_reports.comment_id->comments.comment_id"
             );
             assertThat(foreignKeys(connection))
                     .noneMatch(foreignKey -> foreignKey.startsWith("event_logs."));
