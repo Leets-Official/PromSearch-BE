@@ -116,7 +116,7 @@ class PromptControllerTest {
                                   "outputType":"TEXT",
                                   "jobTagIds":[1],
                                   "taskTagIds":[2],
-                                  "aiModelTagIds":[3],
+                                  "aiModelTagId":3,
                                   "contentType":"FREE",
                                   "promptBody":null,
                                   "visibility":"PRIVATE",
@@ -152,7 +152,7 @@ class PromptControllerTest {
                         PromptOutputType.TEXT,
                         List.of(1L),
                         List.of(2L),
-                        List.of(3L),
+                        3L,
                         "GPT 4.1 Mini",
                         PromptContentType.FREE,
                         null,
@@ -174,7 +174,7 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.result.outputType").value("TEXT"))
                 .andExpect(jsonPath("$.result.jobTagIds[0]").value(1))
                 .andExpect(jsonPath("$.result.taskTagIds[0]").value(2))
-                .andExpect(jsonPath("$.result.aiModelTagIds[0]").value(3))
+                .andExpect(jsonPath("$.result.aiModelTagId").value(3))
                 .andExpect(jsonPath("$.result.customAiModel").value("GPT 4.1 Mini"))
                 .andExpect(jsonPath("$.result.contentType").value("FREE"))
                 .andExpect(jsonPath("$.result.promptBody").doesNotExist())
@@ -410,7 +410,7 @@ class PromptControllerTest {
                           "outputType":"IMAGE",
                           "jobTagIds":[1],
                           "taskTagIds":[2],
-                          "aiModelTagIds":[3],
+                                  "aiModelTagId":3,
                           "contentType":"FREE",
                           "promptBody":"이미지를 생성해 주세요.",
                           "visibility":"PUBLIC",
@@ -434,7 +434,7 @@ class PromptControllerTest {
                           "outputType":"IMAGE",
                           "jobTagIds":[1],
                           "taskTagIds":[2],
-                          "aiModelTagIds":[3],
+                          "aiModelTagId":3,
                           "contentType":"FREE",
                           "promptBody":"이미지를 생성해 주세요.",
                           "visibility":"PUBLIC",
@@ -585,8 +585,7 @@ class PromptControllerTest {
                   "outputType":"TEXT",
                   "jobTagIds":[1,2],
                   "taskTagIds":[10],
-                  "aiModelTagIds":[20],
-                  "customAiModel":"GPT 4.1 Mini",
+                  "aiModelTagId":20,
                   "contentType":"FREE",
                   "promptBody":"회의록을 읽고 결정 사항과 할 일을 정리해 주세요.",
                   "visibility":"PUBLIC",

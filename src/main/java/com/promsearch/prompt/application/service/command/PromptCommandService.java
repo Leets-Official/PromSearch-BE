@@ -161,12 +161,14 @@ public class PromptCommandService implements
     private List<Tag> resolveTags(CreatePromptCommand command) {
         Set<Long> jobTagIds = normalizeTagIds(command.jobTagIds());
         Set<Long> taskTagIds = normalizeTagIds(command.taskTagIds());
-        Set<Long> aiModelTagIds = normalizeTagIds(command.aiModelTagIds());
+        Long aiModelTagId = command.aiModelTagId();
 
         Set<Long> allTagIds = new LinkedHashSet<>();
         allTagIds.addAll(jobTagIds);
         allTagIds.addAll(taskTagIds);
-        allTagIds.addAll(aiModelTagIds);
+        if (aiModelTagId != null) {
+            allTagIds.add(aiModelTagId);
+        }
 
         Map<Long, Tag> tagsById = loadTagPort.batchGetByIds(allTagIds).stream()
                 .collect(Collectors.toMap(
@@ -177,7 +179,7 @@ public class PromptCommandService implements
                 ));
         validateTagTypes(tagsById, jobTagIds, TagType.JOB);
         validateTagTypes(tagsById, taskTagIds, TagType.TASK);
-        validateTagTypes(tagsById, aiModelTagIds, TagType.AI_MODEL);
+        validateAiModelTagType(tagsById, aiModelTagId);
 
         if (command.customAiModel() != null && !command.customAiModel().isBlank()) {
             Tag customAiModel = saveTagPort.getOrCreateCustomAiModel(
@@ -191,12 +193,15 @@ public class PromptCommandService implements
     private List<Tag> resolveTags(SavePromptDraftCommand command) {
         Set<Long> jobTagIds = normalizeTagIds(command.jobTagIds());
         Set<Long> taskTagIds = normalizeTagIds(command.taskTagIds());
-        Set<Long> aiModelTagIds = normalizeTagIds(command.aiModelTagIds());
+        Long aiModelTagId = command.aiModelTagId();
+        validateDraftAiModelSelection(aiModelTagId, command.customAiModel());
 
         Set<Long> allTagIds = new LinkedHashSet<>();
         allTagIds.addAll(jobTagIds);
         allTagIds.addAll(taskTagIds);
-        allTagIds.addAll(aiModelTagIds);
+        if (aiModelTagId != null) {
+            allTagIds.add(aiModelTagId);
+        }
 
         Map<Long, Tag> tagsById = loadTagPort.batchGetByIds(allTagIds).stream()
                 .collect(Collectors.toMap(
@@ -207,7 +212,7 @@ public class PromptCommandService implements
                 ));
         validateTagTypes(tagsById, jobTagIds, TagType.JOB);
         validateTagTypes(tagsById, taskTagIds, TagType.TASK);
-        validateTagTypes(tagsById, aiModelTagIds, TagType.AI_MODEL);
+        validateAiModelTagType(tagsById, aiModelTagId);
 
         if (command.customAiModel() != null && !command.customAiModel().isBlank()) {
             Tag customAiModel = saveTagPort.getOrCreateCustomAiModel(
@@ -234,6 +239,22 @@ public class PromptCommandService implements
             if (tag.getTagType() != expectedType) {
                 throw new PromptDomainException(PromptErrorCode.INVALID_TAG_TYPE);
             }
+        }
+    }
+
+    private void validateAiModelTagType(Map<Long, Tag> tagsById, Long aiModelTagId) {
+        if (aiModelTagId == null) {
+            return;
+        }
+        if (aiModelTagId <= 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_TAG_ID);
+        }
+        validateTagTypes(tagsById, List.of(aiModelTagId), TagType.AI_MODEL);
+    }
+
+    private void validateDraftAiModelSelection(Long aiModelTagId, String customAiModel) {
+        if (aiModelTagId != null && customAiModel != null && !customAiModel.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_AI_MODEL_SELECTION);
         }
     }
 
@@ -354,9 +375,12 @@ public class PromptCommandService implements
         if (command.jobTagIds().isEmpty() || command.taskTagIds().isEmpty()) {
             throw new PromptDomainException(PromptErrorCode.REQUIRED_TAG_MISSING);
         }
-        if (command.aiModelTagIds().isEmpty()
-                && (command.customAiModel() == null || command.customAiModel().isBlank())) {
-            throw new PromptDomainException(PromptErrorCode.REQUIRED_TAG_MISSING);
+        boolean hasAiModelTag = command.aiModelTagId() != null;
+        boolean hasCustomAiModel = command.customAiModel() != null && !command.customAiModel().isBlank();
+        if (hasAiModelTag == hasCustomAiModel) {
+            throw new PromptDomainException(hasAiModelTag
+                    ? PromptErrorCode.INVALID_AI_MODEL_SELECTION
+                    : PromptErrorCode.REQUIRED_TAG_MISSING);
         }
         if (command.images().isEmpty()) {
             throw new PromptDomainException(PromptErrorCode.IMAGE_REQUIRED);

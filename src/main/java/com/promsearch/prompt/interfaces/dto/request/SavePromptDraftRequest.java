@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand;
 import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand.ImageReference;
 import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.domain.Tag;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -12,6 +13,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import java.util.List;
 import java.util.Objects;
@@ -35,10 +37,12 @@ public record SavePromptDraftRequest(
         @Schema(description = "선택한 태스크 태그 식별자 목록", example = "[10, 11]")
         List<Long> taskTagIds,
 
-        @Schema(description = "선택한 AI 모델 태그 식별자 목록", example = "[20]")
-        List<Long> aiModelTagIds,
+        @Schema(description = "선택한 AI 모델 태그 식별자", example = "20")
+        @Positive(message = "aiModelTagId must be positive")
+        Long aiModelTagId,
 
         @Schema(description = "AI 모델 '기타' 직접 입력값. 서버에서 소문자 변환 및 공백 제거 후 검색용으로 저장합니다.", example = "GPT 4.1 Mini")
+        @Size(max = Tag.MAX_CUSTOM_AI_MODEL_LENGTH, message = "customAiModel must be 50 characters or less")
         String customAiModel,
 
         @Schema(description = "콘텐츠 타입", example = "FREE")
@@ -80,7 +84,7 @@ public record SavePromptDraftRequest(
                 outputType,
                 jobTagIds,
                 taskTagIds,
-                aiModelTagIds,
+                aiModelTagId,
                 customAiModel,
                 contentType,
                 promptBody,
