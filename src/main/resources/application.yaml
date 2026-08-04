@@ -11,6 +11,9 @@ spring:
     #   minimum-idle: ${DB_API_MINIMUM_IDLE:2}
     #   connection-timeout: ${DB_API_CONNECTION_TIMEOUT_MS:3000}
     #   max-lifetime: ${DB_API_MAX_LIFETIME_MS:1800000}
+  flyway:
+    # V1~V7은 전체 초기 스키마가 아닌 증분 SQL이다. #21에서 baseline을 확정하기 전 자동 적용하지 않는다.
+    enabled: ${SPRING_FLYWAY_ENABLED:false}
 
 # TODO: API 요청 스레드는 DB 커넥션보다 크게 둘 수 있지만, DB 작업이 많은 API에서는
 # 대기열만 늘어나지 않도록 HTTP 지연·Hikari pending·CPU를 함께 보고 활성화
