@@ -6,6 +6,7 @@ import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptPort;
+import com.promsearch.prompt.application.port.out.user.PromoteUserGradePort;
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
 import com.promsearch.prompt.application.port.out.tag.LoadTagPort;
@@ -61,6 +62,7 @@ public class PromptCommandService implements
     private final SavePromptDraftPort savePromptDraftPort;
     private final LockPromptDraftPort lockPromptDraftPort;
     private final LoadPromptPricingPort loadPromptPricingPort;
+    private final PromoteUserGradePort promoteUserGradePort;
 
     @Override
     public PromptCommandInfo create(CreatePromptCommand command) {
@@ -82,6 +84,7 @@ public class PromptCommandService implements
         List<Tag> tags = resolveTags(command);
         Map<UUID, PromptImage> imagesById = loadImagesForUpdate(command.images());
         Prompt savedPrompt = savePromptPort.create(prompt, tags);
+        promoteUserGradePort.promoteForPostCreation(command.userId());
 
         Optional<Long> reusableDraftPromptId = loadPromptDraftPort.findDraftPromptIdByUserId(command.userId());
         List<PromptImage> existingDraftImages = reusableDraftPromptId

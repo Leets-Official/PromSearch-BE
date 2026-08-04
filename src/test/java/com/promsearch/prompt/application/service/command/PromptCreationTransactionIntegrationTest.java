@@ -7,6 +7,7 @@ import com.promsearch.global.config.JpaConfig;
 import com.promsearch.prompt.application.port.out.author.LoadPromptAuthorPort;
 import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
+import com.promsearch.prompt.application.port.out.user.PromoteUserGradePort;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
 import com.promsearch.prompt.domain.PromptImage;
@@ -72,6 +73,9 @@ class PromptCreationTransactionIntegrationTest {
 
     @MockitoBean
     private LockPromptDraftPort lockPromptDraftPort;
+
+    @MockitoBean
+    private PromoteUserGradePort promoteUserGradePort;
 
     @BeforeEach
     void cleanDatabase() {

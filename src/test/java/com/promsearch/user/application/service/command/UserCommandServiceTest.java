@@ -198,7 +198,7 @@ class UserCommandServiceTest {
                 null,
                 0L,
                 UserRole.USER,
-                UserGrade.NORMAL,
+                UserGrade.NODE,
                 status,
                 now,
                 now

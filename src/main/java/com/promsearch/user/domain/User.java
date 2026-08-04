@@ -59,7 +59,7 @@ public class User {
     }
 
     public static User create(String email, String password, String nickname, String name, String profileImageUrl) {
-        validateRequired(email, password, nickname, 0L, UserRole.USER, UserGrade.NORMAL, UserStatus.ACTIVE);
+        validateRequired(email, password, nickname, 0L, UserRole.USER, UserGrade.NODE, UserStatus.ACTIVE);
 
         Instant now = Instant.now();
         return User.builder()
@@ -71,7 +71,7 @@ public class User {
                 .profileImageObjectKey(null)
                 .point(0L)
                 .role(UserRole.USER)
-                .grade(UserGrade.NORMAL)
+                .grade(UserGrade.NODE)
                 .status(UserStatus.ACTIVE)
                 .createdAt(now)
                 .updatedAt(now)

@@ -80,7 +80,7 @@ public class UserJpaEntity extends BaseEntity {
         this.profileImageObjectKey = profileImageObjectKey;
         this.points = 0L;
         this.role = UserRole.USER;
-        this.grade = UserGrade.NORMAL;
+        this.grade = UserGrade.NODE;
         this.status = UserStatus.ACTIVE;
     }
 
@@ -92,6 +92,21 @@ public class UserJpaEntity extends BaseEntity {
             String profileImageUrl,
             String profileImageObjectKey
     ) {
+    /**
+     * 게시글 작성에 따른 자동 승급을 1단계 적용한다. Origin은 자동 승급 대상이 아니므로
+     * Prime 이상인 경우 아무 변화가 없다.
+     *
+     * @return 이번 호출로 처음 Prime 등급에 도달했는지 여부
+     */
+    public boolean promoteGrade() {
+        return grade.nextAutoPromotionGrade()
+                .map(nextGrade -> {
+                    this.grade = nextGrade;
+                    return nextGrade == UserGrade.PRIME;
+                })
+                .orElse(false);
+    }
+
         return UserJpaEntity.builder()
                 .email(email)
                 .password(password)

@@ -45,9 +45,9 @@ class CommentCrudIntegrationTest {
                 insert into users (
                     user_id, email, password, nickname, name, points, role, grade, status, created_at, updated_at
                 ) values
-                    (1, 'owner@test.com', 'password', 'owner', 'Owner', 0, 'USER', 'NORMAL', 'ACTIVE',
+                    (1, 'owner@test.com', 'password', 'owner', 'Owner', 0, 'USER', 'NODE', 'ACTIVE',
                      current_timestamp, current_timestamp),
-                    (2, 'commenter@test.com', 'password', 'commenter', 'Commenter', 0, 'USER', 'NORMAL', 'ACTIVE',
+                    (2, 'commenter@test.com', 'password', 'commenter', 'Commenter', 0, 'USER', 'NODE', 'ACTIVE',
                      current_timestamp, current_timestamp)
                 """);
         jdbcTemplate.update("""
