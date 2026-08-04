@@ -7,14 +7,17 @@ import com.promsearch.auth.interfaces.dto.response.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
 import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "Auth | 인증", description = "회원가입, 로그인, Access Token 재발급 API")
 public interface AuthControllerDocs {
@@ -58,6 +61,20 @@ public interface AuthControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "유효하지 않은 Refresh Token")
     })
     ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request);
+
+    @Operation(
+            summary = "[AUTH-005] 로그아웃",
+            description = "**작업자: Hanharam | 구현 상태: 구현완료**\n\n"
+                    + "인증된 사용자의 서버 저장 Refresh Token 세션을 모두 폐기합니다."
+    )
+    @SecurityRequirement(name = "jwtBearerAuth")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<Void>> logout(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
 
     @Operation(
             summary = "[AUTH-004] 소셜 로그인",
