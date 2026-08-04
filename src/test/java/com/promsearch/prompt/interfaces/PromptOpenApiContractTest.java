@@ -100,6 +100,23 @@ class PromptOpenApiContractTest {
         assertThat(statistics.has("recommendCount")).isFalse();
     }
 
+    @DisplayName("비로그인 조회의 viewerInteraction은 null이 아닌 false 상태 객체로 문서화한다")
+    @Test
+    void viewerInteractionDocumentsAnonymousDefaultObject() throws Exception {
+        JsonNode document = openApiDocument();
+        JsonNode detailSchema = document.at("/components/schemas/PromptDetailResponse");
+        JsonNode homeSchema = document.at("/components/schemas/HomePromptSummaryResponse");
+
+        assertThat(detailSchema.path("required")).extracting(JsonNode::asText)
+                .contains("viewerInteraction");
+        assertThat(homeSchema.path("required")).extracting(JsonNode::asText)
+                .contains("viewerInteraction");
+        assertThat(document.at("/components/schemas/PromptViewerInteractionResponse/description").asText())
+                .contains("null이 아닌 객체", "liked와 bookmarked는 모두 false");
+        assertThat(document.at("/components/schemas/HomePromptViewerInteractionResponse/description").asText())
+                .contains("null이 아닌 객체", "liked와 bookmarked는 모두 false");
+    }
+
     @DisplayName("상세 조회 접근 사유는 잠금과 해제 원인을 모두 구분한다")
     @Test
     void promptAccessReasonIncludesUnlockedStates() throws Exception {
