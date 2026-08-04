@@ -34,6 +34,16 @@ class PromptTagQueryServiceTest {
                 .containsExactly("학생", "직장인");
     }
 
+    @Test
+    void listByTypeWithNullReadsAllExistingTags() {
+        List<PromptTagInfo> result = promptTagQueryService.listByType(null);
+
+        assertThat(loadTagPort.lastTagType).isNull();
+        assertThat(result)
+                .extracting(PromptTagInfo::tagType)
+                .containsExactly(TagType.JOB, TagType.TASK, TagType.AI_MODEL);
+    }
+
     private static class FakeLoadTagPort implements LoadTagPort {
 
         private TagType lastTagType;
@@ -46,6 +56,13 @@ class PromptTagQueryServiceTest {
         @Override
         public List<Tag> listByType(TagType tagType) {
             this.lastTagType = tagType;
+            if (tagType == null) {
+                return List.of(
+                        Tag.reconstruct(new TagId(1L), TagType.JOB, "학생", "학생", false),
+                        Tag.reconstruct(new TagId(10L), TagType.TASK, "PPT", "ppt", false),
+                        Tag.reconstruct(new TagId(20L), TagType.AI_MODEL, "ChatGPT", "chatgpt", false)
+                );
+            }
             return List.of(
                     Tag.reconstruct(new TagId(1L), tagType, "학생", "학생", false),
                     Tag.reconstruct(new TagId(2L), tagType, "직장인", "직장인", false)
