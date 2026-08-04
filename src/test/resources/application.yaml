@@ -1,6 +1,9 @@
 spring:
   jackson:
     time-zone: Asia/Seoul
+  flyway:
+    # 단위·슬라이스 테스트는 JPA 테스트 픽스처를 사용하며 운영 마이그레이션은 별도 테스트에서 검증한다.
+    enabled: false
 
 springdoc:
   api-docs:
