@@ -64,7 +64,8 @@ public interface AuthControllerDocs {
 
     @Operation(
             summary = "[AUTH-005] 로그아웃",
-            description = "인증된 사용자의 서버 저장 Refresh Token 세션을 모두 폐기합니다."
+            description = "**작업자: Hanharam | 구현 상태: 구현완료**\n\n"
+                    + "인증된 사용자의 서버 저장 Refresh Token 세션을 모두 폐기합니다."
     )
     @SecurityRequirement(name = "jwtBearerAuth")
     @ApiResponses({
