@@ -48,7 +48,7 @@ class UserOpenApiContractTest {
                 .contains("작업자: 한하람", "구현 상태: 구현완료");
     }
 
-    @DisplayName("프로필 조회 응답 스키마는 username, profileImageUrl, email, point, gradeName을 포함한다")
+    @DisplayName("프로필 조회 응답 스키마는 기본 정보와 관심 태그를 포함한다")
     @Test
     void userProfileSchemaContainsRequiredFields() throws Exception {
         JsonNode properties = openApiDocument().at("/components/schemas/UserProfileResponse/properties");
@@ -58,6 +58,8 @@ class UserOpenApiContractTest {
         assertThat(properties.has("email")).isTrue();
         assertThat(properties.has("point")).isTrue();
         assertThat(properties.has("gradeName")).isTrue();
+        assertThat(properties.has("interestJobTags")).isTrue();
+        assertThat(properties.has("interestTaskTags")).isTrue();
     }
 
     private JsonNode openApiDocument() throws Exception {

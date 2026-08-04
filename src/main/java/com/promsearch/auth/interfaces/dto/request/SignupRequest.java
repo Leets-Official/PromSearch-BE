@@ -27,13 +27,13 @@ public record SignupRequest(
         @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
         String profileImageUrl,
 
-        @Schema(description = "관심 직군 태그 이름(최대 3개)", example = "[\"학생\", \"개발자\"]")
+        @Schema(description = "관심 직군 태그 ID(최대 3개)", example = "[1, 2]")
         @Size(max = 3, message = "관심 직군은 최대 3개까지 선택할 수 있습니다.")
-        List<String> jobTags,
+        List<Long> interestJobTagIds,
 
-        @Schema(description = "관심 태스크 태그 이름(최대 3개)", example = "[\"PPT\", \"이미지 생성\"]")
+        @Schema(description = "관심 태스크 태그 ID(최대 3개)", example = "[10, 11]")
         @Size(max = 3, message = "관심 태스크는 최대 3개까지 선택할 수 있습니다.")
-        List<String> taskTags
+        List<Long> interestTaskTagIds
 ) {
 
     public SignupRequest(String nickname, String email, String password) {
@@ -41,13 +41,13 @@ public record SignupRequest(
     }
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(nickname, email, password, profileImageUrl, jobTags, taskTags);
+        return SignupCommand.of(nickname, email, password, profileImageUrl, interestJobTagIds, interestTaskTagIds);
     }
 
     @Override
     public String toString() {
         return "SignupRequest[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl
-                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
+                + ", password=***, profileImageUrl=" + profileImageUrl + ", interestJobTagIds=" + interestJobTagIds
+                + ", interestTaskTagIds=" + interestTaskTagIds + "]";
     }
 }

@@ -12,6 +12,9 @@ import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.infrastructure.persistence.InterestTagLookupRepository;
 import com.promsearch.prompt.infrastructure.persistence.entity.TagJpaEntity;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
+import com.promsearch.user.application.usecase.GetMyProfileUseCase;
+import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
+import com.promsearch.user.application.usecase.dto.UpdateUserProfileCommand;
 import java.util.List;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -42,6 +45,17 @@ class SignupProfileInterestIntegrationTest {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
+    @Autowired
+    private GetMyProfileUseCase getMyProfileUseCase;
+
+    @Autowired
+    private UpdateUserProfileUseCase updateUserProfileUseCase;
+
+    private Long studentTagId;
+    private Long developerTagId;
+    private Long pptTagId;
+    private Long imageGenerationTagId;
+
     @MockitoBean
     private KakaoOAuthAdapter kakaoOAuthAdapter;
 
@@ -50,16 +64,18 @@ class SignupProfileInterestIntegrationTest {
 
     @BeforeEach
     void setUpInterestTags() {
-        saveTagIfMissing(TagType.JOB, "학생", "학생");
-        saveTagIfMissing(TagType.JOB, "개발자", "개발자");
-        saveTagIfMissing(TagType.TASK, "PPT", "ppt");
-        saveTagIfMissing(TagType.TASK, "이미지 생성", "이미지 생성");
+        studentTagId = saveTagIfMissing(TagType.JOB, "학생", "학생");
+        developerTagId = saveTagIfMissing(TagType.JOB, "개발자", "개발자");
+        pptTagId = saveTagIfMissing(TagType.TASK, "PPT", "ppt");
+        imageGenerationTagId = saveTagIfMissing(TagType.TASK, "이미지 생성", "이미지 생성");
     }
 
-    private void saveTagIfMissing(TagType type, String name, String normalizedName) {
-        if (tagRepository.findIdsByTypeAndNames(type, List.of(name)).isEmpty()) {
-            tagRepository.save(TagJpaEntity.create(type, name, normalizedName, false));
-        }
+    private Long saveTagIfMissing(TagType type, String name, String normalizedName) {
+        return tagRepository.findAll().stream()
+                .filter(tag -> tag.getTagType() == type && tag.getTagName().equals(name))
+                .findFirst()
+                .orElseGet(() -> tagRepository.save(TagJpaEntity.create(type, name, normalizedName, false)))
+                .getId();
     }
 
     @Test
@@ -69,8 +85,8 @@ class SignupProfileInterestIntegrationTest {
                 "interest@example.com",
                 "password123",
                 "https://cdn.promsearch.com/profiles/me.png",
-                List.of("학생", "개발자"),
-                List.of("PPT", "이미지 생성")
+                List.of(studentTagId, developerTagId),
+                List.of(pptTagId, imageGenerationTagId)
         );
 
         mockMvc.perform(post("/api/v1/auth/signup")
@@ -89,6 +105,9 @@ class SignupProfileInterestIntegrationTest {
                 user.toDomain().getUserId().id()
         );
         assertThat(tagCount).isEqualTo(4);
+        assertThat(getMyProfileUseCase.getMyProfile(user.toDomain().getUserId().id()).interestTags())
+                .extracting("tagId")
+                .containsExactlyInAnyOrder(studentTagId, developerTagId, pptTagId, imageGenerationTagId);
     }
 
     @Test
@@ -98,7 +117,7 @@ class SignupProfileInterestIntegrationTest {
                 "duplicate-interest@example.com",
                 "password123",
                 null,
-                List.of("개발자", "개발자"),
+                List.of(developerTagId, developerTagId),
                 List.of()
         );
 
@@ -109,13 +128,38 @@ class SignupProfileInterestIntegrationTest {
     }
 
     @Test
+    void profileUpdateReplacesOnlyRequestedInterestTagType() throws Exception {
+        SignupRequest request = new SignupRequest(
+                "개발자4",
+                "update-interest@example.com",
+                "password123",
+                null,
+                List.of(studentTagId),
+                List.of(pptTagId)
+        );
+
+        mockMvc.perform(post("/api/v1/auth/signup")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isCreated());
+
+        Long userId = userRepository.findByEmail("update-interest@example.com").orElseThrow().getId();
+        updateUserProfileUseCase.updateProfile(UpdateUserProfileCommand.of(
+                userId, null, null, null, List.of(developerTagId), null));
+
+        assertThat(getMyProfileUseCase.getMyProfile(userId).interestTags())
+                .extracting("tagId")
+                .containsExactlyInAnyOrder(developerTagId, pptTagId);
+    }
+
+    @Test
     void signupRollsBackUserWhenInterestTagDoesNotExist() throws Exception {
         SignupRequest request = new SignupRequest(
                 "개발자3",
                 "invalid-interest@example.com",
                 "password123",
                 null,
-                List.of("존재하지 않는 직군"),
+                List.of(Long.MAX_VALUE),
                 List.of()
         );
 

@@ -162,6 +162,27 @@ public class User {
                 .build();
     }
 
+    public User changeExternalProfileImage(String profileImageUrl) {
+        if (profileImageUrl == null || profileImageUrl.isBlank()) {
+            throw new UserDomainException(UserErrorCode.PROFILE_IMAGE_UPLOAD_NOT_FOUND);
+        }
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(null)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
     /**
      * 소셜 제공자 URL과 직접 업로드한 객체 키를 모두 제거한다.
      *

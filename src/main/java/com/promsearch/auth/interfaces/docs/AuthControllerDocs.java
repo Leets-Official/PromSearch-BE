@@ -26,7 +26,7 @@ public interface AuthControllerDocs {
             summary = "[AUTH-001] 회원가입",
             description = IMPLEMENTED_BY_LEE_GUNHEE
                     + "이메일, 비밀번호, 닉네임으로 신규 사용자를 생성합니다. "
-                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 각각 최대 3개까지 선택할 수 있습니다."
+                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 태그 ID로 각각 최대 3개까지 선택할 수 있습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
@@ -63,7 +63,7 @@ public interface AuthControllerDocs {
             summary = "[AUTH-004] 소셜 로그인",
             description = IMPLEMENTED_BY_KALLIN1
                     + "프론트엔드에서 전달받은 OAuth 인가 코드로 소셜 로그인 또는 자동 회원가입을 수행하고 "
-                    + "Access Token과 Refresh Token을 발급합니다."
+                    + "Access Token과 Refresh Token을 발급하며, 자동 회원가입 여부는 isNewUser로 반환합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "소셜 로그인 성공"),

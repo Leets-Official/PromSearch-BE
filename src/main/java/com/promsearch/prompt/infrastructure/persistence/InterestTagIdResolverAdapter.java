@@ -16,15 +16,15 @@ public class InterestTagIdResolverAdapter implements ResolveInterestTagIdsPort {
     private final InterestTagLookupRepository tagRepository;
 
     @Override
-    public List<Long> resolve(InterestTagType type, List<String> names) {
-        if (names.isEmpty()) {
+    public List<Long> resolve(InterestTagType type, List<Long> tagIds) {
+        if (tagIds.isEmpty()) {
             return List.of();
         }
 
-        List<Long> tagIds = tagRepository.findIdsByTypeAndNames(TagType.valueOf(type.name()), names);
-        if (tagIds.size() != names.size()) {
+        List<Long> resolvedTagIds = tagRepository.findIdsByTypeAndIds(TagType.valueOf(type.name()), tagIds);
+        if (resolvedTagIds.size() != tagIds.size()) {
             throw new UserDomainException(UserErrorCode.INVALID_INTEREST_TAG);
         }
-        return tagIds;
+        return resolvedTagIds;
     }
 }
