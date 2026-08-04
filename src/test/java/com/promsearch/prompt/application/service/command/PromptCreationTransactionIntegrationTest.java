@@ -94,7 +94,7 @@ class PromptCreationTransactionIntegrationTest {
                 PromptOutputType.IMAGE,
                 List.of(job.getTagId().id()),
                 List.of(task.getTagId().id()),
-                List.of(aiModel.getTagId().id()),
+                aiModel.getTagId().id(),
                 null,
                 PromptContentType.FREE,
                 "프롬프트 본문",

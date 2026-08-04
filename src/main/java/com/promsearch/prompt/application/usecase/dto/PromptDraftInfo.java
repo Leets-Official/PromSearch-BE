@@ -15,7 +15,7 @@ public record PromptDraftInfo(
         PromptOutputType outputType,
         List<Long> jobTagIds,
         List<Long> taskTagIds,
-        List<Long> aiModelTagIds,
+        Long aiModelTagId,
         String customAiModel,
         PromptContentType contentType,
         String promptBody,
@@ -29,7 +29,6 @@ public record PromptDraftInfo(
     public PromptDraftInfo {
         jobTagIds = jobTagIds == null ? List.of() : List.copyOf(jobTagIds);
         taskTagIds = taskTagIds == null ? List.of() : List.copyOf(taskTagIds);
-        aiModelTagIds = aiModelTagIds == null ? List.of() : List.copyOf(aiModelTagIds);
         images = images == null ? List.of() : List.copyOf(images);
     }
 

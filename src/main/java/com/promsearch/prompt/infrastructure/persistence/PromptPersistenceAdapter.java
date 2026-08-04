@@ -103,7 +103,7 @@ public class PromptPersistenceAdapter implements
     private PromptDraftInfo toDraftInfo(PostJpaEntity post) {
         List<Long> jobTagIds = new ArrayList<>();
         List<Long> taskTagIds = new ArrayList<>();
-        List<Long> aiModelTagIds = new ArrayList<>();
+        Long aiModelTagId = null;
         String customAiModel = null;
         Set<Long> seenTagIds = new LinkedHashSet<>();
 
@@ -119,7 +119,7 @@ public class PromptPersistenceAdapter implements
             } else if (tag.getTagType() == TagType.AI_MODEL && Boolean.TRUE.equals(tag.getCustom())) {
                 customAiModel = tag.getTagName();
             } else if (tag.getTagType() == TagType.AI_MODEL) {
-                aiModelTagIds.add(tag.getId());
+                aiModelTagId = tag.getId();
             }
         }
 
@@ -138,7 +138,7 @@ public class PromptPersistenceAdapter implements
                 post.getOutputType(),
                 jobTagIds,
                 taskTagIds,
-                aiModelTagIds,
+                aiModelTagId,
                 customAiModel,
                 post.getContentType(),
                 post.getPromptBody(),

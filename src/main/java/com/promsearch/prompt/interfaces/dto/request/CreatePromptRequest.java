@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
 import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.domain.Tag;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
@@ -46,13 +47,12 @@ public record CreatePromptRequest(
                 @NotNull(message = "taskTagIds must not contain null")
                 @Positive(message = "taskTagIds must contain positive values") Long> taskTagIds,
 
-        @Schema(description = "선택한 AI 모델 태그 식별자 목록. customAiModel과 합쳐 최소 하나가 필요합니다.", example = "[20]")
-        List<
-                @NotNull(message = "aiModelTagIds must not contain null")
-                @Positive(message = "aiModelTagIds must contain positive values") Long> aiModelTagIds,
+        @Schema(description = "선택한 AI 모델 태그 식별자. customAiModel과 정확히 하나를 입력해야 합니다.", example = "20")
+        @Positive(message = "aiModelTagId must be positive")
+        Long aiModelTagId,
 
         @Schema(description = "AI 모델 '기타' 직접 입력값. 서버에서 소문자 변환 및 공백 제거 후 검색용으로 저장합니다.", example = "Flux 1.1 Pro")
-        @Size(max = 100, message = "customAiModel must be 100 characters or less")
+        @Size(max = Tag.MAX_CUSTOM_AI_MODEL_LENGTH, message = "customAiModel must be 50 characters or less")
         String customAiModel,
 
         @Schema(description = "콘텐츠 타입. PREMIUM 가격은 서버 고정 설정값을 사용합니다.", example = "FREE")
@@ -79,10 +79,9 @@ public record CreatePromptRequest(
 
     @JsonIgnore
     @Schema(hidden = true)
-    @AssertTrue(message = "at least one AI model tag or customAiModel is required")
+    @AssertTrue(message = "exactly one AI model tag or customAiModel is required")
     public boolean hasAiModelSelection() {
-        return (aiModelTagIds != null && !aiModelTagIds.isEmpty())
-                || (customAiModel != null && !customAiModel.isBlank());
+        return (aiModelTagId != null) != (customAiModel != null && !customAiModel.isBlank());
     }
 
     @JsonIgnore
@@ -105,7 +104,7 @@ public record CreatePromptRequest(
                 outputType,
                 jobTagIds,
                 taskTagIds,
-                aiModelTagIds,
+                aiModelTagId,
                 customAiModel,
                 contentType,
                 promptBody,

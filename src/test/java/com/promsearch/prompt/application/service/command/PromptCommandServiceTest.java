@@ -167,7 +167,7 @@ class PromptCommandServiceTest {
                 PromptOutputType.TEXT,
                 List.of(1L, 1L),
                 List.of(2L),
-                List.of(),
+                null,
                 "GPT 4.1 Mini",
                 PromptContentType.FREE,
                 "본문",
@@ -231,7 +231,7 @@ class PromptCommandServiceTest {
                 PromptOutputType.TEXT,
                 List.of(1L),
                 List.of(2L),
-                List.of(3L),
+                3L,
                 null,
                 PromptContentType.FREE,
                 "본문",
@@ -255,7 +255,7 @@ class PromptCommandServiceTest {
                 valid.outputType(),
                 List.of(),
                 valid.taskTagIds(),
-                valid.aiModelTagIds(),
+                valid.aiModelTagId(),
                 valid.customAiModel(),
                 valid.contentType(),
                 valid.promptBody(),
@@ -271,7 +271,7 @@ class PromptCommandServiceTest {
                 valid.outputType(),
                 valid.jobTagIds(),
                 valid.taskTagIds(),
-                List.of(),
+                null,
                 null,
                 valid.contentType(),
                 valid.promptBody(),
@@ -287,7 +287,7 @@ class PromptCommandServiceTest {
                 valid.outputType(),
                 valid.jobTagIds(),
                 valid.taskTagIds(),
-                valid.aiModelTagIds(),
+                valid.aiModelTagId(),
                 valid.customAiModel(),
                 valid.contentType(),
                 valid.promptBody(),
@@ -295,6 +295,29 @@ class PromptCommandServiceTest {
                 List.of()
         );
         assertPromptError(() -> service.create(missingImage), PromptErrorCode.IMAGE_REQUIRED);
+        verify(savePromptPort, never()).create(any(), any());
+    }
+
+    @DisplayName("AI 모델 태그와 직접 입력 모델명을 함께 선택하면 생성하지 않는다")
+    @Test
+    void rejectBothAiModelSelections() {
+        CreatePromptCommand valid = command(PromptContentType.FREE, List.of());
+        CreatePromptCommand command = new CreatePromptCommand(
+                valid.userId(),
+                valid.title(),
+                valid.description(),
+                valid.outputType(),
+                valid.jobTagIds(),
+                valid.taskTagIds(),
+                valid.aiModelTagId(),
+                "GPT 4.1 Mini",
+                valid.contentType(),
+                valid.promptBody(),
+                valid.visibility(),
+                valid.images()
+        );
+
+        assertPromptError(() -> service.create(command), PromptErrorCode.INVALID_AI_MODEL_SELECTION);
         verify(savePromptPort, never()).create(any(), any());
     }
 
@@ -449,7 +472,7 @@ class PromptCommandServiceTest {
                 PromptOutputType.TEXT,
                 List.of(1L),
                 List.of(2L),
-                List.of(3L),
+                3L,
                 null,
                 contentType,
                 "본문",
@@ -466,7 +489,7 @@ class PromptCommandServiceTest {
                 null,
                 List.of(1L),
                 List.of(2L),
-                List.of(3L),
+                3L,
                 null,
                 null,
                 null,
@@ -530,7 +553,7 @@ class PromptCommandServiceTest {
                 prompt.getOutputType(),
                 List.of(1L),
                 List.of(2L),
-                List.of(3L),
+                3L,
                 null,
                 prompt.getContentType(),
                 prompt.getPromptBody(),

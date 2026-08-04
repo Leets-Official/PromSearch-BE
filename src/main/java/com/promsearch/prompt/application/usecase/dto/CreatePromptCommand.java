@@ -13,7 +13,7 @@ public record CreatePromptCommand(
         PromptOutputType outputType,
         List<Long> jobTagIds,
         List<Long> taskTagIds,
-        List<Long> aiModelTagIds,
+        Long aiModelTagId,
         String customAiModel,
         PromptContentType contentType,
         String promptBody,
@@ -24,7 +24,6 @@ public record CreatePromptCommand(
     public CreatePromptCommand {
         jobTagIds = immutableList(jobTagIds);
         taskTagIds = immutableList(taskTagIds);
-        aiModelTagIds = immutableList(aiModelTagIds);
         images = immutableList(images);
     }
 

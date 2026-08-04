@@ -30,8 +30,8 @@ public record PromptDraftResponse(
         @Schema(description = "선택한 태스크 태그 식별자 목록", example = "[10, 11]")
         List<Long> taskTagIds,
 
-        @Schema(description = "선택한 AI 모델 태그 식별자 목록", example = "[20]")
-        List<Long> aiModelTagIds,
+        @Schema(description = "선택한 AI 모델 태그 식별자", example = "20", nullable = true)
+        Long aiModelTagId,
 
         @Schema(description = "AI 모델 '기타' 직접 입력 원문", example = "GPT 4.1 Mini")
         String customAiModel,
@@ -66,7 +66,7 @@ public record PromptDraftResponse(
                 info.outputType(),
                 info.jobTagIds(),
                 info.taskTagIds(),
-                info.aiModelTagIds(),
+                info.aiModelTagId(),
                 info.customAiModel(),
                 info.contentType(),
                 info.promptBody(),

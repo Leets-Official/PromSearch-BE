@@ -11,6 +11,8 @@ import lombok.Getter;
 @Getter
 public class Tag {
 
+    public static final int MAX_CUSTOM_AI_MODEL_LENGTH = 50;
+
     private final TagId tagId;
     private final TagType tagType;
     private final String tagName;
@@ -38,6 +40,9 @@ public class Tag {
     }
 
     public static Tag createCustomAiModel(String tagName) {
+        if (tagName == null || tagName.strip().length() > MAX_CUSTOM_AI_MODEL_LENGTH) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_TAG_NAME);
+        }
         String normalizedName = normalizeAiModelName(tagName);
         return create(TagType.AI_MODEL, tagName.strip(), normalizedName, true);
     }

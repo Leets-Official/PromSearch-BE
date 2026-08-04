@@ -74,7 +74,8 @@ public enum PromptErrorCode implements BaseCode {
     REQUIRED_TAG_MISSING(HttpStatus.BAD_REQUEST, "PROMPT-051", "필수 태그를 하나 이상 선택해야 합니다."),
     IMAGE_REQUIRED(HttpStatus.BAD_REQUEST, "PROMPT-052", "프롬프트 이미지를 하나 이상 선택해야 합니다."),
     INVALID_IMAGE_STATUS_QUERY_COUNT(HttpStatus.BAD_REQUEST, "PROMPT-053", "조회할 이미지 개수가 유효하지 않습니다."),
-    DUPLICATE_IMAGE_ID(HttpStatus.BAD_REQUEST, "PROMPT-054", "중복된 이미지 식별자는 조회할 수 없습니다.");
+    DUPLICATE_IMAGE_ID(HttpStatus.BAD_REQUEST, "PROMPT-054", "중복된 이미지 식별자는 조회할 수 없습니다."),
+    INVALID_AI_MODEL_SELECTION(HttpStatus.BAD_REQUEST, "PROMPT-055", "AI 모델 태그와 직접 입력 모델명 중 하나만 선택해야 합니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
