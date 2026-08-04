@@ -64,6 +64,16 @@ public interface PostRepository extends JpaRepository<PostJpaEntity, Long> {
             """)
     Optional<Long> findDraftIdByUserId(@Param("userId") Long userId);
 
+    @Query("""
+            select distinct post
+            from PostJpaEntity post
+            left join fetch post.postTags postTag
+            left join fetch postTag.tag
+            where post.id = :postId
+              and post.deletedAt is null
+            """)
+    Optional<PostJpaEntity> findForEditById(@Param("postId") Long postId);
+
     @EntityGraph(attributePaths = {"statistics", "postTags", "postTags.tag"})
     Optional<PostJpaEntity> findByIdAndStatusAndVisibilityAndDeletedAtIsNull(
             Long id, PromptStatus status, PromptVisibility visibility);
