@@ -260,10 +260,11 @@ class BookmarkQueryIntegrationTest {
     }
 
     private Long saveUser(String suffix) {
+        String nickname = "u" + Integer.toUnsignedString(suffix.hashCode(), 36);
         UserJpaEntity user = userRepository.saveAndFlush(UserJpaEntity.create(
                 suffix + "@example.com",
                 "password",
-                suffix,
+                nickname,
                 suffix,
                 null,
                 null

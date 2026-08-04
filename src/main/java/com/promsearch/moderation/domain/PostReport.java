@@ -2,6 +2,7 @@ package com.promsearch.moderation.domain;
 
 import com.promsearch.moderation.domain.enums.ReportReason;
 import com.promsearch.moderation.domain.enums.ReportStatus;
+import com.promsearch.moderation.domain.enums.ReportTargetType;
 import com.promsearch.moderation.domain.exception.ModerationDomainException;
 import com.promsearch.moderation.domain.exception.ModerationErrorCode;
 import java.time.Instant;
@@ -40,20 +41,19 @@ public class PostReport {
     }
 
     public static PostReport create(Long reporterId, Long postId, ReportReason reason, String description) {
-        validateRequired(reporterId, postId, reason);
-
+        validateRequired(reporterId, postId, reason, description);
         return PostReport.builder()
                 .reporterId(reporterId)
                 .postId(postId)
                 .reason(reason)
-                .description(description)
+                .description(description.trim())
                 .status(ReportStatus.PENDING)
                 .createdAt(Instant.now())
                 .build();
     }
 
     public static PostReport reconstruct(
-            PostReportId postReportId,
+            PostReportId id,
             Long reporterId,
             Long postId,
             ReportReason reason,
@@ -61,13 +61,12 @@ public class PostReport {
             ReportStatus status,
             Instant createdAt
     ) {
-        validateRequired(reporterId, postId, reason);
+        validateRequired(reporterId, postId, reason, description);
         if (status == null) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_STATUS);
         }
-
         return PostReport.builder()
-                .postReportId(postReportId)
+                .postReportId(id)
                 .reporterId(reporterId)
                 .postId(postId)
                 .reason(reason)
@@ -77,15 +76,23 @@ public class PostReport {
                 .build();
     }
 
-    private static void validateRequired(Long reporterId, Long postId, ReportReason reason) {
+    private static void validateRequired(
+            Long reporterId,
+            Long postId,
+            ReportReason reason,
+            String description
+    ) {
         if (reporterId == null || reporterId <= 0) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORTER_ID);
         }
         if (postId == null || postId <= 0) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_POST_ID);
         }
-        if (reason == null) {
+        if (reason == null || !reason.isAllowedFor(ReportTargetType.POST)) {
             throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_REASON);
+        }
+        if (description == null || description.isBlank()) {
+            throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_DESCRIPTION);
         }
     }
 
