@@ -291,6 +291,37 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("AUTH-004"));
     }
 
+    @DisplayName("로그아웃하면 서버에 저장된 모든 refresh token 세션을 폐기한다")
+    @Test
+    void logoutSuccess() throws Exception {
+        signup("gildong", "gildong@example.com", "password123");
+        JsonNode loginResult = loginAndGetResult("gildong@example.com", "password123");
+        String accessToken = loginResult.get("accessToken").asText();
+        String refreshToken = loginResult.get("refreshToken").asText();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result").doesNotExist());
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ReissueRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+    }
+
+    @DisplayName("access token 없이 로그아웃하면 인증 오류를 반환한다")
+    @Test
+    void logoutFailsWithoutAccessToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-002"));
+    }
+
     @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
     @Test
     void protectedApiRequiresAccessToken() throws Exception {

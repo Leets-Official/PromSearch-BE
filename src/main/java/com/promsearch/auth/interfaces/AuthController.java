@@ -1,6 +1,7 @@
 package com.promsearch.auth.interfaces;
 
 import com.promsearch.auth.application.usecase.LoginUseCase;
+import com.promsearch.auth.application.usecase.LogoutUseCase;
 import com.promsearch.auth.application.usecase.ReissueUseCase;
 import com.promsearch.auth.application.usecase.SocialLoginUseCase;
 import com.promsearch.auth.interfaces.dto.request.LoginRequest;
@@ -12,10 +13,12 @@ import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.auth.interfaces.docs.AuthControllerDocs;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.code.SuccessCode;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.application.usecase.SignupUseCase;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,6 +34,7 @@ public class AuthController implements AuthControllerDocs {
     private final LoginUseCase loginUseCase;
     private final ReissueUseCase reissueUseCase;
     private final SocialLoginUseCase socialLoginUseCase;
+    private final LogoutUseCase logoutUseCase;
 
     @PostMapping("/signup")
     @Override
@@ -67,6 +71,13 @@ public class AuthController implements AuthControllerDocs {
         return ResponseEntity
                 .status(SuccessCode.OK.getHttpStatus())
                 .body(response);
+    }
+
+    @PostMapping("/logout")
+    @Override
+    public ResponseEntity<ApiResponse<Void>> logout(@AuthenticationPrincipal AuthenticatedUserPrincipal user) {
+        logoutUseCase.logout(user.userId());
+        return ResponseEntity.ok(ApiResponse.onSuccess(null));
     }
 
     @PostMapping("/oauth/{provider}")
