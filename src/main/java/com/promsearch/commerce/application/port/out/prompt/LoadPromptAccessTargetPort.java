@@ -8,7 +8,7 @@ public interface LoadPromptAccessTargetPort {
             Long promptId,
             Long authorId,
             boolean free,
-            String promptBody
+            long copyCount
     ) {
     }
 }
