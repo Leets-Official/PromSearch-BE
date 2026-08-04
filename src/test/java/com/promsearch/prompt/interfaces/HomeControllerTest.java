@@ -45,10 +45,10 @@ class HomeControllerTest {
 
         mockMvc.perform(get("/api/v1/home/prompts")
                         .param("jobTagId", "1")
-                        .param("taskTagIds", "2", "3")
-                        .param("aiModelTagId", "4")
-                        .param("outputType", "TEXT")
-                        .param("keyword", "보고서")
+                        .param("taskTagIds", "2,3")
+                        .param("aiModelTagIds", "4,5")
+                        .param("outputTypes", "TEXT,IMAGE")
+                        .param("q", "보고서")
                         .param("sort", "POPULAR")
                         .param("page", "0")
                         .param("size", "12"))
@@ -60,8 +60,8 @@ class HomeControllerTest {
         HomePromptListQuery query = queryCaptor.getValue();
         assertThat(query.jobTagId()).isEqualTo(1L);
         assertThat(query.taskTagIds()).containsExactly(2L, 3L);
-        assertThat(query.aiModelTagId()).isEqualTo(4L);
-        assertThat(query.outputType()).isEqualTo(PromptOutputType.TEXT);
+        assertThat(query.aiModelTagIds()).containsExactly(4L, 5L);
+        assertThat(query.outputTypes()).containsExactly(PromptOutputType.TEXT, PromptOutputType.IMAGE);
         assertThat(query.keyword()).isEqualTo("보고서");
         assertThat(query.sort()).isEqualTo(HomePromptSort.POPULAR);
     }
@@ -76,14 +76,19 @@ class HomeControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
-    @DisplayName("홈 프롬프트 목록은 trim 후 두 글자 미만인 검색어를 400으로 거절한다")
+    @DisplayName("홈 프롬프트 목록은 한 글자 검색어를 trim 후에도 전달한다")
     @Test
-    void listPromptsRejectsShortKeyword() throws Exception {
+    void listPromptsAcceptsSingleCharacterQuery() throws Exception {
+        when(listHomePromptsUseCase.listPrompts(any()))
+                .thenReturn(new HomePromptListInfo(List.of(), 0, 12, 0, false));
+
         mockMvc.perform(get("/api/v1/home/prompts")
-                        .param("keyword", " a "))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("COMMON-400"));
+                        .param("q", " a "))
+                .andExpect(status().isOk());
+
+        ArgumentCaptor<HomePromptListQuery> queryCaptor = ArgumentCaptor.forClass(HomePromptListQuery.class);
+        verify(listHomePromptsUseCase).listPrompts(queryCaptor.capture());
+        assertThat(queryCaptor.getValue().keyword()).isEqualTo("a");
     }
 
     @DisplayName("인기 프롬프트 목록은 offset overflow가 가능한 page를 400으로 거절한다")
