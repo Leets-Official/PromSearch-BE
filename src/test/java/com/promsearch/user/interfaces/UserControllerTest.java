@@ -115,7 +115,8 @@ class UserControllerTest {
                 "https://s3.test/signed-profile.png",
                 "user@test.com",
                 100L,
-                "NORMAL"
+                "NORMAL",
+                java.util.List.of()
         ));
 
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(

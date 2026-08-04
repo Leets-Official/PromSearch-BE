@@ -498,6 +498,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("kakao-user@example.com"))
+                .andExpect(jsonPath("$.result.isNewUser").value(true))
                 .andExpect(jsonPath("$.result.nickname").value("카카오유저"))
                 .andExpect(jsonPath("$.result.name").doesNotExist())
                 .andExpect(jsonPath("$.result.profileImageUrl")
@@ -531,6 +532,9 @@ class AuthControllerTest {
                 .andReturn().getResponse().getContentAsString();
         long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
 
+        assertThat(objectMapper.readTree(firstResponse).get("result").get("isNewUser").asBoolean()).isTrue();
+        assertThat(objectMapper.readTree(secondResponse).get("result").get("isNewUser").asBoolean()).isFalse();
+
         assertThat(secondUserId).isEqualTo(firstUserId);
         assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);
     }
@@ -553,6 +557,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.result.isNewUser").value(true))
                 .andExpect(jsonPath("$.result.nickname").value("구글유저"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
@@ -582,6 +587,9 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
+
+        assertThat(objectMapper.readTree(firstResponse).get("result").get("isNewUser").asBoolean()).isTrue();
+        assertThat(objectMapper.readTree(secondResponse).get("result").get("isNewUser").asBoolean()).isFalse();
 
         assertThat(secondUserId).isEqualTo(firstUserId);
         assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);

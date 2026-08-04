@@ -10,5 +10,7 @@ public interface TagRepository extends JpaRepository<TagJpaEntity, Long> {
 
     Optional<TagJpaEntity> findByTagTypeAndNormalizedName(TagType tagType, String normalizedName);
 
+    List<TagJpaEntity> findAllByOrderByIdAsc();
+
     List<TagJpaEntity> findAllByTagTypeOrderByIdAsc(TagType tagType);
 }

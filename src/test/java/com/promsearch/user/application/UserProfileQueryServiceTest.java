@@ -29,6 +29,7 @@ class UserProfileQueryServiceTest {
         userProfileStatsReader = new FakeUserProfileStatsReader();
         userProfileQueryService = new UserProfileQueryService(
                 userRepository,
+                userId -> java.util.List.of(),
                 userProfileStatsReader,
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey
         );

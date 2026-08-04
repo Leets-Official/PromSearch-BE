@@ -5,5 +5,5 @@ import java.util.List;
 
 public interface ResolveInterestTagIdsPort {
 
-    List<Long> resolve(InterestTagType type, List<String> names);
+    List<Long> resolve(InterestTagType type, List<Long> tagIds);
 }

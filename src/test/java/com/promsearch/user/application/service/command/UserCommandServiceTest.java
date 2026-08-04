@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
+import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
@@ -36,9 +37,17 @@ class UserCommandServiceTest {
         userRepository = new FakeUserRepository();
         userCommandService = new UserCommandService(
                 userRepository,
+                userId -> List.of(),
                 userRepository,
                 (type, names) -> List.of(),
-                (userId, tagIds) -> {
+                new SaveUserInterestTagPort() {
+                    @Override
+                    public void save(Long userId, List<Long> tagIds) {
+                    }
+
+                    @Override
+                    public void replace(Long userId, List<Long> tagIds) {
+                    }
                 },
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,

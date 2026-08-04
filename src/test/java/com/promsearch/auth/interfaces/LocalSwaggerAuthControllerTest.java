@@ -58,8 +58,8 @@ class LocalSwaggerAuthControllerTest {
         assertThat(properties.has("email")).isTrue();
         assertThat(properties.has("password")).isTrue();
         assertThat(properties.has("profileImageUrl")).isTrue();
-        assertThat(properties.has("jobTags")).isTrue();
-        assertThat(properties.has("taskTags")).isTrue();
+        assertThat(properties.has("interestJobTagIds")).isTrue();
+        assertThat(properties.has("interestTaskTagIds")).isTrue();
     }
 
     @DisplayName("로그인 응답 Swagger 스키마는 이름 대신 프로필 이미지 URL을 노출한다")

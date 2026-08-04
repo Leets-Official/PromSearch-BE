@@ -10,7 +10,8 @@ public record LoginResponse(
         Long userId,
         String profileImageUrl,
         String nickname,
-        String email
+        String email,
+        boolean isNewUser
 ) {
 
     public static LoginResponse from(LoginInfo info) {
@@ -22,7 +23,8 @@ public record LoginResponse(
                 info.userId(),
                 info.profileImageUrl(),
                 info.nickname(),
-                info.email()
+                info.email(),
+                info.isNewUser()
         );
     }
 }

@@ -1,6 +1,7 @@
 package com.promsearch.user.application.usecase.dto;
 
 import com.promsearch.auth.domain.CredentialPolicy;
+import java.util.List;
 
 /**
  * 사용자 프로필 부분 변경 Command. null 필드는 기존 값을 유지한다.
@@ -9,7 +10,10 @@ public record UpdateUserProfileCommand(
         Long userId,
         String name,
         String nickname,
-        String email
+        String email,
+        String profileImageUrl,
+        List<Long> interestJobTagIds,
+        List<Long> interestTaskTagIds
 ) {
 
     public UpdateUserProfileCommand {
@@ -17,6 +21,8 @@ public record UpdateUserProfileCommand(
         if (email != null && !email.isBlank()) {
             CredentialPolicy.validateEmail(email.trim());
         }
+        interestJobTagIds = interestJobTagIds == null ? null : List.copyOf(interestJobTagIds);
+        interestTaskTagIds = interestTaskTagIds == null ? null : List.copyOf(interestTaskTagIds);
     }
 
     public static UpdateUserProfileCommand of(
@@ -25,6 +31,30 @@ public record UpdateUserProfileCommand(
             String nickname,
             String email
     ) {
-        return new UpdateUserProfileCommand(userId, name, nickname, email);
+        return new UpdateUserProfileCommand(userId, name, nickname, email, null, null, null);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
+            String name,
+            String nickname,
+            String email,
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
+    ) {
+        return of(userId, name, nickname, email, null, interestJobTagIds, interestTaskTagIds);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
+            String name,
+            String nickname,
+            String email,
+            String profileImageUrl,
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
+    ) {
+        return new UpdateUserProfileCommand(
+                userId, name, nickname, email, profileImageUrl, interestJobTagIds, interestTaskTagIds);
     }
 }
