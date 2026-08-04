@@ -51,11 +51,11 @@ class OpenApiDocumentationTest {
         OperationCustomizer customizer = openApiConfig.jwtSecurityOperationCustomizer();
 
         Operation protectedOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null, null, null),
+                new UserController(null, null, null, null, null, null, null, null, null),
                 UserController.class.getMethod("delete", AuthenticatedUserPrincipal.class)
         ));
         Operation publicUserOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null, null, null),
+                new UserController(null, null, null, null, null, null, null, null, null),
                 UserController.class.getMethod("checkNicknameAvailability", String.class)
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
@@ -78,7 +78,7 @@ class OpenApiDocumentationTest {
                 TagController.class.getMethod("listTags", com.promsearch.prompt.domain.enums.TagType.class)
         ));
         Operation publicProfileOperation = customizer.customize(new Operation(), handlerMethod(
-                new UserController(null, null, null, null, null),
+                new UserController(null, null, null, null, null, null, null, null, null),
                 UserController.class.getMethod("getPublicProfile", Long.class)
         ));
         Operation commentListOperation = customizer.customize(new Operation(), handlerMethod(

@@ -27,7 +27,11 @@ class UserProfileQueryServiceTest {
     void setUp() {
         userRepository = new FakeUserRepository();
         userProfileStatsReader = new FakeUserProfileStatsReader();
-        userProfileQueryService = new UserProfileQueryService(userRepository, userProfileStatsReader);
+        userProfileQueryService = new UserProfileQueryService(
+                userRepository,
+                userProfileStatsReader,
+                (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey
+        );
     }
 
     @Test
@@ -55,6 +59,7 @@ class UserProfileQueryServiceTest {
                 "creator",
                 "Creator Name",
                 "https://cdn.test/profile.png",
+                null,
                 100L,
                 UserRole.USER,
                 UserGrade.PRIME,

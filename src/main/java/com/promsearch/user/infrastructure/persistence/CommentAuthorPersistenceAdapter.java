@@ -6,6 +6,7 @@ import com.promsearch.community.domain.exception.CommunityDomainException;
 import com.promsearch.community.domain.exception.CommunityErrorCode;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.UserStatus;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Component;
 public class CommentAuthorPersistenceAdapter implements LoadCommentAuthorPort {
 
     private final UserRepository userRepository;
+    private final ProfileImageDeliveryPort profileImageDeliveryPort;
 
     @Override
     public CommentAuthorSnapshot getActiveById(Long userId) {
@@ -51,7 +53,10 @@ public class CommentAuthorPersistenceAdapter implements LoadCommentAuthorPort {
         return new CommentAuthorSnapshot(
                 user.getUserId().id(),
                 user.getNickname(),
-                user.getProfileImageUrl()
+                profileImageDeliveryPort.resolve(
+                        user.getProfileImageUrl(),
+                        user.getProfileImageObjectKey()
+                )
         );
     }
 }

@@ -48,6 +48,10 @@ tasks.named('test') {
 	useJUnitPlatform()
 }
 
+tasks.named('bootJar') {
+	archiveFileName = 'promsearch-worker.jar'
+}
+
 /* API와 동일한 로컬 .env를 Worker bootRun에도 주입한다. 별도 JVM이므로 외부 DB URL이 필요하다. */
 tasks.named('bootRun') {
 	def envFile = rootProject.file('.env')

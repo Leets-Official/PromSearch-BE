@@ -19,6 +19,9 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+  flyway:
+    # 스키마 마이그레이션은 API 컨테이너가 전담하고, Worker는 준비된 스키마만 사용한다.
+    enabled: false
 
 storage:
   s3:

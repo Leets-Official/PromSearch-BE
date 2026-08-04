@@ -289,7 +289,7 @@ class AuthControllerTest {
     @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
     @Test
     void protectedApiRequiresAccessToken() throws Exception {
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -306,7 +306,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -326,7 +326,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email", null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email");
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)

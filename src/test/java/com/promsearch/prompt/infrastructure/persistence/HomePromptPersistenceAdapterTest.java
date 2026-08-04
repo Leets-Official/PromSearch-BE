@@ -25,6 +25,7 @@ import com.promsearch.prompt.infrastructure.persistence.entity.PostStatisticsJpa
 import com.promsearch.prompt.infrastructure.persistence.entity.PostTagJpaEntity;
 import com.promsearch.prompt.infrastructure.persistence.entity.PromptImageJpaEntity;
 import com.promsearch.prompt.infrastructure.persistence.entity.TagJpaEntity;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
 import com.promsearch.user.infrastructure.persistence.entity.UserJpaEntity;
 import jakarta.persistence.EntityManager;
@@ -68,6 +69,9 @@ class HomePromptPersistenceAdapterTest {
 
     @MockitoBean
     private PresignPromptImageDownloadPort presignPromptImageDownloadPort;
+
+    @MockitoBean
+    private ProfileImageDeliveryPort profileImageDeliveryPort;
 
     @DisplayName("홈 필터 조회 JPQL은 태그, 검색어, 결과물 조건과 공개 범위를 함께 적용한다")
     @Test
@@ -140,7 +144,7 @@ class HomePromptPersistenceAdapterTest {
 
     private Long saveUser(String email, String nickname) {
         UserJpaEntity user = userRepository.saveAndFlush(
-                UserJpaEntity.create(email, "encoded-password", nickname, nickname, null)
+                UserJpaEntity.create(email, "encoded-password", nickname, nickname, null, null)
         );
         return user.toDomain().getUserId().id();
     }
