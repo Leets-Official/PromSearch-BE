@@ -7,7 +7,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageBinaryPort.StoredImage;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import java.io.ByteArrayInputStream;
 import java.time.Duration;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +37,8 @@ class S3PromptImageBinaryStorageAdapterTest {
                         "ap-northeast-2",
                         "prompt-images/original",
                         "prompt-images/watermarked",
+                        "profiles",
+                        null,
                         Duration.ofMinutes(10)
                 )
         );

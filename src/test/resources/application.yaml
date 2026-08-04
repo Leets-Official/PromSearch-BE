@@ -43,4 +43,6 @@ storage:
     region: ap-northeast-2
     original-prefix: prompt-images/original
     watermarked-prefix: prompt-images/watermarked
+    profile-prefix: profiles
+    profile-public-base-url: https://cdn.test.example.com
     upload-url-expiration: 10m

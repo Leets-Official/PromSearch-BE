@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort.StoredObjectMetadata;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageUploadPort.PresignedUpload;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
@@ -49,6 +50,8 @@ class S3PromptImageStorageAdapterTest {
                         "ap-northeast-2",
                         "prompt-images/original",
                         "prompt-images/watermarked",
+                        "profiles",
+                        null,
                         Duration.ofMinutes(10)
                 )
         );

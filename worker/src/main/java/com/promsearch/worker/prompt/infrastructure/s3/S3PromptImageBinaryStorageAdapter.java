@@ -5,7 +5,7 @@ import com.promsearch.prompt.application.port.out.storage.SavePromptImageBinaryP
 import com.promsearch.prompt.domain.PromptImage;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import java.io.IOException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

@@ -1,7 +1,7 @@
 package com.promsearch.worker.prompt.infrastructure.sqs;
 
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;

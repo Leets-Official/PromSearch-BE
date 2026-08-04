@@ -55,6 +55,7 @@ class UserProfileQueryServiceTest {
                 "creator",
                 "Creator Name",
                 "https://cdn.test/profile.png",
+                null,
                 100L,
                 UserRole.USER,
                 UserGrade.PRIME,

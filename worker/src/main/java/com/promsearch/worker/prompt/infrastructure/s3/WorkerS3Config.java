@@ -1,6 +1,6 @@
 package com.promsearch.worker.prompt.infrastructure.s3;
 
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;

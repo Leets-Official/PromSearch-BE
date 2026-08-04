@@ -2,6 +2,7 @@ package com.promsearch.prompt.infrastructure.storage.s3;
 
 import com.promsearch.prompt.application.port.out.storage.GeneratePromptImageObjectKeyPort;
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

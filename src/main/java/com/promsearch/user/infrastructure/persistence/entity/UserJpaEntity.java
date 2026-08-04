@@ -45,6 +45,9 @@ public class UserJpaEntity extends BaseEntity {
     @Column(name = "profile_image_url", columnDefinition = "TEXT")
     private String profileImageUrl;
 
+    @Column(name = "profile_image_object_key", length = 500)
+    private String profileImageObjectKey;
+
     @Column(name = "points", nullable = false)
     private Long points;
 
@@ -61,25 +64,41 @@ public class UserJpaEntity extends BaseEntity {
     private UserStatus status;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private UserJpaEntity(String email, String password, String nickname, String name, String profileImageUrl) {
+    private UserJpaEntity(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl,
+            String profileImageObjectKey
+    ) {
         this.email = email;
         this.password = password;
         this.nickname = nickname;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+        this.profileImageObjectKey = profileImageObjectKey;
         this.points = 0L;
         this.role = UserRole.USER;
         this.grade = UserGrade.NORMAL;
         this.status = UserStatus.ACTIVE;
     }
 
-    public static UserJpaEntity create(String email, String password, String nickname, String name, String profileImageUrl) {
+    public static UserJpaEntity create(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl,
+            String profileImageObjectKey
+    ) {
         return UserJpaEntity.builder()
                 .email(email)
                 .password(password)
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .build();
     }
 
@@ -91,6 +110,7 @@ public class UserJpaEntity extends BaseEntity {
         this.nickname = user.getNickname();
         this.name = user.getName();
         this.profileImageUrl = user.getProfileImageUrl();
+        this.profileImageObjectKey = user.getProfileImageObjectKey();
         this.points = user.getPoint();
         this.role = user.getRole();
         this.grade = user.getGrade();
@@ -109,6 +129,7 @@ public class UserJpaEntity extends BaseEntity {
                 nickname,
                 name,
                 profileImageUrl,
+                profileImageObjectKey,
                 points,
                 role,
                 grade,

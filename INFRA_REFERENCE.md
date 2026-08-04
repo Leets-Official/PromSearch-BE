@@ -69,11 +69,24 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `SPRING_DATASOURCE_PASSWORD` | PostgreSQL 비밀번호 |
 | `SPRING_FLYWAY_ENABLED` | #21 baseline 확정 전에는 `false` |
 | `AWS_S3_BUCKET` | 원본·워터마크 이미지를 저장할 S3 버킷 |
+| `AWS_S3_PROFILE_PUBLIC_BASE_URL` | 프로필 이미지 공개 조회용 CloudFront/CDN base URL. 버킷이 비공개면 필수 |
 | `AWS_SQS_WATERMARK_ENABLED` | SQS 발행기와 Worker 활성화 여부 (`true`) |
 | `AWS_SQS_WATERMARK_QUEUE_URL` | 이미지 워터마크 작업 SQS Queue URL |
 
 `deploy.yml`은 위 값들을 `docker run -e`로 컨테이너에 직접 전달합니다 (`docker run`에 아무 환경변수도 넘기지 않던 이전 버전에서는 컨테이너가 필수 설정값 검증에서 부팅에 실패했습니다).
 Worker 배포는 `AWS_SQS_WATERMARK_ENABLED=true`와 비어 있지 않은 Queue URL을 요구합니다.
+API의 `prod` 프로필은 `AWS_S3_PROFILE_PUBLIC_BASE_URL`이 비어 있으면 기동하지 않습니다. 비공개 S3 버킷 앞의 CloudFront/CDN base URL을 설정해야 합니다.
+
+## 프로필 이미지 DB 마이그레이션
+
+프로필 이미지 교체 시 기존 S3 객체를 안전하게 식별하기 위해 `users.profile_image_object_key` 컬럼을 사용합니다.
+현재는 #21 baseline 확정 전이라 운영 Flyway가 비활성화되어 있으므로, 이 기능이 포함된 이미지를 배포하기 전에 DBA가 아래 마이그레이션을 운영 DB에 먼저 적용해야 합니다.
+
+```sql
+ALTER TABLE users ADD COLUMN IF NOT EXISTS profile_image_object_key VARCHAR(500);
+```
+
+레포의 정식 마이그레이션 파일은 `src/main/resources/db/migration/V8__add_user_profile_image_object_key.sql`입니다. 컬럼 반영 확인 후 API 이미지를 배포합니다.
 
 ## 브랜치 ↔ 파이프라인 매핑
 

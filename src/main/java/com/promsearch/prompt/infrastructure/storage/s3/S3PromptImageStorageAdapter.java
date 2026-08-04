@@ -1,5 +1,6 @@
 package com.promsearch.prompt.infrastructure.storage.s3;
 
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import com.promsearch.prompt.application.port.out.storage.DeletePromptImageObjectPort;
 import com.promsearch.prompt.application.port.out.storage.LoadPromptImageObjectMetadataPort;
 import com.promsearch.prompt.application.port.out.storage.PresignPromptImageDownloadPort;

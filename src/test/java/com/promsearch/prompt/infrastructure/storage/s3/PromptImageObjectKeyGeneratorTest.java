@@ -2,6 +2,7 @@ package com.promsearch.prompt.infrastructure.storage.s3;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import com.promsearch.prompt.domain.enums.PromptImageContentType;
 import java.time.Duration;
 import java.util.UUID;
@@ -19,6 +20,8 @@ class PromptImageObjectKeyGeneratorTest {
                         "ap-northeast-2",
                         "/prompt-images/original/",
                         "/prompt-images/watermarked/",
+                        "profiles",
+                        null,
                         Duration.ofMinutes(10)
                 )
         );
@@ -39,6 +42,8 @@ class PromptImageObjectKeyGeneratorTest {
                         "ap-northeast-2",
                         "prompt-images/original",
                         "/prompt-images/watermarked/",
+                        "profiles",
+                        null,
                         Duration.ofMinutes(10)
                 )
         );

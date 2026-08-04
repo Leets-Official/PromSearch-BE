@@ -8,6 +8,7 @@ import com.promsearch.user.application.usecase.RegisterSocialUserUseCase;
 import com.promsearch.user.application.usecase.SignupUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
+import com.promsearch.user.application.usecase.dto.ProfileImageCleanupEvent;
 import com.promsearch.user.application.usecase.dto.RegisterSocialUserCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
@@ -21,6 +22,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -43,6 +45,7 @@ public class UserCommandService implements
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
     private final PasswordEncoder passwordEncoder;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public SignupInfo signup(SignupCommand command) {
@@ -74,8 +77,6 @@ public class UserCommandService implements
                 UserErrorCode.INVALID_NICKNAME
         );
         String email = resolveRequiredProfileValue(command.email(), user.getEmail(), UserErrorCode.INVALID_EMAIL);
-        String profileImageUrl = resolveOptionalProfileValue(command.profileImageUrl(), user.getProfileImageUrl());
-
         if (!nickname.equals(user.getNickname())) {
             validateDuplicateNickname(nickname);
         }
@@ -83,12 +84,7 @@ public class UserCommandService implements
             validateDuplicateEmail(email);
         }
 
-        User updatedUser = user.updateProfile(
-                email,
-                nickname,
-                name,
-                profileImageUrl
-        );
+        User updatedUser = user.updateProfile(email, nickname, name);
         UserInfo userInfo = UserInfo.from(saveUserPort.update(updatedUser));
         log.info("user_profile_updated userId={}", userInfo.userId());
         return userInfo;
@@ -113,6 +109,7 @@ public class UserCommandService implements
     public void delete(Long userId) {
         User user = loadUserPort.getById(userId);
         saveUserPort.update(user.delete());
+        publishProfileImageCleanup(user.getProfileImageObjectKey());
         log.info("user_deleted userId={}", userId);
     }
 
@@ -188,13 +185,9 @@ public class UserCommandService implements
         return password;
     }
 
-    private String resolveOptionalProfileValue(String requestedValue, String currentValue) {
-        if (requestedValue == null) {
-            return currentValue;
+    private void publishProfileImageCleanup(String objectKey) {
+        if (objectKey != null) {
+            eventPublisher.publishEvent(new ProfileImageCleanupEvent(objectKey));
         }
-        if (requestedValue.isBlank()) {
-            return null;
-        }
-        return requestedValue.trim();
     }
 }

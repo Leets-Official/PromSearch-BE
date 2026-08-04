@@ -19,6 +19,7 @@ public class User {
     private final String nickname;
     private final String name;
     private final String profileImageUrl;
+    private final String profileImageObjectKey;
     private final Long point;
     private final UserRole role;
     private final UserGrade grade;
@@ -34,6 +35,7 @@ public class User {
             String nickname,
             String name,
             String profileImageUrl,
+            String profileImageObjectKey,
             Long point,
             UserRole role,
             UserGrade grade,
@@ -47,6 +49,7 @@ public class User {
         this.nickname = nickname;
         this.name = name;
         this.profileImageUrl = profileImageUrl;
+        this.profileImageObjectKey = profileImageObjectKey;
         this.point = point;
         this.role = role;
         this.grade = grade;
@@ -65,6 +68,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(null)
                 .point(0L)
                 .role(UserRole.USER)
                 .grade(UserGrade.NORMAL)
@@ -81,6 +85,7 @@ public class User {
             String nickname,
             String name,
             String profileImageUrl,
+            String profileImageObjectKey,
             Long point,
             UserRole role,
             UserGrade grade,
@@ -97,6 +102,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -106,7 +112,7 @@ public class User {
                 .build();
     }
 
-    public User updateProfile(String email, String nickname, String name, String profileImageUrl) {
+    public User updateProfile(String email, String nickname, String name) {
         validateRequired(email, password, nickname, name, point, role, grade, status);
 
         return User.builder()
@@ -116,6 +122,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -135,6 +142,7 @@ public class User {
                 .nickname(nickname)
                 .name(name)
                 .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
                 .point(point)
                 .role(role)
                 .grade(grade)
@@ -155,12 +163,54 @@ public class User {
                 .nickname(deletedPrefix + "_user")
                 .name("Deleted User")
                 .profileImageUrl(null)
+                .profileImageObjectKey(null)
                 .point(point)
                 .role(role)
                 .grade(grade)
                 .status(UserStatus.DELETED)
                 .createdAt(createdAt)
                 .updatedAt(now)
+                .build();
+    }
+
+    public User replaceProfileImage(String profileImageUrl, String profileImageObjectKey) {
+        if (profileImageUrl == null || profileImageUrl.isBlank()
+                || profileImageObjectKey == null || profileImageObjectKey.isBlank()) {
+            throw new UserDomainException(UserErrorCode.INVALID_PROFILE_IMAGE_OBJECT_KEY);
+        }
+
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl.trim())
+                .profileImageObjectKey(profileImageObjectKey.trim())
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    public User removeProfileImage() {
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(null)
+                .profileImageObjectKey(null)
+                .point(point)
+                .role(role)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
                 .build();
     }
 

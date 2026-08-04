@@ -6,7 +6,7 @@ import com.promsearch.prompt.application.port.out.promptimage.UpdatePromptImageW
 import com.promsearch.prompt.application.service.command.PromptImageWatermarkOutboxPublisher;
 import com.promsearch.prompt.application.service.command.PromptImageWatermarkOutboxPublisher.PublicationPolicy;
 import com.promsearch.prompt.application.usecase.PublishPendingPromptImageWatermarkJobsUseCase;
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.global.infrastructure.storage.s3.S3StorageProperties;
 import java.time.Clock;
 import java.time.Duration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;

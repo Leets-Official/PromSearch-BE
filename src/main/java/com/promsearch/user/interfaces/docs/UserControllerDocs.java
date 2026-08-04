@@ -3,8 +3,12 @@ package com.promsearch.user.interfaces.docs;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.user.interfaces.dto.request.ChangePasswordRequest;
+import com.promsearch.user.interfaces.dto.request.CompleteProfileImageUploadRequest;
+import com.promsearch.user.interfaces.dto.request.ProfileImageUploadUrlRequest;
 import com.promsearch.user.interfaces.dto.request.UpdateUserProfileRequest;
 import com.promsearch.user.interfaces.dto.response.NicknameAvailabilityResponse;
+import com.promsearch.user.interfaces.dto.response.ProfileImageResponse;
+import com.promsearch.user.interfaces.dto.response.ProfileImageUploadUrlResponse;
 import com.promsearch.user.interfaces.dto.response.PublicUserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserProfileResponse;
 import com.promsearch.user.interfaces.dto.response.UserResponse;
@@ -21,7 +25,10 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 비밀번호 변경, 회원 탈퇴, 공개 프로필 조회 API")
+/**
+ * 사용자 API의 OpenAPI 계약과 공개 메서드 문서를 정의합니다.
+ */
+@Tag(name = "User | 사용자", description = "내 프로필 조회·수정, 프로필 이미지, 비밀번호 변경, 회원 탈퇴, 공개 프로필 조회 API")
 public interface UserControllerDocs {
 
     String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
@@ -64,7 +71,7 @@ public interface UserControllerDocs {
     @Operation(
             summary = "[USER-001] 내 프로필 수정",
             description = IMPLEMENTED_BY_RUCHAN04
-                    + "인증된 사용자의 이름, 닉네임, 이메일, 프로필 이미지를 수정합니다."
+                    + "인증된 사용자의 이름, 닉네임, 이메일을 수정합니다. 프로필 이미지는 전용 API를 사용합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
@@ -77,6 +84,82 @@ public interface UserControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
             @Valid @RequestBody UpdateUserProfileRequest request
+    );
+
+    /**
+     * 프로필 이미지의 S3 직접 업로드 URL과 사용자 전용 Object Key를 발급합니다.
+     *
+     * @param user 인증된 사용자
+     * @param request 업로드할 이미지의 MIME 타입과 파일 크기
+     * @return Presigned PUT URL과 업로드 조건
+     */
+    @Operation(
+            summary = "[USER-007] 프로필 이미지 업로드 URL 발급",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "JPEG 또는 PNG 프로필 이미지를 S3에 직접 PUT할 수 있는 임시 URL을 발급합니다. "
+                    + "응답의 Content-Type, Content-Length, If-None-Match 조건으로 PUT 요청을 보내고, "
+                    + "업로드 후 완료 API를 호출해야 합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "업로드 URL 발급 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "파일 형식 또는 크기 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "S3 연결 또는 자격 증명 오류")
+    })
+    ApiResponse<ProfileImageUploadUrlResponse> issueProfileImageUploadUrl(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+
+            @Valid @RequestBody ProfileImageUploadUrlRequest request
+    );
+
+    /**
+     * S3에 업로드된 객체를 검증하고 현재 프로필 이미지로 적용합니다.
+     *
+     * @param user 인증된 사용자
+     * @param request 업로드 URL 발급 응답에서 받은 Object Key
+     * @return 적용된 프로필 이미지 공개 URL
+     */
+    @Operation(
+            summary = "[USER-008] 프로필 이미지 업로드 완료·교체",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "발급 응답의 Object Key 소유권과 S3 객체의 형식·최대 5MB 크기를 검증한 뒤 프로필에 적용합니다. "
+                    + "기존 자사 S3 프로필 이미지는 DB 커밋 후 삭제합니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 이미지 적용 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "Object Key 또는 업로드 메타데이터 검증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "다른 사용자 경로의 Object Key"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "S3 업로드 객체 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "503", description = "S3 연결 오류")
+    })
+    ApiResponse<ProfileImageResponse> completeProfileImageUpload(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user,
+
+            @Valid @RequestBody CompleteProfileImageUploadRequest request
+    );
+
+    /**
+     * 현재 프로필 이미지 연결과 자사 S3 객체를 제거합니다.
+     *
+     * @param user 인증된 사용자
+     * @return 성공 응답
+     */
+    @Operation(
+            summary = "[USER-009] 프로필 이미지 삭제",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "프로필 이미지 연결을 제거하고 자사 S3 이미지라면 DB 커밋 후 객체를 삭제합니다. "
+                    + "이미지가 없어도 성공하는 멱등 API입니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 이미지 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ApiResponse<Void> deleteProfileImage(
+            @Parameter(hidden = true)
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 
     @Operation(
