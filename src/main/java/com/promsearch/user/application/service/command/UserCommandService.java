@@ -45,7 +45,6 @@ public class UserCommandService implements
         RegisterSocialUserUseCase {
 
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
-    private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
     private static final int SOCIAL_NICKNAME_BASE_MAX_LENGTH = 6;
     private static final int NICKNAME_RETRY_LIMIT = 5;
 
@@ -61,7 +60,7 @@ public class UserCommandService implements
     public SignupInfo signup(SignupCommand command) {
         validateDuplicateEmail(command.email());
         validateDuplicateNickname(command.nickname());
-        InterestTagSelectionPolicy.validate(command.jobTags(), command.taskTags());
+        InterestTagSelectionPolicy.validate(command.jobTagIds(), command.taskTagIds());
 
         String encodedPassword = passwordEncoder.encode(command.password());
         User user = User.create(
@@ -69,13 +68,13 @@ public class UserCommandService implements
                 encodedPassword,
                 command.nickname(),
                 null,
-                normalizeOptional(command.profileImageUrl())
+                null
         );
 
         User savedUser = saveUserPort.create(user);
         List<Long> interestTagIds = new ArrayList<>();
-        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTags()));
-        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTags()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTagIds()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTagIds()));
         saveUserInterestTagPort.save(savedUser.getUserId().id(), interestTagIds);
         SignupInfo signupInfo = SignupInfo.from(savedUser);
         log.info("user_signup_completed userId={}", signupInfo.userId());
@@ -86,7 +85,6 @@ public class UserCommandService implements
     public UserInfo updateProfile(UpdateUserProfileCommand command) {
         User user = loadUserPort.getById(command.userId());
 
-        String name = resolveRequiredProfileValue(command.name(), user.getName(), UserErrorCode.INVALID_NAME);
         String nickname = resolveRequiredProfileValue(
                 command.nickname(),
                 user.getNickname(),
@@ -103,8 +101,7 @@ public class UserCommandService implements
 
         User updatedUser = user.updateProfile(
                 email,
-                nickname,
-                name
+                nickname
         );
         User savedUser = saveUserPort.update(updatedUser);
         UserInfo userInfo = UserInfo.from(savedUser, resolveProfileImageUrl(savedUser));
@@ -140,10 +137,9 @@ public class UserCommandService implements
         validateDuplicateEmail(command.email());
 
         String nickname = resolveAvailableNickname(command.nickname());
-        String name = resolveSocialName(command.name());
         String placeholderPassword = passwordEncoder.encode(UUID.randomUUID().toString());
 
-        User user = User.create(command.email(), placeholderPassword, nickname, name, command.profileImageUrl());
+        User user = User.create(command.email(), placeholderPassword, nickname, nickname, command.profileImageUrl());
 
         SignupInfo signupInfo = SignupInfo.from(saveUserPort.create(user));
         log.info("user_social_signup_completed userId={}", signupInfo.userId());
@@ -177,10 +173,6 @@ public class UserCommandService implements
         return sanitized.length() > SOCIAL_NICKNAME_BASE_MAX_LENGTH
                 ? sanitized.substring(0, SOCIAL_NICKNAME_BASE_MAX_LENGTH)
                 : sanitized;
-    }
-
-    private String resolveSocialName(String name) {
-        return (name == null || name.isBlank()) ? DEFAULT_SOCIAL_NAME : name.trim();
     }
 
     private void validateDuplicateNickname(String nickname) {

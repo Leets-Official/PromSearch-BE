@@ -8,44 +8,39 @@ public record SignupCommand(
         String nickname,
         String email,
         String password,
-        String profileImageUrl,
-        List<String> jobTags,
-        List<String> taskTags
+        List<Long> jobTagIds,
+        List<Long> taskTagIds
 ) {
 
     public SignupCommand {
         CredentialPolicy.validateEmail(email);
         CredentialPolicy.validatePassword(password);
         NicknamePolicy.validate(nickname);
-        jobTags = normalizeTags(jobTags);
-        taskTags = normalizeTags(taskTags);
+        jobTagIds = normalizeTagIds(jobTagIds);
+        taskTagIds = normalizeTagIds(taskTagIds);
     }
 
     public static SignupCommand of(String nickname, String email, String password) {
-        return new SignupCommand(nickname, email, password, null, List.of(), List.of());
+        return new SignupCommand(nickname, email, password, List.of(), List.of());
     }
 
     public static SignupCommand of(
             String nickname,
             String email,
             String password,
-            String profileImageUrl,
-            List<String> jobTags,
-            List<String> taskTags
+            List<Long> jobTagIds,
+            List<Long> taskTagIds
     ) {
-        return new SignupCommand(nickname, email, password, profileImageUrl, jobTags, taskTags);
+        return new SignupCommand(nickname, email, password, jobTagIds, taskTagIds);
     }
 
-    private static List<String> normalizeTags(List<String> tags) {
-        return tags == null
-                ? List.of()
-                : tags.stream().map(tag -> tag == null ? null : tag.trim()).toList();
+    private static List<Long> normalizeTagIds(List<Long> tagIds) {
+        return tagIds == null ? List.of() : List.copyOf(tagIds);
     }
 
     @Override
     public String toString() {
         return "SignupCommand[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl
-                + ", jobTags=" + jobTags + ", taskTags=" + taskTags + "]";
+                + ", password=***, jobTagIds=" + jobTagIds + ", taskTagIds=" + taskTagIds + "]";
     }
 }
