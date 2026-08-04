@@ -20,7 +20,7 @@ class PromptAccessSecurityTest {
         mockMvc.perform(post("/api/v1/prompts/1/unlock"))
                 .andExpect(status().isUnauthorized());
 
-        mockMvc.perform(post("/api/v1/prompts/1/copy"))
+        mockMvc.perform(post("/api/v1/prompts/1/copies"))
                 .andExpect(status().isUnauthorized());
     }
 }

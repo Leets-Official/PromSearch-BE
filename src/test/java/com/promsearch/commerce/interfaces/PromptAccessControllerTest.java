@@ -49,15 +49,16 @@ class PromptAccessControllerTest {
     }
 
     @Test
-    void returnsFullPromptBodyForCopy() throws Exception {
+    void recordsCopyAndReturnsCopyCount() throws Exception {
         when(copyPromptUseCase.copy(new CopyPromptCommand(1L, 10L)))
-                .thenReturn(new CopyPromptInfo(10L, "full prompt body", true));
+                .thenReturn(new CopyPromptInfo(10L, 16L, true));
 
-        mockMvc.perform(post("/api/v1/prompts/{promptId}/copy", 10L)
+        mockMvc.perform(post("/api/v1/prompts/{promptId}/copies", 10L)
                         .with(request -> authenticated(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.result.promptId").value(10))
-                .andExpect(jsonPath("$.result.promptBody").value("full prompt body"));
+                .andExpect(jsonPath("$.result.copyCount").value(16))
+                .andExpect(jsonPath("$.result.promptBody").doesNotExist());
 
         verify(copyPromptUseCase).copy(new CopyPromptCommand(1L, 10L));
     }
