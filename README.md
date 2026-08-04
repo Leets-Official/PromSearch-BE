@@ -54,9 +54,11 @@ docker run --no-healthcheck promsearch worker.jar
 
 API와 Worker 컨테이너에는 동일한 `SPRING_DATASOURCE_*`, `AWS_S3_BUCKET`,
 `AWS_SQS_WATERMARK_*` 환경변수를 전달해야 합니다. Flyway의 PostgreSQL 런타임 의존성은
-API 이미지에 포함되지만, 현재 `V1~V7`이 전체 초기 스키마가 아니므로 #21에서 baseline을 확정할 때까지
-`SPRING_FLYWAY_ENABLED=false`가 기본입니다. Worker는 Flyway를 실행하지 않으며 운영 배포는 API
-헬스체크 성공 후 Worker를 시작합니다.
+API 이미지에 포함됩니다. 새 빈 PostgreSQL에는 `SPRING_FLYWAY_ENABLED=true`를 전달해
+`V1__create_initial_schema.sql`을 적용하고, `SPRING_FLYWAY_BASELINE_ON_MIGRATE`는 `false`로 유지합니다.
+Worker는 Flyway를 실행하지 않으며 운영 배포는 API 헬스체크 성공 후 Worker를 시작합니다.
+기존 V1~V8을 적용한 로컬 DB는 새 V1과 Flyway 체크섬이 호환되지 않으므로 데이터를 보존할 필요가
+없을 때 DB를 재생성해야 합니다. 기존 데이터가 있는 DB에는 이 초기화를 적용하지 않습니다.
 
 ## 배포된 서버 확인
 
