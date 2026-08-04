@@ -9,6 +9,7 @@ import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCas
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptEditUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
@@ -23,6 +24,7 @@ import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
 import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptEditResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageStatusesResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
@@ -61,6 +63,7 @@ public class PromptController implements PromptControllerDocs {
     private final GetPromptImageStatusesUseCase getPromptImageStatusesUseCase;
     private final SavePromptDraftUseCase savePromptDraftUseCase;
     private final GetPromptDraftUseCase getPromptDraftUseCase;
+    private final GetPromptEditUseCase getPromptEditUseCase;
     private final DeletePromptDraftUseCase deletePromptDraftUseCase;
 
     @GetMapping("/prompts/{promptId}")
@@ -71,6 +74,17 @@ public class PromptController implements PromptControllerDocs {
     ) {
         return ApiResponse.onSuccess(PromptDetailResponse.from(
                 getPromptDetailUseCase.get(promptId, user == null ? null : user.userId())
+        ));
+    }
+
+    @GetMapping("/prompts/{promptId}/edit")
+    @Override
+    public ApiResponse<PromptEditResponse> getPromptEdit(
+            @PathVariable Long promptId,
+            @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    ) {
+        return ApiResponse.onSuccess(PromptEditResponse.from(
+                getPromptEditUseCase.get(promptId, user.userId())
         ));
     }
 

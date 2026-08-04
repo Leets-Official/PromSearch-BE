@@ -14,12 +14,14 @@ import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCas
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptEditUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
 import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptEditInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusesInfo;
@@ -82,6 +84,9 @@ class PromptControllerTest {
 
     @MockitoBean
     private GetPromptDraftUseCase getPromptDraftUseCase;
+
+    @MockitoBean
+    private GetPromptEditUseCase getPromptEditUseCase;
 
     @MockitoBean
     private DeletePromptDraftUseCase deletePromptDraftUseCase;
@@ -183,6 +188,32 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.result.images[0].thumbnail").value(true))
                 .andExpect(jsonPath("$.result.status").value("DRAFT"))
                 .andExpect(jsonPath("$.result.updatedAt").value("2026-07-28T21:00:00+09:00"));
+    }
+
+    @DisplayName("작성자용 프롬프트 수정 데이터를 조회한다")
+    @Test
+    void getPromptEdit() throws Exception {
+        UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Mockito.when(getPromptEditUseCase.get(7L, 1L))
+                .thenReturn(new PromptEditInfo(
+                        7L, "회의록 자동 정리", "설명", PromptOutputType.TEXT,
+                        List.of(1L), List.of(2L), List.of(3L), null, PromptContentType.FREE,
+                        "본문", PromptVisibility.PRIVATE,
+                        List.of(new PromptEditInfo.ImageInfo(imageId, "https://image.example.com/signed", 0, true)),
+                        PromptStatus.ACTIVE, 0L, Instant.parse("2026-07-28T12:00:00Z")
+                ));
+
+        mockMvc.perform(get("/api/v1/prompts/7/edit")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.jobTagIds[0]").value(1))
+                .andExpect(jsonPath("$.result.taskTagIds[0]").value(2))
+                .andExpect(jsonPath("$.result.aiModelTagIds[0]").value(3))
+                .andExpect(jsonPath("$.result.visibility").value("PRIVATE"))
+                .andExpect(jsonPath("$.result.images[0].imageUrl").value("https://image.example.com/signed"));
     }
 
     @DisplayName("인증 사용자의 임시저장을 삭제한다")

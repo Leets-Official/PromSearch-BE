@@ -53,7 +53,7 @@ class OpenApiImplementationMetadataContractTest {
                     }
                 }));
 
-        assertThat(documentedOperations).hasSize(35);
+        assertThat(documentedOperations).hasSize(36);
         assertThat(missingMetadata).isEmpty();
         assertThat(invalidStatus).isEmpty();
     }

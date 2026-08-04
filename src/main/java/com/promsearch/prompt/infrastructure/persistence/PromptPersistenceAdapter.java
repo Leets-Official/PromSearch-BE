@@ -1,6 +1,9 @@
 package com.promsearch.prompt.infrastructure.persistence;
 
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort.ImageProjection;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort.PromptEditProjection;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptPort;
 import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
@@ -27,6 +30,7 @@ import org.springframework.stereotype.Component;
 public class PromptPersistenceAdapter implements
         SavePromptPort,
         LoadPromptDraftPort,
+        LoadPromptEditPort,
         SavePromptDraftPort {
 
     private final PostRepository postRepository;
@@ -68,6 +72,12 @@ public class PromptPersistenceAdapter implements
         }
         return postRepository.findDraftByUserId(userId)
                 .map(this::toDraftInfo);
+    }
+
+    @Override
+    public Optional<PromptEditProjection> findById(Long promptId) {
+        return postRepository.findForEditById(promptId)
+                .map(this::toEditProjection);
     }
 
     @Override
@@ -148,5 +158,19 @@ public class PromptPersistenceAdapter implements
                 post.getPricePoint(),
                 post.getUpdatedAt()
         );
+    }
+
+    private PromptEditProjection toEditProjection(PostJpaEntity post) {
+        PromptDraftInfo draft = toDraftInfo(post);
+        List<ImageProjection> images = promptImageRepository.findAllByPromptIdOrderBySortOrderAsc(post.getId()).stream()
+                .filter(image -> image.getWatermarkedObjectKey() != null && !image.getWatermarkedObjectKey().isBlank())
+                .map(image -> new ImageProjection(
+                        image.getId(), image.getWatermarkedObjectKey(), image.getSortOrder(), image.getThumbnail()))
+                .toList();
+        return new PromptEditProjection(
+                post.getId(), post.getUserId(), draft.title(), draft.description(), draft.outputType(),
+                draft.jobTagIds(), draft.taskTagIds(), draft.aiModelTagIds(), draft.customAiModel(),
+                draft.contentType(), draft.promptBody(), draft.visibility(), images, draft.status(),
+                draft.pricePoint(), draft.updatedAt());
     }
 }
