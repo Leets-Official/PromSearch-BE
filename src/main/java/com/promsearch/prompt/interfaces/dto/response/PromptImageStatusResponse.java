@@ -14,14 +14,18 @@ public record PromptImageStatusResponse(
         PromptImageStatus status,
 
         @Schema(description = "워터마크 처리 실패 코드. 실패 상태가 아니면 null", example = "WATERMARK_RENDER_FAILED")
-        String failureCode
+        String failureCode,
+
+        @Schema(description = "READY 상태의 워터마크 완료 이미지 Presigned 조회 URL. 그 외 상태에서는 null", example = "https://storage.example.com/watermarked/image.jpg?X-Amz-Signature=...")
+        String imageUrl
 ) {
 
     public static PromptImageStatusResponse from(PromptImageStatusInfo info) {
         return new PromptImageStatusResponse(
                 info.imageId(),
                 info.status(),
-                info.failureCode()
+                info.failureCode(),
+                info.imageUrl()
         );
     }
 }

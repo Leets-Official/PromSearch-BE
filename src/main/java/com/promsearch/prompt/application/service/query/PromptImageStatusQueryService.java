@@ -1,6 +1,7 @@
 package com.promsearch.prompt.application.service.query;
 
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
+import com.promsearch.prompt.application.port.out.storage.PresignPromptImageDownloadPort;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusInfo;
@@ -27,6 +28,7 @@ public class PromptImageStatusQueryService implements GetPromptImageStatusesUseC
     private static final int MAX_IMAGE_COUNT = 10;
 
     private final LoadPromptImagePort loadPromptImagePort;
+    private final PresignPromptImageDownloadPort presignPromptImageDownloadPort;
 
     @Override
     public PromptImageStatusesInfo getStatuses(GetPromptImageStatusesQuery query) {
@@ -43,8 +45,15 @@ public class PromptImageStatusQueryService implements GetPromptImageStatusesUseC
         Map<UUID, PromptImage> imageMap = images.stream()
                 .collect(Collectors.toMap(image -> image.getPromptImageId().id(), Function.identity()));
         return new PromptImageStatusesInfo(query.imageIds().stream()
-                .map(imageId -> PromptImageStatusInfo.from(imageMap.get(imageId)))
+                .map(imageId -> toInfo(imageMap.get(imageId)))
                 .toList());
+    }
+
+    private PromptImageStatusInfo toInfo(PromptImage image) {
+        String imageUrl = image.isReady()
+                ? presignPromptImageDownloadPort.presignGet(image.getWatermarkedObjectKey())
+                : null;
+        return PromptImageStatusInfo.from(image, imageUrl);
     }
 
     /** HTTP 검증을 우회한 호출에서도 조회 개수·중복·요청자 정책을 보장 */

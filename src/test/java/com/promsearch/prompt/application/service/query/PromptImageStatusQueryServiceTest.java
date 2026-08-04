@@ -2,9 +2,11 @@ package com.promsearch.prompt.application.service.query;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
+import com.promsearch.prompt.application.port.out.storage.PresignPromptImageDownloadPort;
 import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusesInfo;
 import com.promsearch.prompt.domain.PromptImage;
@@ -28,11 +30,14 @@ class PromptImageStatusQueryServiceTest {
     @Mock
     private LoadPromptImagePort loadPromptImagePort;
 
+    @Mock
+    private PresignPromptImageDownloadPort presignPromptImageDownloadPort;
+
     private PromptImageStatusQueryService service;
 
     @BeforeEach
     void setUp() {
-        service = new PromptImageStatusQueryService(loadPromptImagePort);
+        service = new PromptImageStatusQueryService(loadPromptImagePort, presignPromptImageDownloadPort);
     }
 
     @DisplayName("이미지 상태를 요청한 imageId 순서대로 반환한다")
@@ -45,6 +50,8 @@ class PromptImageStatusQueryServiceTest {
                 first.getPromptImageId().id()
         );
         when(loadPromptImagePort.listByIds(requestOrder)).thenReturn(List.of(first, second));
+        when(presignPromptImageDownloadPort.presignGet(first.getWatermarkedObjectKey()))
+                .thenReturn("https://storage.example.com/first.jpg");
 
         PromptImageStatusesInfo info =
                 service.getStatuses(new GetPromptImageStatusesQuery(1L, requestOrder));
@@ -56,7 +63,10 @@ class PromptImageStatusQueryServiceTest {
                 .extracting("status")
                 .containsExactly(PromptImageStatus.FAILED, PromptImageStatus.READY);
         assertThat(info.images().getFirst().failureCode()).isEqualTo("WATERMARK_RENDER_FAILED");
+        assertThat(info.images().getFirst().imageUrl()).isNull();
         assertThat(info.images().get(1).failureCode()).isNull();
+        assertThat(info.images().get(1).imageUrl()).isEqualTo("https://storage.example.com/first.jpg");
+        verify(presignPromptImageDownloadPort).presignGet(first.getWatermarkedObjectKey());
     }
 
     @DisplayName("중복된 imageId는 DB 조회 전에 거절한다")
