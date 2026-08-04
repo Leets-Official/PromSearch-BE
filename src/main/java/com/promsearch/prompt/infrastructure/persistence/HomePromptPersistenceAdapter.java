@@ -158,7 +158,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                     )
                     """);
         }
-        if (query.aiModelTagId() != null) {
+        if (!query.aiModelTagIds().isEmpty()) {
             /*
              * AI 모델은 업로드 시 기존 AI_MODEL 태그 또는 custom AI 모델 태그와 연결됩니다.
              * 필터 조회에서는 새 태그를 만들지 않고, 이미 연결된 AI_MODEL 태그 ID만 조건으로 사용합니다.
@@ -168,31 +168,25 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                         select postTag.id
                         from PostTagJpaEntity postTag
                         where postTag.post.id = p.id
-                          and postTag.tag.id = :aiModelTagId
+                          and postTag.tag.id in :aiModelTagIds
                           and postTag.tag.tagType = :aiModelTagType
                     )
                     """);
         }
-        if (query.outputType() != null) {
+        if (!query.outputTypes().isEmpty()) {
             filters.append("""
-                    and p.outputType = :outputType
+                    and p.outputType in :outputTypes
                     """);
         }
         if (query.hasKeyword()) {
             /*
-             * 검색창은 카드에서 사용자가 바로 확인할 수 있는 제목, 설명, 태그명을 대상으로 합니다.
+             * 검색창은 제목과 설명을 대상으로 합니다.
              * 본문(promptBody)은 유료 콘텐츠 원문 노출 정책과 검색 비용을 고려해 홈 목록 검색 범위에서 제외합니다.
              */
             filters.append("""
                     and (
                         lower(p.title) like :keyword escape '\\'
                         or lower(coalesce(p.description, '')) like :keyword escape '\\'
-                        or exists (
-                            select keywordPostTag.id
-                            from PostTagJpaEntity keywordPostTag
-                            where keywordPostTag.post.id = p.id
-                              and lower(keywordPostTag.tag.tagName) like :keyword escape '\\'
-                        )
                     )
                     """);
         }
@@ -231,13 +225,13 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                     .setParameter("taskTagIds", query.taskTagIds())
                     .setParameter("taskTagType", TagType.TASK);
         }
-        if (query.aiModelTagId() != null) {
+        if (!query.aiModelTagIds().isEmpty()) {
             typedQuery
-                    .setParameter("aiModelTagId", query.aiModelTagId())
+                    .setParameter("aiModelTagIds", query.aiModelTagIds())
                     .setParameter("aiModelTagType", TagType.AI_MODEL);
         }
-        if (query.outputType() != null) {
-            typedQuery.setParameter("outputType", query.outputType());
+        if (!query.outputTypes().isEmpty()) {
+            typedQuery.setParameter("outputTypes", query.outputTypes());
         }
         if (query.hasKeyword()) {
             /*

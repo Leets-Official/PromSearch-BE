@@ -12,7 +12,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -33,7 +32,7 @@ public interface HomeControllerDocs {
                     홈 화면의 검색창, 좌측 직군 메뉴, 태스크 다중 선택, AI 모델, 결과물 타입 필터를 조합해 카드 목록을 조회합니다.
                     비회원도 조회할 수 있고, 로그인 사용자는 liked/bookmarked 상태를 함께 받습니다.
                     태그 조건은 새 태그를 만들지 않고 tags 테이블에 이미 존재하는 태그 ID만 조회 조건으로 사용합니다.
-                    검색어는 trim 후 2자 이상일 때만 허용하며, %, _, \\ 문자는 와일드카드가 아니라 일반 문자로 검색합니다.
+                    검색어는 trim 후 제목과 설명에 부분일치하며, %, _, \\ 문자는 와일드카드가 아니라 일반 문자로 검색합니다.
                     """
     )
     @ApiResponses({
@@ -50,19 +49,14 @@ public interface HomeControllerDocs {
             @Parameter(description = "TASK 타입 태그 ID 목록. 여러 개를 선택하면 OR 조건으로 조회합니다.", example = "10,11,12")
             @RequestParam(required = false) @Size(max = HomePromptListQuery.MAX_FILTER_TAGS) List<@Positive Long> taskTagIds,
 
-            @Parameter(description = "AI_MODEL 타입 태그 ID. 전체 모델이면 생략합니다.", example = "20")
-            @RequestParam(required = false) @Positive Long aiModelTagId,
+            @Parameter(description = "AI_MODEL 타입 태그 ID 목록. 여러 개를 선택하면 OR 조건으로 조회합니다.", example = "20,21")
+            @RequestParam(required = false) @Size(max = HomePromptListQuery.MAX_FILTER_TAGS) List<@Positive Long> aiModelTagIds,
 
-            @Parameter(description = "결과물 타입. 전체 결과물이면 생략합니다.", example = "TEXT")
-            @RequestParam(required = false) PromptOutputType outputType,
+            @Parameter(description = "결과물 타입 목록. 여러 개를 선택하면 OR 조건으로 조회합니다.", example = "IMAGE,TEXT")
+            @RequestParam(required = false) List<PromptOutputType> outputTypes,
 
-            @Parameter(description = "제목, 설명, 태그명에 적용할 검색어. 공백 제거 후 2~100자까지 허용합니다.", example = "보고서")
-            @RequestParam(required = false)
-            @Pattern(
-                    regexp = "^\\s*$|^\\s*\\S[\\s\\S]*\\S\\s*$",
-                    message = "keyword must be blank or at least 2 characters after trim"
-            )
-            @Size(max = HomePromptListQuery.MAX_KEYWORD_LENGTH) String keyword,
+            @Parameter(description = "제목과 설명에 적용할 검색어. trim 후 1~100자까지 허용합니다.", example = "보고서")
+            @RequestParam(name = "q", required = false) @Size(max = HomePromptListQuery.MAX_KEYWORD_LENGTH) String q,
 
             @Parameter(description = "정렬 기준. LATEST는 최신순, POPULAR는 좋아요순입니다.", example = "LATEST")
             @RequestParam(defaultValue = "LATEST") HomePromptSort sort,

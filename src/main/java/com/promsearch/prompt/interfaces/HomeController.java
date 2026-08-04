@@ -12,7 +12,6 @@ import com.promsearch.prompt.interfaces.dto.response.HomePromptListResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
-import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
@@ -48,14 +47,9 @@ public class HomeController implements HomeControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @RequestParam(required = false) @Positive Long jobTagId,
             @RequestParam(required = false) @Size(max = HomePromptListQuery.MAX_FILTER_TAGS) List<@Positive Long> taskTagIds,
-            @RequestParam(required = false) @Positive Long aiModelTagId,
-            @RequestParam(required = false) PromptOutputType outputType,
-            @RequestParam(required = false)
-            @Pattern(
-                    regexp = "^\\s*$|^\\s*\\S[\\s\\S]*\\S\\s*$",
-                    message = "keyword must be blank or at least 2 characters after trim"
-            )
-            @Size(max = HomePromptListQuery.MAX_KEYWORD_LENGTH) String keyword,
+            @RequestParam(required = false) @Size(max = HomePromptListQuery.MAX_FILTER_TAGS) List<@Positive Long> aiModelTagIds,
+            @RequestParam(required = false) List<PromptOutputType> outputTypes,
+            @RequestParam(name = "q", required = false) @Size(max = HomePromptListQuery.MAX_KEYWORD_LENGTH) String q,
             @RequestParam(defaultValue = "LATEST") HomePromptSort sort,
             @RequestParam(defaultValue = DEFAULT_PAGE) @PositiveOrZero @Max(HomePromptListQuery.MAX_PAGE) int page,
             @RequestParam(defaultValue = DEFAULT_SIZE) @Min(1) @Max(HomePromptListQuery.MAX_SIZE) int size
@@ -68,9 +62,9 @@ public class HomeController implements HomeControllerDocs {
                 viewerUserId(user),
                 jobTagId,
                 taskTagIds,
-                aiModelTagId,
-                outputType,
-                keyword,
+                aiModelTagIds,
+                outputTypes,
+                q,
                 sort,
                 page,
                 size
