@@ -211,6 +211,7 @@ class PromptAccessTransactionIntegrationTest {
                 false,
                 List.of(),
                 List.of(),
+                List.of(),
                 new StatisticsProjection(0L, 0L, 0L, 0L),
                 Instant.now(),
                 Instant.now()

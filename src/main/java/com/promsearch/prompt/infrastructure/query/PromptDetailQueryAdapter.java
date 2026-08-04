@@ -11,9 +11,12 @@ import com.promsearch.prompt.domain.PostStatistics;
 import com.promsearch.prompt.domain.enums.PromptImageStatus;
 import com.promsearch.prompt.domain.enums.PromptStatus;
 import com.promsearch.prompt.domain.enums.PromptVisibility;
+import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.infrastructure.persistence.PostRepository;
 import com.promsearch.prompt.infrastructure.persistence.PromptImageRepository;
 import com.promsearch.prompt.infrastructure.persistence.entity.PostJpaEntity;
+import com.promsearch.prompt.infrastructure.persistence.entity.PostTagJpaEntity;
+import com.promsearch.prompt.infrastructure.persistence.entity.TagJpaEntity;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.UserStatus;
 import com.promsearch.user.infrastructure.persistence.UserRepository;
@@ -71,12 +74,18 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
                         image.getThumbnail()))
                 .toList();
         List<TagProjection> tags = post.getPostTags().stream()
+                .filter(postTag -> !Boolean.TRUE.equals(postTag.getTag().getCustom()))
                 .map(postTag -> new TagProjection(
                         postTag.getTag().getId(),
                         postTag.getTag().getTagType(),
                         postTag.getTag().getTagName()))
                 .sorted(Comparator.comparing(TagProjection::tagType)
                         .thenComparing(TagProjection::tagId))
+                .toList();
+        List<String> customAiModels = post.getPostTags().stream()
+                .map(PostTagJpaEntity::getTag)
+                .filter(tag -> tag.getTagType() == TagType.AI_MODEL && Boolean.TRUE.equals(tag.getCustom()))
+                .map(TagJpaEntity::getTagName)
                 .toList();
         PostStatistics statistics = post.getStatistics() == null
                 ? PostStatistics.create(promptId)
@@ -100,6 +109,7 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
                 bookmarked,
                 images,
                 tags,
+                customAiModels,
                 new StatisticsProjection(
                         statistics.getViewCount(),
                         statistics.getCopyCount(),

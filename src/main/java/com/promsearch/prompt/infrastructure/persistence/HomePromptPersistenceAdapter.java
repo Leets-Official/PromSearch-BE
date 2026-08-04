@@ -259,10 +259,11 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
          */
         Map<Long, String> thumbnailImages = findThumbnailImages(promptIds);
         Map<Long, List<HomePromptTagInfo>> tags = findTags(promptIds);
+        Map<Long, List<String>> customAiModels = findCustomAiModels(promptIds);
         Map<Long, HomePromptViewerInteractionInfo> interactions = findViewerInteractions(query.viewerUserId(), promptIds);
 
         List<HomePromptSummaryInfo> prompts = rows.stream()
-                .map(row -> toSummaryInfo(row, thumbnailImages, tags, interactions))
+                .map(row -> toSummaryInfo(row, thumbnailImages, tags, customAiModels, interactions))
                 .toList();
 
         boolean hasNext = ((long) query.page() + 1) * query.size() < totalElements;
@@ -273,6 +274,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
             PromptCardRow row,
             Map<Long, String> thumbnailImages,
             Map<Long, List<HomePromptTagInfo>> tags,
+            Map<Long, List<String>> customAiModels,
             Map<Long, HomePromptViewerInteractionInfo> interactions
     ) {
         /*
@@ -307,6 +309,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                 ),
                 interactions.getOrDefault(row.promptId(), HomePromptViewerInteractionInfo.none()),
                 tags.getOrDefault(row.promptId(), List.of()),
+                customAiModels.getOrDefault(row.promptId(), List.of()),
                 row.createdAt()
         );
     }
@@ -362,6 +365,7 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                         join p.postTags pt
                         join pt.tag tag
                         where p.id in :promptIds
+                          and (tag.custom = false or tag.custom is null)
                         order by p.id asc, tag.id asc
                         """, Object[].class)
                 .setParameter("promptIds", promptIds)
@@ -381,6 +385,32 @@ public class HomePromptPersistenceAdapter implements HomePromptReader {
                         .thenComparing(HomePromptTagInfo::tagId)
         ));
         return tags;
+    }
+
+    private Map<Long, List<String>> findCustomAiModels(List<Long> promptIds) {
+        if (promptIds.isEmpty()) {
+            return Map.of();
+        }
+
+        List<Object[]> rows = entityManager.createQuery("""
+                        select p.id, tag.tagName
+                        from PostJpaEntity p
+                        join p.postTags pt
+                        join pt.tag tag
+                        where p.id in :promptIds
+                          and tag.tagType = :tagType
+                          and tag.custom = true
+                        """, Object[].class)
+                .setParameter("promptIds", promptIds)
+                .setParameter("tagType", TagType.AI_MODEL)
+                .getResultList();
+
+        Map<Long, List<String>> customAiModels = new HashMap<>();
+        for (Object[] row : rows) {
+            customAiModels.computeIfAbsent(number(row[0]), ignored -> new ArrayList<>())
+                    .add((String) row[1]);
+        }
+        return customAiModels;
     }
 
     private Map<Long, HomePromptViewerInteractionInfo> findViewerInteractions(Long viewerUserId, List<Long> promptIds) {

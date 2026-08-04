@@ -53,6 +53,9 @@ public record PromptDetailResponse(
         @Schema(description = "태그 목록")
         List<PromptTagResponse> tags,
 
+        @Schema(description = "사용자가 직접 입력한 AI 모델명 목록. 없으면 빈 배열입니다.", example = "[\"GPT 4.1 Mini\"]")
+        List<String> customAiModels,
+
         @Schema(description = "공개 통계")
         PromptStatisticsResponse statistics,
 
@@ -90,6 +93,7 @@ public record PromptDetailResponse(
                 info.tags().stream()
                         .map(tag -> new PromptTagResponse(tag.tagId(), tag.tagType(), tag.name()))
                         .toList(),
+                info.customAiModels(),
                 new PromptStatisticsResponse(
                         info.statistics().viewCount(),
                         info.statistics().copyCount(),

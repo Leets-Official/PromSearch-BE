@@ -69,6 +69,7 @@ public class PromptDetailQueryService implements GetPromptDetailUseCase {
                 prompt.tags().stream()
                         .map(tag -> new Tag(tag.tagId(), tag.tagType(), tag.name()))
                         .toList(),
+                prompt.customAiModels(),
                 new Statistics(
                         prompt.statistics().viewCount(),
                         prompt.statistics().copyCount(),
