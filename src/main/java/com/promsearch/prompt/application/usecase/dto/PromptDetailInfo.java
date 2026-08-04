@@ -39,7 +39,7 @@ public record PromptDetailInfo(
         UNLOCKED
     }
 
-    public record ViewerInteraction(boolean recommended, boolean bookmarked) {
+    public record ViewerInteraction(boolean liked, boolean bookmarked) {
     }
 
     public record Image(UUID imageId, String imageUrl, int sortOrder, boolean thumbnail) {
@@ -48,6 +48,6 @@ public record PromptDetailInfo(
     public record Tag(Long tagId, TagType tagType, String name) {
     }
 
-    public record Statistics(long viewCount, long copyCount, long recommendCount, long commentCount) {
+    public record Statistics(long viewCount, long copyCount, long likeCount, long commentCount) {
     }
 }

@@ -55,7 +55,7 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
         }
 
         User author = authorResult.get();
-        boolean recommended = viewerId != null && postInteractionRepository
+        boolean liked = viewerId != null && postInteractionRepository
                 .existsByUserIdAndPostIdAndInteractionType(
                         viewerId, promptId, InteractionType.LIKE);
         boolean bookmarked = viewerId != null && postInteractionRepository
@@ -105,7 +105,7 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
                 post.getPricePoint(),
                 post.getPromptBody(),
                 post.getDescription(),
-                recommended,
+                liked,
                 bookmarked,
                 images,
                 tags,

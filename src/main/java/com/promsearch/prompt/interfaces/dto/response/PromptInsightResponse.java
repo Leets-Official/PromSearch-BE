@@ -6,8 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public record PromptInsightResponse(
         @Schema(description = "누적 조회수 합계", example = "1024")
         long totalViews,
-        @Schema(description = "누적 추천수 합계", example = "88")
-        long totalRecommends,
+        @Schema(description = "누적 좋아요 수", example = "88")
+        long likeCount,
         @Schema(description = "누적 복사수 합계", example = "42")
         long totalCopies
 ) {

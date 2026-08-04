@@ -13,7 +13,7 @@ public record MyPromptSummaryResponse(
         Instant publishedAt,
         @Schema(description = "누적 조회수", example = "128")
         long viewCount,
-        @Schema(description = "누적 추천수", example = "12")
-        long recommendCount
+        @Schema(description = "누적 좋아요 수", example = "12")
+        long likeCount
 ) {
 }

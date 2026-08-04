@@ -58,7 +58,7 @@ public class PromptDetailQueryService implements GetPromptDetailUseCase {
                 bodyAccess.body(),
                 prompt.description(),
                 new Access(bodyAccess.locked(), bodyAccess.reason()),
-                new ViewerInteraction(prompt.recommended(), prompt.bookmarked()),
+                new ViewerInteraction(prompt.liked(), prompt.bookmarked()),
                 prompt.images().stream()
                         .map(image -> new Image(
                                 image.imageId(),
@@ -73,7 +73,7 @@ public class PromptDetailQueryService implements GetPromptDetailUseCase {
                 new Statistics(
                         prompt.statistics().viewCount(),
                         prompt.statistics().copyCount(),
-                        prompt.statistics().recommendCount(),
+                        prompt.statistics().likeCount(),
                         prompt.statistics().commentCount()),
                 prompt.createdAt(),
                 prompt.updatedAt()
