@@ -71,7 +71,9 @@ public class SwaggerSecurityConfig {
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(apiAuthenticationEntryPoint)
                         .accessDeniedHandler(apiAccessDeniedHandler))
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers(SWAGGER_PATHS).permitAll()
                         .requestMatchers(
                                 HttpMethod.GET,
