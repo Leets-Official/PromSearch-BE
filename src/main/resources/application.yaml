@@ -1,28 +1,59 @@
+server:
+  port: ${SERVER_PORT:8080}
+  # 종료 신호를 받으면 진행 중인 요청을 마친 뒤 종료한다.
+  shutdown: graceful
+  # ALB/Nginx처럼 신뢰할 수 있는 프록시 뒤에서만 FRAMEWORK로 변경한다.
+  forward-headers-strategy: ${SERVER_FORWARD_HEADERS_STRATEGY:NONE}
+  tomcat:
+    threads:
+      # CPU 사용률·응답 지연·Hikari pending 수를 함께 보고 조정한다.
+      max: ${SERVER_TOMCAT_THREADS_MAX:200}
+      min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:10}
+    max-connections: ${SERVER_TOMCAT_MAX_CONNECTIONS:8192}
+    # 모든 처리 스레드가 사용 중일 때 대기시킬 요청 수다.
+    accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:100}
+
 spring:
   application:
     name: promsearch
+  lifecycle:
+    # 현재 Docker stop 기본 유예 시간(10초) 안에 종료되도록 둔다.
+    timeout-per-shutdown-phase: ${SPRING_LIFECYCLE_SHUTDOWN_TIMEOUT:9s}
   jackson:
     time-zone: ${RESPONSE_TIME_ZONE:Asia/Seoul}
   datasource:
-    # TODO: API 인스턴스 수 × Hikari maximum-pool-size가 PostgreSQL max_connections의
-    # 70~80% 이내가 되도록 부하 테스트 후 아래 항목을 활성화
-    # hikari:
-    #   maximum-pool-size: ${DB_API_MAXIMUM_POOL_SIZE:10}
-    #   minimum-idle: ${DB_API_MINIMUM_IDLE:2}
-    #   connection-timeout: ${DB_API_CONNECTION_TIMEOUT_MS:3000}
-    #   max-lifetime: ${DB_API_MAX_LIFETIME_MS:1800000}
+    hikari:
+      auto-commit: true
+      # API·Worker 풀 합계가 PostgreSQL max_connections의 70~80% 이내인지 부하 테스트로 튜닝한다.
+      maximum-pool-size: ${DB_API_MAXIMUM_POOL_SIZE:10}
+      minimum-idle: ${DB_API_MINIMUM_IDLE:2}
+      # DB 장애 시 요청 스레드가 오래 대기하지 않도록 짧게 실패한다.
+      connection-timeout: ${DB_API_CONNECTION_TIMEOUT_MS:3000}
+      validation-timeout: ${DB_API_VALIDATION_TIMEOUT_MS:1000}
+      # RDS·네트워크의 유휴 연결 정리 정책을 보며 튜닝한다.
+      idle-timeout: ${DB_API_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${DB_API_MAX_LIFETIME_MS:1800000}
+      keepalive-time: ${DB_API_KEEPALIVE_TIME_MS:60000}
+      # 배포 시 DB 접속 실패를 즉시 감지하도록 fail-fast로 둔다.
+      initialization-fail-timeout: ${DB_API_INITIALIZATION_FAIL_TIMEOUT_MS:1}
+  jpa:
+    # Controller까지 영속성 컨텍스트를 열어 두지 않고 서비스 트랜잭션에서 조회를 끝낸다.
+    open-in-view: false
+    hibernate:
+      # 운영 스키마는 Flyway로만 관리하고 Hibernate가 변경하지 않는다.
+      ddl-auto: ${SPRING_JPA_HIBERNATE_DDL_AUTO:none}
+    properties:
+      hibernate:
+        default_schema: public
+        format_sql: ${HIBERNATE_FORMAT_SQL:false}
+        show_sql: ${HIBERNATE_SHOW_SQL:false}
+        # 통계 수집은 오버헤드가 있으므로 성능 분석 시에만 활성화한다.
+        generate_statistics: ${HIBERNATE_GENERATE_STATISTICS:false}
   flyway:
-    # V1~V7은 전체 초기 스키마가 아닌 증분 SQL이다. #21에서 baseline을 확정하기 전 자동 적용하지 않는다.
+    # 운영에서는 GitHub Secret으로 true를 전달한다. 새 DB도 baseline-on-migrate는 사용하지 않는다.
     enabled: ${SPRING_FLYWAY_ENABLED:false}
-
-# TODO: API 요청 스레드는 DB 커넥션보다 크게 둘 수 있지만, DB 작업이 많은 API에서는
-# 대기열만 늘어나지 않도록 HTTP 지연·Hikari pending·CPU를 함께 보고 활성화
-# server:
-#   tomcat:
-#     threads:
-#       max: ${SERVER_TOMCAT_THREADS_MAX:200}
-#       min-spare: ${SERVER_TOMCAT_THREADS_MIN_SPARE:10}
-#     accept-count: ${SERVER_TOMCAT_ACCEPT_COUNT:100}
+    baseline-on-migrate: ${SPRING_FLYWAY_BASELINE_ON_MIGRATE:false}
+    out-of-order: ${SPRING_FLYWAY_OUT_OF_ORDER:false}
 
 springdoc:
   api-docs:
@@ -33,6 +64,24 @@ springdoc:
     path: /docs
     persist-authorization: true
     try-it-out-enabled: true
+    operations-sorter: method
+    tags-sorter: alpha
+    doc-expansion: none
+    disable-swagger-default-url: true
+    display-request-duration: true
+    filter: true
+    deep-linking: true
+
+logging:
+  level:
+    root: ${LOGGING_ROOT_LEVEL:INFO}
+    com.promsearch: ${LOGGING_APP_LEVEL:INFO}
+    # 운영 기본값에서는 SQL과 바인딩 값을 숨기고, 장애 분석 때만 DEBUG/TRACE로 올린다.
+    org.hibernate.SQL: ${LOGGING_HIBERNATE_SQL_LEVEL:WARN}
+    org.hibernate.orm.jdbc.bind: ${LOGGING_HIBERNATE_BIND_LEVEL:WARN}
+    org.springframework.transaction: ${LOGGING_TRANSACTION_LEVEL:INFO}
+    org.springframework.orm.jpa: ${LOGGING_JPA_LEVEL:INFO}
+    com.zaxxer.hikari: ${LOGGING_HIKARI_LEVEL:WARN}
 
 prompt:
   pricing:

@@ -1,6 +1,10 @@
 spring:
   jackson:
     time-zone: Asia/Seoul
+  jpa:
+    # 운영의 ddl-auto=none을 덮어 테스트 간 격리된 H2 스키마를 생성한다.
+    hibernate:
+      ddl-auto: create-drop
   flyway:
     # 단위·슬라이스 테스트는 JPA 테스트 픽스처를 사용하며 운영 마이그레이션은 별도 테스트에서 검증한다.
     enabled: false
