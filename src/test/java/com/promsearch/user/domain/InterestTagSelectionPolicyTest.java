@@ -12,15 +12,15 @@ class InterestTagSelectionPolicyTest {
     @Test
     void acceptsUpToThreeTagsPerType() {
         assertThatCode(() -> InterestTagSelectionPolicy.validate(
-                List.of("학생", "직장인", "개발자"),
-                List.of("PPT", "보고서", "이미지 생성")
+                List.of(1L, 2L, 3L),
+                List.of(4L, 5L, 6L)
         )).doesNotThrowAnyException();
     }
 
     @Test
     void rejectsMoreThanThreeTagsPerType() {
         assertThatThrownBy(() -> InterestTagSelectionPolicy.validate(
-                List.of("학생", "직장인", "자영업자", "개발자"),
+                List.of(1L, 2L, 3L, 4L),
                 List.of()
         )).isInstanceOf(UserDomainException.class);
     }
@@ -28,7 +28,7 @@ class InterestTagSelectionPolicyTest {
     @Test
     void rejectsDuplicateTags() {
         assertThatThrownBy(() -> InterestTagSelectionPolicy.validate(
-                List.of("개발자", "개발자"),
+                List.of(1L, 1L),
                 List.of()
         )).isInstanceOf(UserDomainException.class);
     }

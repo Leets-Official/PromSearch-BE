@@ -62,13 +62,11 @@ class UserCommandServiceTest {
         UserInfo userInfo = userCommandService.updateProfile(
                 UpdateUserProfileCommand.of(
                         1L,
-                        " newName ",
                         " newNick ",
                         " new@example.com "
                 )
         );
 
-        assertThat(userInfo.name()).isEqualTo("newName");
         assertThat(userInfo.nickname()).isEqualTo("newNick");
         assertThat(userInfo.email()).isEqualTo("new@example.com");
         assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/original.png");
@@ -80,12 +78,11 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, null)
+                UpdateUserProfileCommand.of(1L, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
         assertThat(userInfo.nickname()).isEqualTo("oldNick");
-        assertThat(userInfo.name()).isEqualTo("oldName");
         assertThat(userInfo.profileImageUrl()).isEqualTo("old-image");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
     }
@@ -96,7 +93,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "two", null)
+                UpdateUserProfileCommand.of(1L, "two", null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -109,7 +106,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, "user2@example.com")
+                UpdateUserProfileCommand.of(1L, null, "user2@example.com")
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")

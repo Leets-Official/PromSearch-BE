@@ -225,7 +225,7 @@ class SocialAuthenticationServiceTest {
                     "USER",
                     true
             ));
-            return new SignupInfo(userId, command.name(), command.nickname(), command.email());
+            return new SignupInfo(userId, command.nickname(), command.email());
         }
     }
 
