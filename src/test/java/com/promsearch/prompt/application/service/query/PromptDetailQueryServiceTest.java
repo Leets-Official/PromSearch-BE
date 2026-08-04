@@ -56,6 +56,7 @@ class PromptDetailQueryServiceTest {
         assertThat(result.access().locked()).isTrue();
         assertThat(result.access().reason()).isEqualTo(AccessReason.ANONYMOUS);
         assertThat(result.viewerInteraction().recommended()).isFalse();
+        assertThat(result.customAiModels()).containsExactly("GPT 4.1 Mini");
         assertThat(result.statistics().recommendCount()).isEqualTo(7L);
     }
 
@@ -147,6 +148,7 @@ class PromptDetailQueryServiceTest {
                 false,
                 List.of(),
                 List.of(),
+                List.of("GPT 4.1 Mini"),
                 new StatisticsProjection(100L, 12L, 7L, 3L),
                 Instant.parse("2026-07-28T01:00:00Z"),
                 Instant.parse("2026-07-28T02:00:00Z")

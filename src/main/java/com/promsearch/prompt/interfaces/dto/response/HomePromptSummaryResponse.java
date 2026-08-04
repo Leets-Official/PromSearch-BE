@@ -39,6 +39,9 @@ public record HomePromptSummaryResponse(
         @Schema(description = "카드에 표시할 태그 목록")
         List<HomePromptTagResponse> tags,
 
+        @Schema(description = "사용자가 직접 입력한 AI 모델명 목록. 없으면 빈 배열입니다.", example = "[\"GPT 4.1 Mini\"]")
+        List<String> customAiModels,
+
         @Schema(description = "생성 시각", example = "2026-07-23T12:00:00Z")
         Instant createdAt
 ) {
@@ -57,6 +60,7 @@ public record HomePromptSummaryResponse(
                 info.tags().stream()
                         .map(HomePromptTagResponse::from)
                         .toList(),
+                info.customAiModels(),
                 info.createdAt()
         );
     }

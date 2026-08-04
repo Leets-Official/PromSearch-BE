@@ -27,6 +27,7 @@ public interface LoadPromptDetailPort {
             boolean bookmarked,
             List<ImageProjection> images,
             List<TagProjection> tags,
+            List<String> customAiModels,
             StatisticsProjection statistics,
             Instant createdAt,
             Instant updatedAt

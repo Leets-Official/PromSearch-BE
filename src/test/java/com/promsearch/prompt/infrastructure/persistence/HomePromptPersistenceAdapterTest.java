@@ -81,12 +81,13 @@ class HomePromptPersistenceAdapterTest {
         TagJpaEntity jobTag = saveTag(TagType.JOB, "학생", "학생");
         TagJpaEntity taskTag = saveTag(TagType.TASK, "PPT", "ppt");
         TagJpaEntity aiModelTag = saveTag(TagType.AI_MODEL, "ChatGPT", "chatgpt");
+        TagJpaEntity customAiModelTag = saveCustomAiModelTag("GPT 4.1 Mini", "gpt41mini");
 
         Long publicPromptId = savePrompt(
                 authorId,
                 "보고서 프롬프트",
                 PromptVisibility.PUBLIC,
-                List.of(jobTag, taskTag, aiModelTag)
+                List.of(jobTag, taskTag, aiModelTag, customAiModelTag)
         );
         savePrompt(authorId, "보고서 비공개 프롬프트", PromptVisibility.PRIVATE, List.of(jobTag, taskTag, aiModelTag));
         saveReadyThumbnail(authorId, publicPromptId, "watermarked/%d/thumb.jpg".formatted(publicPromptId));
@@ -121,6 +122,7 @@ class HomePromptPersistenceAdapterTest {
         assertThat(prompt.tags())
                 .extracting("tagId")
                 .containsExactly(jobTag.getId(), taskTag.getId(), aiModelTag.getId());
+        assertThat(prompt.customAiModels()).containsExactly("GPT 4.1 Mini");
     }
 
     @DisplayName("홈 필터 검색어는 LIKE 와일드카드 문자를 일반 문자로 검색한다")
@@ -151,6 +153,10 @@ class HomePromptPersistenceAdapterTest {
 
     private TagJpaEntity saveTag(TagType tagType, String tagName, String normalizedName) {
         return tagRepository.saveAndFlush(TagJpaEntity.create(tagType, tagName, normalizedName, false));
+    }
+
+    private TagJpaEntity saveCustomAiModelTag(String tagName, String normalizedName) {
+        return tagRepository.saveAndFlush(TagJpaEntity.create(TagType.AI_MODEL, tagName, normalizedName, true));
     }
 
     private List<Long> searchPromptIds(String keyword) {

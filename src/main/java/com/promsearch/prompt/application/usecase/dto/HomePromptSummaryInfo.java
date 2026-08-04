@@ -16,6 +16,7 @@ public record HomePromptSummaryInfo(
         HomePromptStatisticsInfo statistics,
         HomePromptViewerInteractionInfo viewerInteraction,
         List<HomePromptTagInfo> tags,
+        List<String> customAiModels,
         Instant createdAt
 ) {
 }

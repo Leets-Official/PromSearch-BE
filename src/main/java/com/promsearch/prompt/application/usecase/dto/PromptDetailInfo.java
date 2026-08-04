@@ -20,6 +20,7 @@ public record PromptDetailInfo(
         ViewerInteraction viewerInteraction,
         List<Image> images,
         List<Tag> tags,
+        List<String> customAiModels,
         Statistics statistics,
         Instant createdAt,
         Instant updatedAt
