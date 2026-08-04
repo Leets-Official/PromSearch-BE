@@ -23,6 +23,17 @@ public interface PostRepository extends JpaRepository<PostJpaEntity, Long> {
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""
+            select post
+            from PostJpaEntity post
+            where post.id = :postId
+              and post.status = com.promsearch.prompt.domain.enums.PromptStatus.ACTIVE
+              and post.visibility = com.promsearch.prompt.domain.enums.PromptVisibility.PUBLIC
+              and post.deletedAt is null
+            """)
+    Optional<PostJpaEntity> findAccessibleByIdForUpdate(@Param("postId") Long postId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
             select distinct post
             from PostJpaEntity post
             left join fetch post.postTags postTag
