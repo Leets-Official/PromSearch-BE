@@ -106,7 +106,7 @@ public class User {
                 .build();
     }
 
-    public User updateProfile(String email, String nickname, String name, String profileImageUrl) {
+    public User updateProfile(String email, String nickname, String profileImageUrl) {
         validateRequired(email, password, nickname, name, point, role, grade, status);
 
         return User.builder()

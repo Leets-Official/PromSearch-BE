@@ -36,7 +36,6 @@ public class UserCommandService implements
         RegisterSocialUserUseCase {
 
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
-    private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
     private static final int NICKNAME_HINT_MAX_LENGTH = 90;
     private static final int NICKNAME_RETRY_LIMIT = 5;
 
@@ -54,7 +53,7 @@ public class UserCommandService implements
                 command.email(),
                 encodedPassword,
                 command.nickname(),
-                command.name(),
+                command.nickname(),
                 null
         );
 
@@ -67,7 +66,6 @@ public class UserCommandService implements
     public UserInfo updateProfile(UpdateUserProfileCommand command) {
         User user = loadUserPort.getById(command.userId());
 
-        String name = resolveRequiredProfileValue(command.name(), user.getName(), UserErrorCode.INVALID_NAME);
         String nickname = resolveRequiredProfileValue(
                 command.nickname(),
                 user.getNickname(),
@@ -86,7 +84,6 @@ public class UserCommandService implements
         User updatedUser = user.updateProfile(
                 email,
                 nickname,
-                name,
                 profileImageUrl
         );
         UserInfo userInfo = UserInfo.from(saveUserPort.update(updatedUser));
@@ -121,10 +118,9 @@ public class UserCommandService implements
         validateDuplicateEmail(command.email());
 
         String nickname = resolveAvailableNickname(command.nickname());
-        String name = resolveSocialName(command.name());
         String placeholderPassword = passwordEncoder.encode(UUID.randomUUID().toString());
 
-        User user = User.create(command.email(), placeholderPassword, nickname, name, command.profileImageUrl());
+        User user = User.create(command.email(), placeholderPassword, nickname, nickname, command.profileImageUrl());
 
         SignupInfo signupInfo = SignupInfo.from(saveUserPort.create(user));
         log.info("user_social_signup_completed userId={}", signupInfo.userId());
@@ -153,10 +149,6 @@ public class UserCommandService implements
         return trimmed.length() > NICKNAME_HINT_MAX_LENGTH
                 ? trimmed.substring(0, NICKNAME_HINT_MAX_LENGTH)
                 : trimmed;
-    }
-
-    private String resolveSocialName(String name) {
-        return (name == null || name.isBlank()) ? DEFAULT_SOCIAL_NAME : name.trim();
     }
 
     private void validateDuplicateNickname(String nickname) {

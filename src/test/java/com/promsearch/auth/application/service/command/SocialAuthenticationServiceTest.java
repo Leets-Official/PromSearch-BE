@@ -190,7 +190,7 @@ class SocialAuthenticationServiceTest {
 
         Long seed(String email, String nickname, boolean active) {
             Long userId = nextId++;
-            usersById.put(userId, new AuthUserInfo(userId, email, "encoded-placeholder", nickname, nickname, "USER", active));
+            usersById.put(userId, new AuthUserInfo(userId, email, "encoded-placeholder", nickname, "USER", active));
             return userId;
         }
 
@@ -215,8 +215,8 @@ class SocialAuthenticationServiceTest {
             }
             Long userId = nextId++;
             usersById.put(userId, new AuthUserInfo(
-                    userId, command.email(), "encoded-placeholder", command.nickname(), command.name(), "USER", true));
-            return new SignupInfo(userId, command.name(), command.nickname(), command.email());
+                    userId, command.email(), "encoded-placeholder", command.nickname(), "USER", true));
+            return new SignupInfo(userId, command.nickname(), command.email());
         }
     }
 

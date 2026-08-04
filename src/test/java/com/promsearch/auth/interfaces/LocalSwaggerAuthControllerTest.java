@@ -61,18 +61,18 @@ class LocalSwaggerAuthControllerTest {
                 .asText();
         assertThat(authorizationHeader).startsWith("Bearer ");
 
-        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("스웨거", null, null, null);
+        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("swagger-user", null, null);
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.name").value("스웨거"));
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.nickname").value("swagger-user"));
     }
 
     private Long signupAndGetUserId() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password123"

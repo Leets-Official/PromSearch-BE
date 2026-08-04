@@ -7,11 +7,6 @@ import jakarta.validation.constraints.Size;
 
 @Schema(description = "회원가입 요청")
 public record SignupRequest(
-        @Schema(description = "사용자 실명", example = "홍길동")
-        @NotBlank(message = "이름은 필수입니다.")
-        @Size(max = 100, message = "이름은 100자 이하여야 합니다.")
-        String name,
-
         @Schema(description = "서비스에서 사용할 닉네임", example = "prompt-master")
         @NotBlank(message = "닉네임은 필수입니다.")
         @Size(max = 100, message = "닉네임은 100자 이하여야 합니다.")
@@ -27,7 +22,7 @@ public record SignupRequest(
 ) {
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(name, nickname, email, password);
+        return SignupCommand.of(nickname, email, password);
     }
 
     /**
@@ -35,6 +30,6 @@ public record SignupRequest(
      */
     @Override
     public String toString() {
-        return "SignupRequest[name=" + name + ", nickname=" + nickname + ", email=" + email + ", password=***]";
+        return "SignupRequest[nickname=" + nickname + ", email=" + email + ", password=***]";
     }
 }

@@ -43,15 +43,14 @@ class UserCommandServiceTest {
         UserInfo userInfo = userCommandService.updateProfile(
                 UpdateUserProfileCommand.of(
                         1L,
-                        " newName ",
                         " newNick ",
                         " new@example.com ",
                         " https://image.test/me.png "
                 )
         );
 
-        assertThat(userInfo.name()).isEqualTo("newName");
         assertThat(userInfo.nickname()).isEqualTo("newNick");
+        assertThat(userRepository.users.get(1L).getName()).isEqualTo("oldName");
         assertThat(userInfo.email()).isEqualTo("new@example.com");
         assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/me.png");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
@@ -62,12 +61,11 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, null, null)
+                UpdateUserProfileCommand.of(1L, null, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
         assertThat(userInfo.nickname()).isEqualTo("oldNick");
-        assertThat(userInfo.name()).isEqualTo("oldName");
         assertThat(userInfo.profileImageUrl()).isEqualTo("old-image");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
     }
@@ -78,7 +76,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "two", null, null)
+                UpdateUserProfileCommand.of(1L, "two", null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -91,7 +89,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, "user2@example.com", null)
+                UpdateUserProfileCommand.of(1L, null, "user2@example.com", null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -155,7 +153,7 @@ class UserCommandServiceTest {
 
         userCommandService.delete(1L);
         SignupInfo signupInfo = userCommandService.signup(
-                SignupCommand.of("newName", "oldNick", "old@example.com", "new-password")
+                SignupCommand.of("oldNick", "old@example.com", "new-password")
         );
 
         assertThat(signupInfo.userId()).isEqualTo(2L);

@@ -8,7 +8,6 @@ public record AuthUserInfo(
         String email,
         String encodedPassword,
         String nickname,
-        String name,
         String role,
         boolean active
 ) {
@@ -19,7 +18,6 @@ public record AuthUserInfo(
                 user.getEmail(),
                 user.getPassword(),
                 user.getNickname(),
-                user.getName(),
                 user.getRole().name(),
                 user.getStatus() == UserStatus.ACTIVE
         );

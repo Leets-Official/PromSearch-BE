@@ -9,7 +9,6 @@ import com.promsearch.auth.domain.CredentialPolicy;
  * 이메일과 비밀번호를 인증 도메인의 단일 정책으로 검증한다.
  */
 public record SignupCommand(
-        String name,
         String nickname,
         String email,
         String password
@@ -20,8 +19,8 @@ public record SignupCommand(
         CredentialPolicy.validatePassword(password);
     }
 
-    public static SignupCommand of(String name, String nickname, String email, String password) {
-        return new SignupCommand(name, nickname, email, password);
+    public static SignupCommand of(String nickname, String email, String password) {
+        return new SignupCommand(nickname, email, password);
     }
 
     /**
@@ -29,6 +28,6 @@ public record SignupCommand(
      */
     @Override
     public String toString() {
-        return "SignupCommand[name=" + name + ", nickname=" + nickname + ", email=" + email + ", password=***]";
+        return "SignupCommand[nickname=" + nickname + ", email=" + email + ", password=***]";
     }
 }

@@ -71,7 +71,6 @@ class AuthControllerTest {
     @Test
     void signupSuccess() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password123"
@@ -84,7 +83,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.code").value("COMMON-201"))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
@@ -100,7 +99,6 @@ class AuthControllerTest {
         signup("홍길동", "gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedNicknameRequest = new SignupRequest(
-                "김길동",
                 "gildong",
                 "another@example.com",
                 "password123"
@@ -120,7 +118,6 @@ class AuthControllerTest {
         signup("홍길동", "gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedEmailRequest = new SignupRequest(
-                "김길동",
                 "another",
                 "gildong@example.com",
                 "password123"
@@ -141,7 +138,6 @@ class AuthControllerTest {
         signup("Hong Gil Dong", "gildong", "gildong@example.com", "password123");
 
         SignupRequest duplicatedRequest = new SignupRequest(
-            "Kim Gil Dong",
             "gildong",
             "gildong@example.com",
             "password123"
@@ -160,7 +156,6 @@ class AuthControllerTest {
     void signupFailWhenRequestInvalid() throws Exception {
         SignupRequest invalidRequest = new SignupRequest(
                 "",
-                "",
                 "invalid-email",
                 "short"
         );
@@ -177,7 +172,6 @@ class AuthControllerTest {
     @Test
     void signupFailWhenEmailViolatesCredentialPolicy() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "invalid-email",
                 "password123"
@@ -195,7 +189,6 @@ class AuthControllerTest {
     @Test
     void signupFailWhenPasswordViolatesCredentialPolicy() throws Exception {
         SignupRequest request = new SignupRequest(
-                "홍길동",
                 "gildong",
                 "gildong@example.com",
                 "password"
@@ -227,7 +220,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
-                .andExpect(jsonPath("$.result.name").value("홍길동"))
+                .andExpect(jsonPath("$.result.name").doesNotExist())
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
@@ -289,7 +282,7 @@ class AuthControllerTest {
     @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
     @Test
     void protectedApiRequiresAccessToken() throws Exception {
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -306,7 +299,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("new-nickname", null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -315,8 +308,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.result.name").value("새이름"))
-                .andExpect(jsonPath("$.result.nickname").value("gildong"));
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.nickname").value("new-nickname"));
     }
 
     @DisplayName("프로필 이메일이 인증 도메인 정책을 위반하면 수정에 실패한다")
@@ -326,7 +319,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email", null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, "invalid-email", null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -605,7 +598,7 @@ class AuthControllerTest {
     }
 
     private void signup(String name, String nickname, String email, String password) throws Exception {
-        SignupRequest request = new SignupRequest(name, nickname, email, password);
+        SignupRequest request = new SignupRequest(nickname, email, password);
 
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)

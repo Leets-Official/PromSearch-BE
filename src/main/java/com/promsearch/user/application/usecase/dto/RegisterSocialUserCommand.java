@@ -8,7 +8,6 @@ import com.promsearch.auth.domain.CredentialPolicy;
 public record RegisterSocialUserCommand(
         String email,
         String nickname,
-        String name,
         String profileImageUrl
 ) {
 
@@ -17,7 +16,7 @@ public record RegisterSocialUserCommand(
         CredentialPolicy.validateEmail(email);
     }
 
-    public static RegisterSocialUserCommand of(String email, String nickname, String name, String profileImageUrl) {
-        return new RegisterSocialUserCommand(email, nickname, name, profileImageUrl);
+    public static RegisterSocialUserCommand of(String email, String nickname, String profileImageUrl) {
+        return new RegisterSocialUserCommand(email, nickname, profileImageUrl);
     }
 }

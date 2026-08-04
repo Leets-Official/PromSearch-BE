@@ -56,7 +56,6 @@ public class CredentialAuthenticationService implements LoginUseCase {
                 refreshToken.value(),
                 accessToken.expiresInSeconds(),
                 authenticatedUser,
-                user.name(),
                 user.nickname()
         );
     }

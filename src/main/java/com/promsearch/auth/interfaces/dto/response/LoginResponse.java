@@ -8,7 +8,6 @@ public record LoginResponse(
         String tokenType,
         Long expiresIn,
         Long userId,
-        String name,
         String nickname,
         String email
 ) {
@@ -20,7 +19,6 @@ public record LoginResponse(
                 info.tokenType(),
                 info.expiresIn(),
                 info.userId(),
-                info.name(),
                 info.nickname(),
                 info.email()
         );
