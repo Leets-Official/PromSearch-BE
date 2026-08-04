@@ -5,6 +5,7 @@ import com.promsearch.prompt.infrastructure.persistence.PromptImagePersistenceAd
 import com.promsearch.prompt.infrastructure.persistence.PromptImageRepository;
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
 import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import com.promsearch.worker.prompt.infrastructure.image.WatermarkRenderingProperties;
 import java.util.Map;
 import org.springframework.boot.WebApplicationType;
@@ -21,6 +22,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 @EnableJpaRepositories(basePackageClasses = PromptImageRepository.class)
 @EnableConfigurationProperties({
         S3StorageProperties.class,
+        S3ObjectStorageProperties.class,
         WatermarkSqsProperties.class,
         WatermarkRenderingProperties.class
 })

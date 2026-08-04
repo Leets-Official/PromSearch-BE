@@ -31,10 +31,10 @@ class CredentialLoggingSafetyTest {
     private static Stream<Arguments> credentialsContainingPasswords() {
         return Stream.of(
                 Arguments.of(LoginCommand.of("user@example.com", CURRENT_PASSWORD)),
-                Arguments.of(SignupCommand.of("name", "nickname", "user@example.com", CURRENT_PASSWORD)),
+                Arguments.of(SignupCommand.of("nickname", "user@example.com", CURRENT_PASSWORD)),
                 Arguments.of(ChangePasswordCommand.of(1L, CURRENT_PASSWORD, NEW_PASSWORD)),
                 Arguments.of(new LoginRequest("user@example.com", CURRENT_PASSWORD)),
-                Arguments.of(new SignupRequest("name", "nickname", "user@example.com", CURRENT_PASSWORD)),
+                Arguments.of(new SignupRequest("nickname", "user@example.com", CURRENT_PASSWORD)),
                 Arguments.of(new ChangePasswordRequest(CURRENT_PASSWORD, NEW_PASSWORD))
         );
     }

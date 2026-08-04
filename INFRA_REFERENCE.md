@@ -24,11 +24,12 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 - 트리거: `develop`, `main` 대상 `push` / `pull_request`
 - `feature/*` → `develop` PR, `develop` → `main` PR 모두 여기서 빌드 + 테스트(`./gradlew build`)와 Docker 이미지 빌드를 수행합니다.
 - 이 워크플로우는 배포를 하지 않습니다. 실패해도 재시도가 자유로워야 하므로 알림도 없습니다.
+- 동일 브랜치의 이전 CI는 취소하고 최신 커밋만 검증하며, Gradle 의존성 캐시를 사용합니다.
 
 ### `deploy.yml` — 배포
 
 - 트리거: `workflow_run` (`ci.yml`의 실행 완료 이벤트), `branches: [main]`으로 제한
-- `if: github.event.workflow_run.conclusion == 'success'` 조건이 있어서, **`main`에서 CI가 성공했을 때만** 실제로 동작합니다.
+- CI 실행 이벤트가 `push`이고, 대상 브랜치가 `main`이며, 실행 결과가 `success`일 때만 실제로 동작합니다.
   - `develop`에서 CI가 성공해도 이 조건에서 걸러져 배포로 이어지지 않습니다.
   - `main`에서 CI가 실패하면 이 워크플로우 자체는 실행되지만 `build-and-push` job이 스킵됩니다.
 - 체크아웃 시 `ref: ${{ github.event.workflow_run.head_sha }}`를 사용합니다. `main`의 최신 tip이 아니라 **CI가 실제로 검증한 커밋**을 그대로 배포하기 위함입니다 (CI 종료 시점과 배포 시작 시점 사이에 `main`이 더 앞서가는 레이스 컨디션을 방지).
@@ -38,10 +39,13 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
   - CI가 검증한 커밋 SHA 이미지로 API를 기동하고, API 헬스체크가 완료된 뒤 Worker를 시작합니다.
   - Worker의 첫 SQS Long Polling 성공 로그까지 확인한 뒤 배포를 완료합니다.
   - API 또는 Worker 검증이 실패하면 직전 컨테이너를 복구합니다.
-  - Flyway PostgreSQL 의존성은 포함하지만, 전체 baseline을 확정하는 #21 전까지 자동 마이그레이션은 비활성화합니다.
+  - Docker 명령과 로그 조회에는 제한 시간을 두며, Worker readiness는 최근 200줄만 확인합니다.
+  - API와 Worker 로그는 컨테이너별 최대 10MB × 3파일로 순환합니다.
+  - API가 Flyway를 실행하며, 새 빈 PostgreSQL에는 V1 전체 초기 스키마를 적용합니다.
   - `--restart unless-stopped`: EC2가 재부팅되어도 컨테이너가 자동으로 다시 뜹니다.
   - `docker image prune -f`: 배포마다 쌓이는 이전 이미지를 정리합니다.
 - 배포(`deploy` job) 실패 시 Discord 웹훅으로 알림이 갑니다.
+- GitHub `production` Environment를 사용하므로 필요하면 Environment protection rule에서 배포 승인을 설정할 수 있습니다.
 
 ## 필요한 GitHub Secrets
 
@@ -67,7 +71,7 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `SPRING_DATASOURCE_URL` | API와 Worker가 공유하는 PostgreSQL JDBC URL |
 | `SPRING_DATASOURCE_USERNAME` | PostgreSQL 사용자 이름 |
 | `SPRING_DATASOURCE_PASSWORD` | PostgreSQL 비밀번호 |
-| `SPRING_FLYWAY_ENABLED` | #21 baseline 확정 전에는 `false` |
+| `SPRING_FLYWAY_ENABLED` | 새 빈 운영 DB는 `true` |
 | `AWS_S3_BUCKET` | 원본·워터마크 이미지를 저장할 S3 버킷 |
 | `AWS_SQS_WATERMARK_ENABLED` | SQS 발행기와 Worker 활성화 여부 (`true`) |
 | `AWS_SQS_WATERMARK_QUEUE_URL` | 이미지 워터마크 작업 SQS Queue URL |

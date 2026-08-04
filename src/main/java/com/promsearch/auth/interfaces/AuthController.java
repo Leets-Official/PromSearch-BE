@@ -8,7 +8,6 @@ import com.promsearch.auth.interfaces.dto.response.LoginResponse;
 import com.promsearch.auth.interfaces.dto.request.ReissueRequest;
 import com.promsearch.auth.interfaces.dto.response.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
-import com.promsearch.auth.interfaces.dto.response.SignupResponse;
 import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.auth.interfaces.docs.AuthControllerDocs;
 import com.promsearch.global.response.ApiResponse;
@@ -35,11 +34,9 @@ public class AuthController implements AuthControllerDocs {
 
     @PostMapping("/signup")
     @Override
-    public ResponseEntity<ApiResponse<SignupResponse>> signup(@Valid @RequestBody SignupRequest request) {
-        ApiResponse<SignupResponse> response = ApiResponse.onSuccess(
-                SuccessCode.CREATED,
-                SignupResponse.from(signupUseCase.signup(request.toCommand()))
-        );
+    public ResponseEntity<ApiResponse<Void>> signup(@Valid @RequestBody SignupRequest request) {
+        signupUseCase.signup(request.toCommand());
+        ApiResponse<Void> response = ApiResponse.onSuccess(SuccessCode.CREATED, null);
 
         return ResponseEntity
                 .status(SuccessCode.CREATED.getHttpStatus())

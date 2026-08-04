@@ -6,6 +6,7 @@ public enum SuccessCode implements BaseCode {
 
     OK(HttpStatus.OK, "COMMON-200", "성공입니다."),
     CREATED(HttpStatus.CREATED, "COMMON-201", "생성되었습니다."),
+    REPORT_ACCEPTED(HttpStatus.CREATED, "COMMON-201", "신고가 접수되었습니다."),
     NO_CONTENT(HttpStatus.NO_CONTENT, "COMMON-204", "성공적으로 처리되었습니다.");
 
     private final HttpStatus httpStatus;

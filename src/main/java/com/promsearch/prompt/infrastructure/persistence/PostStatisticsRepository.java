@@ -5,10 +5,35 @@ import jakarta.persistence.LockModeType;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 public interface PostStatisticsRepository extends JpaRepository<PostStatisticsJpaEntity, Long> {
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("""
+            update PostStatisticsJpaEntity statistics
+            set statistics.copyCount = statistics.copyCount + 1
+            where statistics.postId = :promptId
+            """)
+    int incrementCopyCount(@Param("promptId") Long promptId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update PostStatisticsJpaEntity statistics
+            set statistics.reportCount = statistics.reportCount + 1
+            where statistics.postId = :promptId
+              and exists (
+                    select post.id
+                    from PostJpaEntity post
+                    where post.id = statistics.postId
+                      and post.status = com.promsearch.prompt.domain.enums.PromptStatus.ACTIVE
+                      and post.visibility = com.promsearch.prompt.domain.enums.PromptVisibility.PUBLIC
+                      and post.deletedAt is null
+              )
+            """)
+    int incrementReportCountIfReportable(@Param("promptId") Long promptId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("""

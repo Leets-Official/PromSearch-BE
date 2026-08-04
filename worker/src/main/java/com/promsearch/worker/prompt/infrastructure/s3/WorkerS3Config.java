@@ -1,6 +1,6 @@
 package com.promsearch.worker.prompt.infrastructure.s3;
 
-import com.promsearch.prompt.infrastructure.storage.s3.S3StorageProperties;
+import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import software.amazon.awssdk.http.urlconnection.UrlConnectionHttpClient;
@@ -13,7 +13,7 @@ public class WorkerS3Config {
 
     /** AWS 기본 자격 증명 체인을 사용하는 동기 S3 클라이언트 */
     @Bean
-    S3Client workerS3Client(S3StorageProperties properties) {
+    S3Client workerS3Client(S3ObjectStorageProperties properties) {
         // TODO: 동시 처리량을 높일 때 Apache HTTP 커넥션 풀로 전환하고
         // maxConnections를 다운로드 + 업로드 동시 요청 수 이상으로 설정한 뒤 타임아웃 검증
         return S3Client.builder()
