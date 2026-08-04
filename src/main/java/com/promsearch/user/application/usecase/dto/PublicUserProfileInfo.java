@@ -21,7 +21,11 @@ public record PublicUserProfileInfo(
         Instant createdAt
 ) {
 
-    public static PublicUserProfileInfo from(User user, UserProfileStats stats) {
+    public static PublicUserProfileInfo from(
+            User user,
+            UserProfileStats stats,
+            String profileImageUrl
+    ) {
         /*
          * 공개 프로필 응답에서는 user.getEmail(), user.getName(), user.getPoint(), user.getRole() 등을 절대 포함하지 않습니다.
          * 카드에서 작성자 프로필을 열 때 필요한 식별/표시 정보와 공개 통계만 내려줍니다.
@@ -29,7 +33,7 @@ public record PublicUserProfileInfo(
         return new PublicUserProfileInfo(
                 user.getUserId().id(),
                 user.getNickname(),
-                user.getProfileImageUrl(),
+                profileImageUrl,
                 user.getGrade(),
                 stats.promptCount(),
                 stats.totalLikeCount(),
