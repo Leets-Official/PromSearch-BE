@@ -25,7 +25,7 @@ class CorsConfigTest {
     void allowedOriginPassesPreflightOnProtectedApi() throws Exception {
         mockMvc.perform(options("/api/v1/prompts/draft")
                         .header(HttpHeaders.ORIGIN, "https://promsearch.kr")
-                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "GET"))
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "PATCH"))
                 .andExpect(status().isOk())
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "https://promsearch.kr"));
     }

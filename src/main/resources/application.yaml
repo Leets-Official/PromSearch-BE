@@ -72,6 +72,10 @@ springdoc:
     filter: true
     deep-linking: true
 
+openapi:
+  # 운영 Swagger가 프록시 헤더 누락으로 HTTP URL을 만들지 않도록, 배포 시 HTTPS API 주소를 명시한다.
+  server-url: ${OPENAPI_SERVER_URL:}
+
 logging:
   level:
     root: ${LOGGING_ROOT_LEVEL:INFO}
