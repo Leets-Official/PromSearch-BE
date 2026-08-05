@@ -35,13 +35,13 @@ public record HomePromptListQuery(
          * AI 모델 드롭다운에서 선택한 AI_MODEL 타입 태그 ID입니다.
          * 전체 옵션이면 null입니다.
          */
-        Long aiModelTagId,
+        List<Long> aiModelTagIds,
 
         /*
          * 결과물 전체/TEXT/IMAGE 필터입니다.
          * 전체 옵션이면 null입니다.
          */
-        PromptOutputType outputType,
+        List<PromptOutputType> outputTypes,
 
         /*
          * 검색창 입력값입니다. 제목, 설명, 태그명에 대해 부분 검색합니다.
@@ -64,7 +64,6 @@ public record HomePromptListQuery(
     public static final int MAX_SIZE = 50;
     public static final int MAX_PAGE = 1_000;
     public static final int MAX_FILTER_TAGS = 10;
-    public static final int MIN_KEYWORD_LENGTH = 2;
     public static final int MAX_KEYWORD_LENGTH = 100;
 
     public HomePromptListQuery {
@@ -72,12 +71,13 @@ public record HomePromptListQuery(
          * Controller 검증을 우회하는 테스트나 내부 호출이 생겨도 application 경계에서 같은 규칙을 적용합니다.
          * 특히 taskTagIds는 반복 query parameter로 들어와 같은 값이 중복될 수 있어 여기서 순서를 유지한 채 제거합니다.
          */
-        taskTagIds = normalizeTagIds(taskTagIds);
+        taskTagIds = normalizeTagIds(taskTagIds, "taskTagIds");
+        aiModelTagIds = normalizeTagIds(aiModelTagIds, "aiModelTagIds");
+        outputTypes = normalizeOutputTypes(outputTypes);
         keyword = normalizeKeyword(keyword);
         sort = sort == null ? HomePromptSort.LATEST : sort;
 
         validatePositiveTagId(jobTagId, "jobTagId");
-        validatePositiveTagId(aiModelTagId, "aiModelTagId");
         validatePaging(page, size);
     }
 
@@ -85,8 +85,8 @@ public record HomePromptListQuery(
             Long viewerUserId,
             Long jobTagId,
             List<Long> taskTagIds,
-            Long aiModelTagId,
-            PromptOutputType outputType,
+            List<Long> aiModelTagIds,
+            List<PromptOutputType> outputTypes,
             String keyword,
             HomePromptSort sort,
             int page,
@@ -96,8 +96,8 @@ public record HomePromptListQuery(
                 viewerUserId,
                 jobTagId,
                 taskTagIds,
-                aiModelTagId,
-                outputType,
+                aiModelTagIds,
+                outputTypes,
                 keyword,
                 sort,
                 page,
@@ -110,7 +110,7 @@ public record HomePromptListQuery(
          * 인기 목록은 필터가 없고 정렬만 좋아요순으로 고정된 홈 목록의 특수 케이스입니다.
          * 같은 record를 사용해 응답 조립과 페이지 검증 규칙을 필터 목록과 공유합니다.
          */
-        return filtered(viewerUserId, null, List.of(), null, null, null, HomePromptSort.POPULAR, page, size);
+        return filtered(viewerUserId, null, List.of(), List.of(), List.of(), null, HomePromptSort.POPULAR, page, size);
     }
 
     public static HomePromptListQuery job(Long viewerUserId, Long jobTagId, int page, int size) {
@@ -118,26 +118,36 @@ public record HomePromptListQuery(
          * 기존 직군별 API 호환을 위해 남겨둔 진입점입니다.
          * 새 홈 필터 API와 같은 조회 엔진을 쓰되 JOB 태그만 미리 채워 넣습니다.
          */
-        return filtered(viewerUserId, jobTagId, List.of(), null, null, null, HomePromptSort.LATEST, page, size);
+        return filtered(viewerUserId, jobTagId, List.of(), List.of(), List.of(), null, HomePromptSort.LATEST, page, size);
     }
 
     public boolean hasKeyword() {
         return keyword != null;
     }
 
-    private static List<Long> normalizeTagIds(List<Long> tagIds) {
+    private static List<Long> normalizeTagIds(List<Long> tagIds, String fieldName) {
         if (tagIds == null || tagIds.isEmpty()) {
             return List.of();
         }
         LinkedHashSet<Long> uniqueTagIds = new LinkedHashSet<>();
         for (Long tagId : tagIds) {
-            validatePositiveTagId(tagId, "taskTagIds");
+            validatePositiveTagId(tagId, fieldName);
             uniqueTagIds.add(tagId);
         }
         if (uniqueTagIds.size() > MAX_FILTER_TAGS) {
             throw new IllegalArgumentException("taskTagIds size must be " + MAX_FILTER_TAGS + " or less");
         }
         return List.copyOf(uniqueTagIds);
+    }
+
+    private static List<PromptOutputType> normalizeOutputTypes(List<PromptOutputType> outputTypes) {
+        if (outputTypes == null || outputTypes.isEmpty()) {
+            return List.of();
+        }
+        if (outputTypes.stream().anyMatch(java.util.Objects::isNull)) {
+            throw new IllegalArgumentException("outputTypes must not contain null");
+        }
+        return List.copyOf(new LinkedHashSet<>(outputTypes));
     }
 
     private static String normalizeKeyword(String keyword) {
@@ -149,9 +159,6 @@ public record HomePromptListQuery(
          * 의미 있는 검색어만 persistence 계층으로 내려보내 불필요한 like 조건 생성을 막습니다.
          */
         String trimmed = keyword.trim();
-        if (trimmed.length() < MIN_KEYWORD_LENGTH) {
-            throw new IllegalArgumentException("keyword must be at least " + MIN_KEYWORD_LENGTH + " characters");
-        }
         if (trimmed.length() > MAX_KEYWORD_LENGTH) {
             throw new IllegalArgumentException("keyword must be " + MAX_KEYWORD_LENGTH + " characters or less");
         }

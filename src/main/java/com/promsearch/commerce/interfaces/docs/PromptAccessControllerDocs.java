@@ -12,7 +12,7 @@ import jakarta.validation.constraints.Positive;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 
-@Tag(name = "Commerce | 프롬프트 접근", description = "유료 프롬프트 잠금 해제 및 본문 복사 API")
+@Tag(name = "Commerce | 프롬프트 접근", description = "유료 프롬프트 잠금 해제 및 복사 기록 API")
 @SecurityRequirement(name = "jwtBearerAuth")
 public interface PromptAccessControllerDocs {
 
@@ -41,13 +41,13 @@ public interface PromptAccessControllerDocs {
     );
 
     @Operation(
-            summary = "[COMMERCE-002] 프롬프트 본문 복사",
+            summary = "[PROMPT-013] 프롬프트 복사 기록",
             description = IMPLEMENTED_BY_KUNHEELEE7
-                    + "FREE 프롬프트, 작성자 본인의 프롬프트 또는 잠금 해제한 PREMIUM 프롬프트의 전문을 반환합니다. "
-                    + "작성자를 제외한 사용자별 최초 복사만 copyCount에 반영합니다."
+                    + "FREE 프롬프트, 작성자 본인의 프롬프트 또는 잠금 해제한 PREMIUM 프롬프트의 복사를 기록합니다. "
+                    + "작성자를 제외한 사용자별 최초 복사만 copyCount에 반영하고, 처리 후 누적 복사 수를 반환합니다."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프롬프트 전문 반환"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프롬프트 복사 기록 및 누적 복사 수 반환"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "유효하지 않은 프롬프트 ID"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "유료 프롬프트 복사 권한 없음"),

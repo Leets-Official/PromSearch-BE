@@ -133,8 +133,8 @@ class UserControllerTest {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.username").value("nickname"))
                     .andExpect(jsonPath("$.result.profileImageUrl").value("https://s3.test/signed-profile.png"))
-                    .andExpect(jsonPath("$.result.jobTags[0].tagName").value("직장인"))
-                    .andExpect(jsonPath("$.result.taskTags[0].tagName").value("PPT"));
+                    .andExpect(jsonPath("$.result.interestJobTags[0].name").value("직장인"))
+                    .andExpect(jsonPath("$.result.interestTaskTags[0].name").value("PPT"));
         } finally {
             SecurityContextHolder.clearContext();
         }

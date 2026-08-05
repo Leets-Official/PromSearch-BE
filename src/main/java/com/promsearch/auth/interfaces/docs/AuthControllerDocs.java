@@ -7,14 +7,17 @@ import com.promsearch.auth.interfaces.dto.response.ReissueResponse;
 import com.promsearch.auth.interfaces.dto.request.SignupRequest;
 import com.promsearch.auth.interfaces.dto.request.SocialLoginRequest;
 import com.promsearch.global.response.ApiResponse;
+import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "Auth | 인증", description = "회원가입, 로그인, Access Token 재발급 API")
 public interface AuthControllerDocs {
@@ -26,7 +29,8 @@ public interface AuthControllerDocs {
             summary = "[AUTH-001] 회원가입",
             description = IMPLEMENTED_BY_LEE_GUNHEE
                     + "이메일, 비밀번호, 닉네임으로 신규 사용자를 생성합니다. "
-                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 각각 최대 3개까지 선택할 수 있습니다."
+                    + "프로필 이미지는 선택 사항이며, 관심 직군과 관심 태스크는 태그 ID로 각각 최대 3개까지 선택할 수 있습니다. "
+                    + "필수 약관 4개는 모두 동의해야 하며, 마케팅 정보 수신은 선택입니다. 개인정보 처리방침은 별도 동의 값으로 받지 않습니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
@@ -60,10 +64,24 @@ public interface AuthControllerDocs {
     ResponseEntity<ApiResponse<ReissueResponse>> reissue(@Valid @RequestBody ReissueRequest request);
 
     @Operation(
+            summary = "[AUTH-005] 로그아웃",
+            description = "**작업자: Hanharam | 구현 상태: 구현완료**\n\n"
+                    + "인증된 사용자의 서버 저장 Refresh Token 세션을 모두 폐기합니다."
+    )
+    @SecurityRequirement(name = "jwtBearerAuth")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "로그아웃 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    ResponseEntity<ApiResponse<Void>> logout(
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
+
+    @Operation(
             summary = "[AUTH-004] 소셜 로그인",
             description = IMPLEMENTED_BY_KALLIN1
                     + "프론트엔드에서 전달받은 OAuth 인가 코드로 소셜 로그인 또는 자동 회원가입을 수행하고 "
-                    + "Access Token과 Refresh Token을 발급합니다."
+                    + "Access Token과 Refresh Token을 발급하며, 자동 회원가입 여부는 isNewUser로 반환합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "소셜 로그인 성공"),

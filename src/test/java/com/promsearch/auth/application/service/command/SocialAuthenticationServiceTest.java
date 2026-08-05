@@ -73,6 +73,7 @@ class SocialAuthenticationServiceTest {
         assertThat(loginInfo.profileImageUrl()).isEqualTo("https://image.test/a.png");
         assertThat(loginInfo.accessToken()).isNotBlank();
         assertThat(loginInfo.refreshToken()).isNotBlank();
+        assertThat(loginInfo.isNewUser()).isTrue();
         assertThat(socialAccountRepository.findByProviderAndProviderUserId(SocialProvider.KAKAO, "kakao-1"))
                 .isPresent()
                 .get()
@@ -90,6 +91,7 @@ class SocialAuthenticationServiceTest {
                 SocialLoginCommand.of("KAKAO", "auth-code", "https://promsearch.com/callback"));
 
         assertThat(loginInfo.userId()).isEqualTo(existingUserId);
+        assertThat(loginInfo.isNewUser()).isFalse();
         assertThat(userDirectory.registeredCount()).isEqualTo(1);
     }
 

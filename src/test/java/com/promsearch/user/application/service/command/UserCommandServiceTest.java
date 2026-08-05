@@ -1,6 +1,7 @@
 package com.promsearch.user.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.user.application.port.out.user.LoadUserPort;
@@ -39,9 +40,12 @@ class UserCommandServiceTest {
         saveUserInterestTagPort = new FakeSaveUserInterestTagPort();
         userCommandService = new UserCommandService(
                 userRepository,
+                userId -> List.of(),
                 userRepository,
                 (type, tagIds) -> tagIds,
                 saveUserInterestTagPort,
+                (userId, agreements) -> {
+                },
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {
@@ -91,11 +95,9 @@ class UserCommandServiceTest {
     }
 
     @Test
-    void updateProfileRejectsPartialInterestTagUpdate() {
-        assertThatThrownBy(() -> UpdateUserProfileCommand.of(1L, null, null, List.of(1L), null))
-                .isInstanceOf(UserDomainException.class)
-                .extracting("baseCode")
-                .isEqualTo(UserErrorCode.INVALID_INTEREST_TAG);
+    void updateProfileAllowsPartialInterestTagUpdate() {
+        assertThatCode(() -> UpdateUserProfileCommand.of(1L, null, null, List.of(1L), null))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -329,7 +331,7 @@ class UserCommandServiceTest {
         }
 
         @Override
-        public void replaceAll(Long userId, List<Long> tagIds) {
+        public void replace(Long userId, List<Long> tagIds) {
             lastReplacedUserId = userId;
             lastReplacedTagIds = tagIds;
         }

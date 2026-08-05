@@ -204,13 +204,7 @@ class AuthControllerTest {
     @DisplayName("이메일과 비밀번호가 올바르면 로그인에 성공한다")
     @Test
     void loginSuccess() throws Exception {
-        SignupRequest signupRequest = new SignupRequest(
-                "gildong",
-                "gildong@example.com",
-                "password123",
-                List.of(),
-                List.of()
-        );
+        SignupRequest signupRequest = new SignupRequest("gildong", "gildong@example.com", "password123");
         mockMvc.perform(post("/api/v1/auth/signup")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(signupRequest)))
@@ -289,10 +283,41 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.code").value("AUTH-004"));
     }
 
+    @DisplayName("로그아웃하면 서버에 저장된 모든 refresh token 세션을 폐기한다")
+    @Test
+    void logoutSuccess() throws Exception {
+        signup("gildong", "gildong@example.com", "password123");
+        JsonNode loginResult = loginAndGetResult("gildong@example.com", "password123");
+        String accessToken = loginResult.get("accessToken").asText();
+        String refreshToken = loginResult.get("refreshToken").asText();
+
+        mockMvc.perform(post("/api/v1/auth/logout")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.code").value("COMMON-200"))
+                .andExpect(jsonPath("$.result").doesNotExist());
+
+        mockMvc.perform(post("/api/v1/auth/reissue")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new ReissueRequest(refreshToken))))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code").value("AUTH-004"));
+    }
+
+    @DisplayName("access token 없이 로그아웃하면 인증 오류를 반환한다")
+    @Test
+    void logoutFailsWithoutAccessToken() throws Exception {
+        mockMvc.perform(post("/api/v1/auth/logout"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH-002"));
+    }
+
     @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
     @Test
     void protectedApiRequiresAccessToken() throws Exception {
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, "새닉네임", null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -309,17 +334,16 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("newnick", null, null, null);
-
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
                         .header("X-User-Id", "999")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content("""
+                                {"nickname":"새닉네임"}
+                                """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.result.name").doesNotExist())
-                .andExpect(jsonPath("$.result.nickname").value("newnick"));
+                .andExpect(jsonPath("$.result.nickname").value("새닉네임"));
     }
 
     @DisplayName("회원 탈퇴 시 10자를 초과하는 익명화 닉네임을 저장한다")
@@ -359,7 +383,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, "invalid-email", null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email");
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -496,6 +520,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("kakao-user@example.com"))
+                .andExpect(jsonPath("$.result.isNewUser").value(true))
                 .andExpect(jsonPath("$.result.nickname").value("카카오유저"))
                 .andExpect(jsonPath("$.result.name").doesNotExist())
                 .andExpect(jsonPath("$.result.profileImageUrl")
@@ -529,6 +554,9 @@ class AuthControllerTest {
                 .andReturn().getResponse().getContentAsString();
         long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
 
+        assertThat(objectMapper.readTree(firstResponse).get("result").get("isNewUser").asBoolean()).isTrue();
+        assertThat(objectMapper.readTree(secondResponse).get("result").get("isNewUser").asBoolean()).isFalse();
+
         assertThat(secondUserId).isEqualTo(firstUserId);
         assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);
     }
@@ -551,6 +579,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.accessToken", notNullValue()))
                 .andExpect(jsonPath("$.result.refreshToken", notNullValue()))
                 .andExpect(jsonPath("$.result.email").value("google-user@example.com"))
+                .andExpect(jsonPath("$.result.isNewUser").value(true))
                 .andExpect(jsonPath("$.result.nickname").value("구글유저"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
 
@@ -580,6 +609,9 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         long secondUserId = objectMapper.readTree(secondResponse).get("result").get("userId").asLong();
+
+        assertThat(objectMapper.readTree(firstResponse).get("result").get("isNewUser").asBoolean()).isTrue();
+        assertThat(objectMapper.readTree(secondResponse).get("result").get("isNewUser").asBoolean()).isFalse();
 
         assertThat(secondUserId).isEqualTo(firstUserId);
         assertThat(userJpaRepository.count()).isEqualTo(userCountAfterFirstLogin);

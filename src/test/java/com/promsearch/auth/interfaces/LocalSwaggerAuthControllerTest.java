@@ -57,9 +57,9 @@ class LocalSwaggerAuthControllerTest {
         assertThat(properties.has("nickname")).isTrue();
         assertThat(properties.has("email")).isTrue();
         assertThat(properties.has("password")).isTrue();
-        assertThat(properties.has("profileImageUrl")).isFalse();
-        assertThat(properties.has("jobTagIds")).isTrue();
-        assertThat(properties.has("taskTagIds")).isTrue();
+        assertThat(properties.has("profileImageUrl")).isTrue();
+        assertThat(properties.has("interestJobTagIds")).isTrue();
+        assertThat(properties.has("interestTaskTagIds")).isTrue();
     }
 
     @DisplayName("로그인 응답 Swagger 스키마는 이름 대신 프로필 이미지 URL을 노출한다")
@@ -104,13 +104,13 @@ class LocalSwaggerAuthControllerTest {
                 .asText();
         assertThat(authorizationHeader).startsWith("Bearer ");
 
-        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("swagger", null, null, null);
+        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest(null, "스웨거", null);
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.nickname").value("swagger"));
+                .andExpect(jsonPath("$.result.nickname").value("스웨거"));
     }
 
     private Long signupAndGetUserId() throws Exception {

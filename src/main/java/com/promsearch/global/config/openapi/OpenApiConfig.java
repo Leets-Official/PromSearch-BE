@@ -47,7 +47,8 @@ public class OpenApiConfig {
              * - Auth/Test/Swagger 토큰 API: 기존 공개 API
              * - @SecurityRequirements: 비회원 접근 가능한 공개 API
              */
-            if (AuthController.class.isAssignableFrom(beanType)
+            if ((AuthController.class.isAssignableFrom(beanType)
+                    && !handlerMethod.getMethod().getName().equals("logout"))
                     || LocalSwaggerAuthController.class.isAssignableFrom(beanType)
                     || TestController.class.isAssignableFrom(beanType)
                     || handlerMethod.hasMethodAnnotation(SecurityRequirements.class)) {

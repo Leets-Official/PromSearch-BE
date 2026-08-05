@@ -10,8 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface InterestTagLookupRepository extends JpaRepository<TagJpaEntity, Long> {
 
-    @Query("select tag.id from TagJpaEntity tag "
-            + "where tag.tagType = :type and tag.id in :tagIds")
+    @Query("select tag.id from TagJpaEntity tag where tag.tagType = :type and tag.id in :tagIds")
     List<Long> findIdsByTypeAndIds(
             @Param("type") TagType type,
             @Param("tagIds") Collection<Long> tagIds

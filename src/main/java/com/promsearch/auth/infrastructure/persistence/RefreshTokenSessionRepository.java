@@ -23,4 +23,14 @@ public interface RefreshTokenSessionRepository extends JpaRepository<RefreshToke
               and session.revokedAt is null
             """)
     void revokeFamily(@Param("familyId") String familyId, @Param("revokedAt") Instant revokedAt);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+            update RefreshTokenSessionJpaEntity session
+            set session.revokedAt = :revokedAt
+            where session.userId = :userId
+              and session.revokedAt is null
+              and session.expiresAt > :revokedAt
+            """)
+    void revokeActiveSessionsByUserId(@Param("userId") Long userId, @Param("revokedAt") Instant revokedAt);
 }

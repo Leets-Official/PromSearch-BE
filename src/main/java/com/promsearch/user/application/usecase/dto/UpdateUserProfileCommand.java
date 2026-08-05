@@ -1,22 +1,19 @@
 package com.promsearch.user.application.usecase.dto;
 
 import com.promsearch.auth.domain.CredentialPolicy;
-import com.promsearch.user.domain.exception.UserDomainException;
-import com.promsearch.user.domain.exception.UserErrorCode;
 import java.util.List;
 
 /**
  * 사용자 프로필 부분 변경 Command. null 필드는 기존 값을 유지한다.
- *
- * <p>{@code jobTagIds}와 {@code taskTagIds}는 관심 태그를 함께 교체할 때만 사용하며,
- * 둘 다 null이면 기존 관심 태그를 유지하고 둘 중 하나만 null이면 유효하지 않은 요청으로 거절한다.</p>
  */
 public record UpdateUserProfileCommand(
         Long userId,
+        String name,
         String nickname,
         String email,
-        List<Long> jobTagIds,
-        List<Long> taskTagIds
+        String profileImageUrl,
+        List<Long> interestJobTagIds,
+        List<Long> interestTaskTagIds
 ) {
 
     public UpdateUserProfileCommand {
@@ -24,18 +21,50 @@ public record UpdateUserProfileCommand(
         if (email != null && !email.isBlank()) {
             CredentialPolicy.validateEmail(email.trim());
         }
-        if ((jobTagIds == null) != (taskTagIds == null)) {
-            throw new UserDomainException(UserErrorCode.INVALID_INTEREST_TAG);
-        }
+        interestJobTagIds = interestJobTagIds == null ? null : List.copyOf(interestJobTagIds);
+        interestTaskTagIds = interestTaskTagIds == null ? null : List.copyOf(interestTaskTagIds);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
+            String name,
+            String nickname,
+            String email
+    ) {
+        return new UpdateUserProfileCommand(userId, name, nickname, email, null, null, null);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
+            String name,
+            String nickname,
+            String email,
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
+    ) {
+        return of(userId, name, nickname, email, null, interestJobTagIds, interestTaskTagIds);
     }
 
     public static UpdateUserProfileCommand of(
             Long userId,
             String nickname,
             String email,
-            List<Long> jobTagIds,
-            List<Long> taskTagIds
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
     ) {
-        return new UpdateUserProfileCommand(userId, nickname, email, jobTagIds, taskTagIds);
+        return of(userId, null, nickname, email, null, interestJobTagIds, interestTaskTagIds);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
+            String name,
+            String nickname,
+            String email,
+            String profileImageUrl,
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
+    ) {
+        return new UpdateUserProfileCommand(
+                userId, name, nickname, email, profileImageUrl, interestJobTagIds, interestTaskTagIds);
     }
 }

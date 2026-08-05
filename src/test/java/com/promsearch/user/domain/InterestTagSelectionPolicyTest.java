@@ -13,7 +13,7 @@ class InterestTagSelectionPolicyTest {
     void acceptsUpToThreeTagsPerType() {
         assertThatCode(() -> InterestTagSelectionPolicy.validate(
                 List.of(1L, 2L, 3L),
-                List.of(4L, 5L, 6L)
+                List.of(10L, 11L, 12L)
         )).doesNotThrowAnyException();
     }
 

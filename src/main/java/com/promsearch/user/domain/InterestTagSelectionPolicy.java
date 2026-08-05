@@ -18,7 +18,7 @@ public final class InterestTagSelectionPolicy {
     }
 
     private static void validateTagIds(List<Long> tagIds) {
-        if (tagIds.size() > MAX_TAGS_PER_TYPE
+        if (tagIds == null || tagIds.size() > MAX_TAGS_PER_TYPE
                 || tagIds.stream().anyMatch(tagId -> tagId == null || tagId <= 0)
                 || new HashSet<>(tagIds).size() != tagIds.size()) {
             throw new UserDomainException(UserErrorCode.INVALID_INTEREST_TAG);

@@ -78,7 +78,7 @@ class PromptAccessCommandServiceTest {
     void freePromptAndAuthorRequireNoUnlockRecord() {
         when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(freeTarget());
         when(loadPromptAccessTargetPort.getByIdForUpdate(11L)).thenReturn(
-                new PromptAccessTarget(11L, 1L, false, "paid body"));
+                new PromptAccessTarget(11L, 1L, false, 0L));
 
         service.unlock(new UnlockPromptCommand(2L, 10L));
         service.unlock(new UnlockPromptCommand(1L, 11L));
@@ -99,46 +99,54 @@ class PromptAccessCommandServiceTest {
     }
 
     @Test
-    void firstAuthorizedCopyReturnsFullBodyAndIncreasesCount() {
-        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(premiumTarget());
+    void firstAuthorizedCopyReturnsIncrementedCount() {
+        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(premiumTarget(15L));
         when(checkPostUnlockPort.isUnlocked(2L, 10L)).thenReturn(true);
 
         CopyPromptInfo result = service.copy(new CopyPromptCommand(2L, 10L));
 
-        assertThat(result).isEqualTo(new CopyPromptInfo(10L, "paid body", true));
+        assertThat(result).isEqualTo(new CopyPromptInfo(10L, 16L, true));
         verify(savePostCopyPort).save(any(PostCopy.class));
         verify(increasePromptCopyCountPort).increase(10L);
     }
 
     @Test
-    void duplicateCopyReturnsBodyWithoutIncreasingCount() {
-        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(freeTarget());
+    void duplicateCopyReturnsCurrentCountWithoutIncreasingCount() {
+        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(freeTarget(15L));
         when(checkPostCopyPort.isCopied(2L, 10L)).thenReturn(true);
 
         CopyPromptInfo result = service.copy(new CopyPromptCommand(2L, 10L));
 
-        assertThat(result).isEqualTo(new CopyPromptInfo(10L, "free body", false));
+        assertThat(result).isEqualTo(new CopyPromptInfo(10L, 15L, false));
         verify(savePostCopyPort, never()).save(any(PostCopy.class));
         verify(increasePromptCopyCountPort, never()).increase(any());
     }
 
     @Test
     void authorCopyIsNotRecordedOrCounted() {
-        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(premiumTarget());
+        when(loadPromptAccessTargetPort.getByIdForUpdate(10L)).thenReturn(premiumTarget(15L));
 
         CopyPromptInfo result = service.copy(new CopyPromptCommand(1L, 10L));
 
-        assertThat(result.promptBody()).isEqualTo("paid body");
+        assertThat(result.copyCount()).isEqualTo(15L);
         assertThat(result.newlyCounted()).isFalse();
         verify(savePostCopyPort, never()).save(any(PostCopy.class));
         verify(increasePromptCopyCountPort, never()).increase(any());
     }
 
     private PromptAccessTarget premiumTarget() {
-        return new PromptAccessTarget(10L, 1L, false, "paid body");
+        return premiumTarget(0L);
+    }
+
+    private PromptAccessTarget premiumTarget(long copyCount) {
+        return new PromptAccessTarget(10L, 1L, false, copyCount);
     }
 
     private PromptAccessTarget freeTarget() {
-        return new PromptAccessTarget(10L, 1L, true, "free body");
+        return freeTarget(0L);
+    }
+
+    private PromptAccessTarget freeTarget(long copyCount) {
+        return new PromptAccessTarget(10L, 1L, true, copyCount);
     }
 }

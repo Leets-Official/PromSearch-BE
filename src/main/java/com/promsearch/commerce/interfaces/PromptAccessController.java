@@ -35,7 +35,7 @@ public class PromptAccessController implements PromptAccessControllerDocs {
         return ApiResponse.onSuccess(null);
     }
 
-    @PostMapping("/copy")
+    @PostMapping("/copies")
     @Override
     public ApiResponse<PromptCopyResponse> copy(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,

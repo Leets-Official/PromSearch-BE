@@ -54,7 +54,7 @@ public interface UserControllerDocs {
     @Operation(
             summary = "[USER-004] 내 프로필 조회",
             description = IMPLEMENTED_BY_HANHARAM
-                    + "인증된 사용자의 마이페이지 프로필 정보와 현재 선택된 관심 직군·태스크 태그를 조회합니다."
+                    + "인증된 사용자의 마이페이지 프로필 정보를 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 조회 성공"),
@@ -68,8 +68,8 @@ public interface UserControllerDocs {
     @Operation(
             summary = "[USER-001] 내 프로필 수정",
             description = IMPLEMENTED_BY_RUCHAN04
-                    + "인증된 사용자의 이름, 닉네임, 이메일, 프로필 이미지를 수정합니다. "
-                    + "jobTagIds와 taskTagIds를 함께 보내면 관심 직군·태스크 태그를 전체 교체합니다."
+                    + "인증된 사용자의 이름, 닉네임, 이메일, 외부 프로필 이미지 URL과 관심 태그를 수정합니다. "
+                    + "관심 직군과 관심 태스크는 각각 최대 3개이며, 각 배열이 null이면 해당 기존 선택을 유지합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로필 수정 성공"),
