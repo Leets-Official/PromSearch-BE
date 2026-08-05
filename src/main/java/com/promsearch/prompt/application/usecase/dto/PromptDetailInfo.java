@@ -24,7 +24,7 @@ public record PromptDetailInfo(
         Instant createdAt,
         Instant updatedAt
 ) {
-    public record Author(Long userId, String nickname, String profileImageUrl) {
+    public record Author(Long userId, String nickname, String profileImageUrl, String gradeName) {
     }
 
     public record Access(boolean locked, AccessReason reason) {

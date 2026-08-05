@@ -58,7 +58,7 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
                     )
               )
               and (
-                    :cursorCreatedAt is null
+                    cast(:cursorCreatedAt as timestamp) is null
                     or comment.createdAt < :cursorCreatedAt
                     or (
                         comment.createdAt = :cursorCreatedAt
@@ -82,7 +82,7 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             where reply.parentCommentId = :parentCommentId
               and reply.status in :visibleStatuses
               and (
-                    :cursorCreatedAt is null
+                    cast(:cursorCreatedAt as timestamp) is null
                     or reply.createdAt > :cursorCreatedAt
                     or (
                         reply.createdAt = :cursorCreatedAt
