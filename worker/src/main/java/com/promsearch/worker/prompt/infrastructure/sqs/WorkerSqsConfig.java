@@ -2,7 +2,10 @@ package com.promsearch.worker.prompt.infrastructure.sqs;
 
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
 import com.promsearch.common.infrastructure.storage.s3.S3ObjectStorageProperties;
+import com.promsearch.worker.prompt.infrastructure.image.WatermarkRenderingProperties;
 import java.time.Duration;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -21,11 +24,18 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 )
 public class WorkerSqsConfig {
 
+    @Bean(destroyMethod = "shutdown")
+    ExecutorService watermarkTaskExecutor(WatermarkRenderingProperties properties) {
+        return Executors.newFixedThreadPool(
+                properties.concurrency(),
+                Thread.ofPlatform().name("watermark-worker-", 0).factory()
+        );
+    }
+
     /** 20초 Long Polling보다 긴 HTTP 응답 제한을 가진 SQS 동기 클라이언트 */
     @Bean
     SqsClient workerSqsClient(S3ObjectStorageProperties storageProperties) {
-        // TODO: 소비 동시성을 높일 때 Apache HTTP 커넥션 풀로 전환하고
-        // maxConnections를 Long Polling 수 + 삭제 요청 동시성 이상으로 설정
+        // 동시성을 올릴 때는 SQS 연결 사용량과 삭제 요청 지연을 부하 테스트로 함께 확인한다.
         return SqsClient.builder()
                 .region(Region.of(storageProperties.region()))
                 .httpClientBuilder(UrlConnectionHttpClient.builder()

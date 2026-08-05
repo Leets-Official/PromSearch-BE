@@ -70,13 +70,14 @@ jobs:
           AWS_REGION: ap-northeast-2
           AWS_SQS_WATERMARK_ENABLED: ${{ secrets.AWS_SQS_WATERMARK_ENABLED }}
           AWS_SQS_WATERMARK_QUEUE_URL: ${{ secrets.AWS_SQS_WATERMARK_QUEUE_URL }}
+          WATERMARK_WORKER_CONCURRENCY: ${{ vars.WATERMARK_WORKER_CONCURRENCY || '2' }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
           timeout: 30s
           command_timeout: 12m
-          envs: JWT_ACCESS_SECRET,JWT_REFRESH_SECRET,SWAGGER_ENABLE,SWAGGER_AUTH_USERNAME,SWAGGER_AUTH_PASSWORD,SERVER_FORWARD_HEADERS_STRATEGY,OPENAPI_SERVER_URL,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,SPRING_FLYWAY_ENABLED,AWS_S3_BUCKET,AWS_REGION,AWS_SQS_WATERMARK_ENABLED,AWS_SQS_WATERMARK_QUEUE_URL
+          envs: JWT_ACCESS_SECRET,JWT_REFRESH_SECRET,SWAGGER_ENABLE,SWAGGER_AUTH_USERNAME,SWAGGER_AUTH_PASSWORD,SERVER_FORWARD_HEADERS_STRATEGY,OPENAPI_SERVER_URL,KAKAO_CLIENT_ID,KAKAO_CLIENT_SECRET,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,SPRING_DATASOURCE_URL,SPRING_DATASOURCE_USERNAME,SPRING_DATASOURCE_PASSWORD,SPRING_FLYWAY_ENABLED,AWS_S3_BUCKET,AWS_REGION,AWS_SQS_WATERMARK_ENABLED,AWS_SQS_WATERMARK_QUEUE_URL,WATERMARK_WORKER_CONCURRENCY
           script: |
             set -eu
 
@@ -88,26 +89,25 @@ jobs:
             IMAGE=${{ secrets.DOCKERHUB_USERNAME }}/promsearch:${{ github.event.workflow_run.head_sha }}
             API_PREVIOUS=false
             API_NEW=false
-            WORKER_PREVIOUS_NAMES=""
-            WORKER_NEW_NAMES=""
+            WORKER_PREVIOUS=false
+            WORKER_NEW=false
             ROLLBACK_REQUIRED=false
 
             rollback() {
               if [ "$API_NEW" = "true" ]; then
                 docker rm -f promsearch || true
               fi
-              for worker_name in $WORKER_NEW_NAMES; do
-                docker rm -f "$worker_name" || true
-              done
+              if [ "$WORKER_NEW" = "true" ]; then
+                docker rm -f promsearch-worker || true
+              fi
               if [ "$API_PREVIOUS" = "true" ]; then
                 docker rename promsearch-previous promsearch || true
                 docker start promsearch || true
               fi
-              for worker_previous_name in $WORKER_PREVIOUS_NAMES; do
-                worker_name=${worker_previous_name%-previous}
-                docker rename "$worker_previous_name" "$worker_name" || true
-                docker start "$worker_name" || true
-              done
+              if [ "$WORKER_PREVIOUS" = "true" ]; then
+                docker rename promsearch-worker-previous promsearch-worker || true
+                docker start promsearch-worker || true
+              fi
             }
 
             rollback_on_exit() {
@@ -121,22 +121,18 @@ jobs:
             trap 'exit 1' HUP INT TERM
 
             timeout 4m docker pull "$IMAGE"
-            docker rm -f promsearch-previous promsearch-worker-previous \
-              promsearch-worker-1-previous promsearch-worker-2-previous || true
+            docker rm -f promsearch-previous promsearch-worker-previous || true
             ROLLBACK_REQUIRED=true
             if docker container inspect promsearch >/dev/null 2>&1; then
               docker rename promsearch promsearch-previous
               API_PREVIOUS=true
               docker stop --time 20 promsearch-previous
             fi
-            for worker_name in promsearch-worker promsearch-worker-1 promsearch-worker-2; do
-              if docker container inspect "$worker_name" >/dev/null 2>&1; then
-                worker_previous_name="${worker_name}-previous"
-                docker rename "$worker_name" "$worker_previous_name"
-                WORKER_PREVIOUS_NAMES="$WORKER_PREVIOUS_NAMES $worker_previous_name"
-                docker stop --time 20 "$worker_previous_name"
-              fi
-            done
+            if docker container inspect promsearch-worker >/dev/null 2>&1; then
+              docker rename promsearch-worker promsearch-worker-previous
+              WORKER_PREVIOUS=true
+              docker stop --time 20 promsearch-worker-previous
+            fi
 
             API_NEW=true
             if ! docker run -d --name promsearch --restart unless-stopped \
@@ -185,48 +181,45 @@ jobs:
               exit 1
             fi
 
-            for worker_name in promsearch-worker-1 promsearch-worker-2; do
-              if ! docker run -d --name "$worker_name" --restart unless-stopped --no-healthcheck \
-                --log-opt max-size=10m --log-opt max-file=3 \
-                -e SPRING_PROFILES_ACTIVE=prod \
-                -e SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
-                -e SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
-                -e SPRING_DATASOURCE_PASSWORD="$SPRING_DATASOURCE_PASSWORD" \
-                -e SPRING_JPA_HIBERNATE_DDL_AUTO=none \
-                -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
-                -e AWS_REGION="$AWS_REGION" \
-                -e AWS_SQS_WATERMARK_ENABLED="$AWS_SQS_WATERMARK_ENABLED" \
-                -e AWS_SQS_WATERMARK_QUEUE_URL="$AWS_SQS_WATERMARK_QUEUE_URL" \
-                "$IMAGE" worker.jar; then
-                exit 1
-              fi
-              WORKER_NEW_NAMES="$WORKER_NEW_NAMES $worker_name"
-            done
+            WORKER_NEW=true
+            if ! docker run -d --name promsearch-worker --restart unless-stopped --no-healthcheck \
+              --log-opt max-size=10m --log-opt max-file=3 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e SPRING_DATASOURCE_URL="$SPRING_DATASOURCE_URL" \
+              -e SPRING_DATASOURCE_USERNAME="$SPRING_DATASOURCE_USERNAME" \
+              -e SPRING_DATASOURCE_PASSWORD="$SPRING_DATASOURCE_PASSWORD" \
+              -e SPRING_JPA_HIBERNATE_DDL_AUTO=none \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e AWS_REGION="$AWS_REGION" \
+              -e AWS_SQS_WATERMARK_ENABLED="$AWS_SQS_WATERMARK_ENABLED" \
+              -e AWS_SQS_WATERMARK_QUEUE_URL="$AWS_SQS_WATERMARK_QUEUE_URL" \
+              -e WATERMARK_WORKER_CONCURRENCY="$WATERMARK_WORKER_CONCURRENCY" \
+              "$IMAGE" worker.jar; then
+              exit 1
+            fi
 
-            for worker_name in $WORKER_NEW_NAMES; do
-              WORKER_READY=false
-              for attempt in $(seq 1 12); do
-                WORKER_RUNNING=$(timeout 5s docker inspect --format='{{.State.Running}}' "$worker_name" 2>/dev/null || true)
-                if [ "$WORKER_RUNNING" != "true" ]; then
-                  break
-                fi
-                WORKER_LOGS=$(timeout 5s docker logs --tail 200 "$worker_name" 2>&1 || true)
-                if printf '%s\n' "$WORKER_LOGS" | grep -q 'prompt_image_watermark_sqs_poll_ready'; then
-                  WORKER_READY=true
-                  break
-                fi
-                echo "Worker ${worker_name} readiness check ${attempt}/12"
-                sleep 5
-              done
-              if [ "$WORKER_READY" != "true" ]; then
-                timeout 10s docker logs --tail 200 "$worker_name" || true
-                exit 1
+            WORKER_READY=false
+            for attempt in $(seq 1 12); do
+              WORKER_RUNNING=$(timeout 5s docker inspect --format='{{.State.Running}}' promsearch-worker 2>/dev/null || true)
+              if [ "$WORKER_RUNNING" != "true" ]; then
+                break
               fi
+              WORKER_LOGS=$(timeout 5s docker logs --tail 200 promsearch-worker 2>&1 || true)
+              if printf '%s\n' "$WORKER_LOGS" | grep -q 'prompt_image_watermark_sqs_poll_ready'; then
+                WORKER_READY=true
+                break
+              fi
+              echo "Worker readiness check ${attempt}/12"
+              sleep 5
             done
+            if [ "$WORKER_READY" != "true" ]; then
+              timeout 10s docker logs --tail 200 promsearch-worker || true
+              exit 1
+            fi
 
             ROLLBACK_REQUIRED=false
             trap - EXIT
-            docker rm promsearch-previous $WORKER_PREVIOUS_NAMES || true
+            docker rm promsearch-previous promsearch-worker-previous || true
             timeout 1m docker image prune -f || true
 
       - name: Notify Discord on failure

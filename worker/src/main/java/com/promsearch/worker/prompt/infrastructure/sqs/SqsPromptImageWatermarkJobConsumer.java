@@ -5,9 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.promsearch.prompt.application.usecase.ProcessPromptImageWatermarkUseCase;
 import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
+import com.promsearch.worker.prompt.infrastructure.image.WatermarkRenderingProperties;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -26,7 +28,6 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest;
  */
 @Slf4j
 @Component
-@RequiredArgsConstructor
 @ConditionalOnProperty(
         name = "messaging.sqs.watermark.enabled",
         havingValue = "true"
@@ -37,7 +38,27 @@ public class SqsPromptImageWatermarkJobConsumer {
     private final ObjectMapper objectMapper;
     private final ProcessPromptImageWatermarkUseCase processWatermarkUseCase;
     private final WatermarkSqsProperties properties;
+    private final WatermarkRenderingProperties renderingProperties;
+    private final ExecutorService watermarkTaskExecutor;
+    private final Semaphore availableProcessingSlots;
     private final AtomicBoolean connectivityConfirmed = new AtomicBoolean();
+
+    public SqsPromptImageWatermarkJobConsumer(
+            SqsClient sqsClient,
+            ObjectMapper objectMapper,
+            ProcessPromptImageWatermarkUseCase processWatermarkUseCase,
+            WatermarkSqsProperties properties,
+            WatermarkRenderingProperties renderingProperties,
+            ExecutorService watermarkTaskExecutor
+    ) {
+        this.sqsClient = sqsClient;
+        this.objectMapper = objectMapper;
+        this.processWatermarkUseCase = processWatermarkUseCase;
+        this.properties = properties;
+        this.renderingProperties = renderingProperties;
+        this.watermarkTaskExecutor = watermarkTaskExecutor;
+        this.availableProcessingSlots = new Semaphore(renderingProperties.concurrency());
+    }
 
     /** 한 번의 Long Polling이 끝난 후 짧게 쉬고 다음 메시지를 조회 */
     @Scheduled(
@@ -45,24 +66,32 @@ public class SqsPromptImageWatermarkJobConsumer {
                     "${messaging.sqs.watermark.worker-poll-delay-milliseconds:200}"
     )
     public void pollAvailableMessage() {
+        int reservedSlots = reserveAvailableSlots();
+        if (reservedSlots == 0) {
+            return;
+        }
+
+        List<Message> messages;
         try {
-            List<Message> messages = receiveMessages();
+            messages = receiveMessages(reservedSlots);
             if (connectivityConfirmed.compareAndSet(false, true)) {
                 log.info("prompt_image_watermark_sqs_poll_ready");
             }
-            messages.forEach(this::processMessage);
         } catch (RuntimeException exception) {
+            availableProcessingSlots.release(reservedSlots);
             log.warn("prompt_image_watermark_sqs_poll_failed", exception);
+            return;
         }
+
+        availableProcessingSlots.release(reservedSlots - messages.size());
+        messages.forEach(this::submitMessage);
     }
 
-    /** 현재는 이미지 메모리 사용량을 제한하기 위해 한 번에 한 메시지만 수신 */
-    private List<Message> receiveMessages() {
-        // TODO: Worker 병렬 처리 도입 시 maxNumberOfMessages와 실행 풀 크기를 함께 늘리고,
-        // heap 사용량·GC pause·S3 대역폭·DB 풀 포화도를 기준으로 상한 결정
+    /** 실행기 슬롯을 선점한 수만큼만 SQS에서 가져와 visibility timeout 중 대기를 방지 */
+    private List<Message> receiveMessages(int maximumMessages) {
         return sqsClient.receiveMessage(ReceiveMessageRequest.builder()
                         .queueUrl(properties.queueUrl())
-                        .maxNumberOfMessages(1)
+                        .maxNumberOfMessages(maximumMessages)
                         .waitTimeSeconds(properties.receiveWaitTimeSeconds())
                         .visibilityTimeout(properties.visibilityTimeoutSeconds())
                         .messageSystemAttributeNames(
@@ -70,6 +99,31 @@ public class SqsPromptImageWatermarkJobConsumer {
                         )
                         .build())
                 .messages();
+    }
+
+    private int reserveAvailableSlots() {
+        int maximumMessages = Math.min(renderingProperties.concurrency(), 10);
+        int reservedSlots = 0;
+        while (reservedSlots < maximumMessages && availableProcessingSlots.tryAcquire()) {
+            reservedSlots++;
+        }
+        return reservedSlots;
+    }
+
+    private void submitMessage(Message message) {
+        try {
+            watermarkTaskExecutor.execute(() -> {
+                try {
+                    processMessage(message);
+                } finally {
+                    availableProcessingSlots.release();
+                }
+            });
+        } catch (RuntimeException exception) {
+            availableProcessingSlots.release();
+            log.warn("prompt_image_watermark_task_submission_failed messageId={}",
+                    message.messageId(), exception);
+        }
     }
 
     /** JSON 작업 처리와 결과 저장까지 성공한 경우에만 SQS 메시지를 삭제 */
