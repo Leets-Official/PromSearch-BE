@@ -2,6 +2,8 @@ package com.promsearch.user.application.service.command;
 
 import com.promsearch.user.application.port.out.tag.ResolveInterestTagIdsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
+import com.promsearch.user.application.port.out.user.LoadUserInterestTagPort;
+import com.promsearch.user.application.port.out.user.SaveUserAgreementPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
@@ -12,6 +14,7 @@ import com.promsearch.user.application.usecase.RegisterSocialUserUseCase;
 import com.promsearch.user.application.usecase.SignupUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
+import com.promsearch.user.application.usecase.dto.InterestTagInfo;
 import com.promsearch.user.application.usecase.dto.RegisterSocialUserCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
@@ -23,6 +26,7 @@ import com.promsearch.user.domain.NicknamePolicy;
 import com.promsearch.user.domain.enums.InterestTagType;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -45,13 +49,16 @@ public class UserCommandService implements
         RegisterSocialUserUseCase {
 
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
+    private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
     private static final int SOCIAL_NICKNAME_BASE_MAX_LENGTH = 6;
     private static final int NICKNAME_RETRY_LIMIT = 5;
 
     private final LoadUserPort loadUserPort;
+    private final LoadUserInterestTagPort loadUserInterestTagPort;
     private final SaveUserPort saveUserPort;
     private final ResolveInterestTagIdsPort resolveInterestTagIdsPort;
     private final SaveUserInterestTagPort saveUserInterestTagPort;
+    private final SaveUserAgreementPort saveUserAgreementPort;
     private final PasswordEncoder passwordEncoder;
     private final ProfileImageDeliveryPort profileImageDeliveryPort;
     private final ScheduleProfileImageDeletionPort profileImageDeletionPort;
@@ -60,7 +67,7 @@ public class UserCommandService implements
     public SignupInfo signup(SignupCommand command) {
         validateDuplicateEmail(command.email());
         validateDuplicateNickname(command.nickname());
-        InterestTagSelectionPolicy.validate(command.jobTagIds(), command.taskTagIds());
+        InterestTagSelectionPolicy.validate(command.interestJobTagIds(), command.interestTaskTagIds());
 
         String encodedPassword = passwordEncoder.encode(command.password());
         User user = User.create(
@@ -72,9 +79,10 @@ public class UserCommandService implements
         );
 
         User savedUser = saveUserPort.create(user);
+        saveUserAgreementPort.saveAll(savedUser.getUserId().id(), command.agreements().toUserAgreements(Instant.now()));
         List<Long> interestTagIds = new ArrayList<>();
-        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTagIds()));
-        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTagIds()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.interestJobTagIds()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.interestTaskTagIds()));
         saveUserInterestTagPort.save(savedUser.getUserId().id(), interestTagIds);
         SignupInfo signupInfo = SignupInfo.from(savedUser);
         log.info("user_signup_completed userId={}", signupInfo.userId());
@@ -99,20 +107,18 @@ public class UserCommandService implements
             validateDuplicateEmail(email);
         }
 
-        User updatedUser = user.updateProfile(
-                email,
-                nickname
-        );
-        User savedUser = saveUserPort.update(updatedUser);
-
-        if (command.jobTagIds() != null && command.taskTagIds() != null) {
-            InterestTagSelectionPolicy.validate(command.jobTagIds(), command.taskTagIds());
-            List<Long> interestTagIds = new ArrayList<>();
-            interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTagIds()));
-            interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTagIds()));
-            saveUserInterestTagPort.replaceAll(savedUser.getUserId().id(), interestTagIds);
+        User updatedUser = user.updateProfile(email, nickname);
+        if (command.profileImageUrl() != null) {
+            String profileImageUrl = command.profileImageUrl().trim();
+            updatedUser = profileImageUrl.isEmpty()
+                    ? updatedUser.removeProfileImage()
+                    : updatedUser.changeExternalProfileImage(profileImageUrl);
+            if (user.getProfileImageObjectKey() != null) {
+                profileImageDeletionPort.afterCommit(user.getProfileImageObjectKey());
+            }
         }
-
+        User savedUser = saveUserPort.update(updatedUser);
+        replaceInterestTagsIfRequested(command);
         UserInfo userInfo = UserInfo.from(savedUser, resolveProfileImageUrl(savedUser));
         log.info("user_profile_updated userId={}", userInfo.userId());
         return userInfo;
@@ -220,7 +226,33 @@ public class UserCommandService implements
         );
     }
 
+    private void replaceInterestTagsIfRequested(UpdateUserProfileCommand command) {
+        if (command.interestJobTagIds() == null && command.interestTaskTagIds() == null) {
+            return;
+        }
+
+        List<InterestTagInfo> currentInterestTags =
+                loadUserInterestTagPort.listByUserId(command.userId());
+        List<Long> currentJobTagIds = currentInterestTags.stream()
+                .filter(tag -> tag.type() == InterestTagType.JOB)
+                .map(tag -> tag.tagId())
+                .toList();
+        List<Long> currentTaskTagIds = currentInterestTags.stream()
+                .filter(tag -> tag.type() == InterestTagType.TASK)
+                .map(tag -> tag.tagId())
+                .toList();
+        List<Long> jobTagIds = command.interestJobTagIds() == null ? currentJobTagIds : command.interestJobTagIds();
+        List<Long> taskTagIds = command.interestTaskTagIds() == null ? currentTaskTagIds : command.interestTaskTagIds();
+        InterestTagSelectionPolicy.validate(jobTagIds, taskTagIds);
+
+        List<Long> interestTagIds = new ArrayList<>();
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, jobTagIds));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, taskTagIds));
+        saveUserInterestTagPort.replace(command.userId(), interestTagIds);
+    }
+
     private String normalizeOptional(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
+
 }

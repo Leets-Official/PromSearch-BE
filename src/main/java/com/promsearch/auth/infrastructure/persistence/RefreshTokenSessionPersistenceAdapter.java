@@ -2,6 +2,7 @@ package com.promsearch.auth.infrastructure.persistence;
 
 import com.promsearch.auth.infrastructure.persistence.entity.RefreshTokenSessionJpaEntity;
 import com.promsearch.auth.application.port.out.persistence.refresh.LoadRefreshTokenSessionPort;
+import com.promsearch.auth.application.port.out.persistence.refresh.RevokeRefreshTokenSessionPort;
 import com.promsearch.auth.application.port.out.persistence.refresh.SaveRefreshTokenSessionPort;
 import com.promsearch.auth.domain.RefreshTokenSession;
 import java.time.Instant;
@@ -12,7 +13,7 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenSessionPersistenceAdapter
-        implements LoadRefreshTokenSessionPort, SaveRefreshTokenSessionPort {
+        implements LoadRefreshTokenSessionPort, SaveRefreshTokenSessionPort, RevokeRefreshTokenSessionPort {
 
     private final RefreshTokenSessionRepository repository;
 
@@ -34,5 +35,10 @@ public class RefreshTokenSessionPersistenceAdapter
     @Override
     public void revokeFamily(String familyId, Instant revokedAt) {
         repository.revokeFamily(familyId, revokedAt);
+    }
+
+    @Override
+    public void revokeActiveSessionsByUserId(Long userId, Instant revokedAt) {
+        repository.revokeActiveSessionsByUserId(userId, revokedAt);
     }
 }

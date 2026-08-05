@@ -63,8 +63,12 @@ class OpenApiDocumentationTest {
                 UserController.class.getMethod("checkNicknameAvailability", String.class)
         ));
         Operation authOperation = customizer.customize(new Operation(), handlerMethod(
-                new AuthController(null, null, null, null),
+                new AuthController(null, null, null, null, null),
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
+        ));
+        Operation logoutOperation = customizer.customize(new Operation(), handlerMethod(
+                new AuthController(null, null, null, null, null),
+                AuthController.class.getMethod("logout", AuthenticatedUserPrincipal.class)
         ));
         Operation promptDetailOperation = customizer.customize(new Operation(), handlerMethod(
                 new PromptController(null, null, null, null, null, null, null, null, null, null, null, null),
@@ -109,6 +113,9 @@ class OpenApiDocumentationTest {
                 .containsExactly("jwtBearerAuth");
         assertThat(publicUserOperation.getSecurity()).isNull();
         assertThat(authOperation.getSecurity()).isNull();
+        assertThat(logoutOperation.getSecurity())
+                .flatExtracting(SecurityRequirement::keySet)
+                .containsExactly("jwtBearerAuth");
         assertThat(promptDetailOperation.getSecurity()).hasSize(2);
         assertThat(promptDetailOperation.getSecurity().get(0)).isEmpty();
         assertThat(promptDetailOperation.getSecurity().get(1))

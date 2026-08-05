@@ -27,7 +27,7 @@ public class PromptAccessPersistenceAdapter
                 post.getId(),
                 post.getUserId(),
                 post.getContentType() == PromptContentType.FREE,
-                post.getPromptBody()
+                post.getStatistics().toDomain().getCopyCount()
         );
     }
 

@@ -72,7 +72,7 @@ public class PromptAccessCommandService implements UnlockPromptUseCase, CopyProm
         }
         return new CopyPromptInfo(
                 command.promptId(),
-                target.promptBody() == null ? "" : target.promptBody(),
+                newlyCounted ? Math.incrementExact(target.copyCount()) : target.copyCount(),
                 newlyCounted
         );
     }

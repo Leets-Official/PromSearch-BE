@@ -358,8 +358,13 @@ class PromptControllerTest {
         UUID secondImageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174001");
         Mockito.when(getPromptImageStatusesUseCase.getStatuses(Mockito.any()))
                 .thenReturn(new PromptImageStatusesInfo(List.of(
-                        new PromptImageStatusInfo(firstImageId, PromptImageStatus.PROCESSING, null),
-                        new PromptImageStatusInfo(secondImageId, PromptImageStatus.FAILED, "WATERMARK_RENDER_FAILED")
+                        new PromptImageStatusInfo(
+                                firstImageId,
+                                PromptImageStatus.READY,
+                                null,
+                                "https://storage.example.com/first.jpg"
+                        ),
+                        new PromptImageStatusInfo(secondImageId, PromptImageStatus.FAILED, "WATERMARK_RENDER_FAILED", null)
                 )));
 
         mockMvc.perform(get("/api/v1/prompt-images/statuses")
@@ -371,8 +376,10 @@ class PromptControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
                 .andExpect(jsonPath("$.result.images[0].imageId").value(firstImageId.toString()))
-                .andExpect(jsonPath("$.result.images[0].status").value("PROCESSING"))
+                .andExpect(jsonPath("$.result.images[0].status").value("READY"))
                 .andExpect(jsonPath("$.result.images[0].failureCode").doesNotExist())
+                .andExpect(jsonPath("$.result.images[0].imageUrl")
+                        .value("https://storage.example.com/first.jpg"))
                 .andExpect(jsonPath("$.result.images[1].imageId").value(secondImageId.toString()))
                 .andExpect(jsonPath("$.result.images[1].status").value("FAILED"))
                 .andExpect(jsonPath("$.result.images[1].failureCode").value("WATERMARK_RENDER_FAILED"));

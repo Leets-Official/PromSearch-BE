@@ -22,6 +22,7 @@ import com.promsearch.user.application.usecase.dto.AuthUserInfo;
 import com.promsearch.user.application.usecase.dto.RegisterSocialUserCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
 import java.util.UUID;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -43,8 +44,10 @@ public class SocialLoginCompletionService {
 
     @Transactional
     public LoginInfo completeLogin(SocialProvider provider, SocialLoginResult socialLoginResult) {
-        Long userId = loadSocialAccountPort
-                .findByProviderAndProviderUserId(provider, socialLoginResult.providerUserId())
+        Optional<SocialAccount> socialAccount = loadSocialAccountPort
+                .findByProviderAndProviderUserId(provider, socialLoginResult.providerUserId());
+        boolean isNewUser = socialAccount.isEmpty();
+        Long userId = socialAccount
                 .map(SocialAccount::getUserId)
                 .orElseGet(() -> provisionSocialUser(provider, socialLoginResult));
 
@@ -63,7 +66,8 @@ public class SocialLoginCompletionService {
                 accessToken.expiresInSeconds(),
                 authenticatedUser,
                 user.profileImageUrl(),
-                user.nickname()
+                user.nickname(),
+                isNewUser
         );
     }
 

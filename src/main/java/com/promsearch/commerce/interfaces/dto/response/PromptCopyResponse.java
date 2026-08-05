@@ -7,11 +7,11 @@ public record PromptCopyResponse(
         @Schema(description = "복사한 프롬프트 ID", example = "10")
         Long promptId,
 
-        @Schema(description = "복사 권한이 확인된 프롬프트 전문", example = "회의록을 요약해 주세요.")
-        String promptBody
+        @Schema(description = "복사 처리 후 프롬프트의 누적 복사 수", example = "16")
+        long copyCount
 ) {
 
     public static PromptCopyResponse from(CopyPromptInfo info) {
-        return new PromptCopyResponse(info.promptId(), info.promptBody());
+        return new PromptCopyResponse(info.promptId(), info.copyCount());
     }
 }

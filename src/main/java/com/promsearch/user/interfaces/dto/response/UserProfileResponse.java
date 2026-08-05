@@ -17,9 +17,9 @@ public record UserProfileResponse(
         @Schema(description = "크리에이터 등급 이름", example = "ORIGIN")
         String gradeName,
         @Schema(description = "관심 직군 태그")
-        List<InterestTagResponse> jobTags,
+        List<InterestTagResponse> interestJobTags,
         @Schema(description = "관심 태스크 태그")
-        List<InterestTagResponse> taskTags
+        List<InterestTagResponse> interestTaskTags
 ) {
 
     public static UserProfileResponse from(UserProfileInfo info) {
@@ -32,5 +32,14 @@ public record UserProfileResponse(
                 info.jobTags().stream().map(InterestTagResponse::from).toList(),
                 info.taskTags().stream().map(InterestTagResponse::from).toList()
         );
+    }
+
+    public record InterestTagResponse(
+            @Schema(description = "태그 ID", example = "1") Long tagId,
+            @Schema(description = "태그 이름", example = "직장인") String name
+    ) {
+        private static InterestTagResponse from(com.promsearch.user.application.usecase.dto.InterestTagInfo info) {
+            return new InterestTagResponse(info.tagId(), info.tagName());
+        }
     }
 }

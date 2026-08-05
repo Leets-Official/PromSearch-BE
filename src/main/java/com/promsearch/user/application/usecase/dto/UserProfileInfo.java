@@ -4,6 +4,7 @@ import com.promsearch.user.application.port.out.tag.InterestTagRow;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.enums.InterestTagType;
 import java.util.List;
+import java.util.stream.Stream;
 
 /**
  * 내 프로필 조회 UseCase가 API 계층에 전달하는 읽기 모델.
@@ -39,5 +40,9 @@ public record UserProfileInfo(
                         .map(InterestTagInfo::from)
                         .toList()
         );
+    }
+
+    public List<InterestTagInfo> interestTags() {
+        return Stream.concat(jobTags.stream(), taskTags.stream()).toList();
     }
 }

@@ -154,6 +154,7 @@ public interface PromptControllerDocs {
             summary = "[PROMPT-004] 이미지 처리 상태 일괄 조회",
             description = IMPLEMENTED_BY_HANHARAM
                     + "인증 사용자가 업로드한 이미지 1~10개의 처리 상태를 요청 순서대로 조회합니다. "
+                    + "READY 상태이면 워터마크 완료 이미지의 Presigned 조회 URL(imageUrl)을 반환하고, 그 외 상태의 imageUrl은 null입니다. "
                     + "imageIds는 쉼표로 구분하며, 중복 식별자는 거절합니다. "
                     + "요청한 이미지가 하나라도 없거나 본인 소유가 아니면 전체 요청이 실패합니다."
     )
