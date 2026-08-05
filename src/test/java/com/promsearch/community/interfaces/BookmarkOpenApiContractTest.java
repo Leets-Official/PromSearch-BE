@@ -39,7 +39,7 @@ class BookmarkOpenApiContractTest {
         assertThat(delete.path("security").get(0).has("jwtBearerAuth")).isTrue();
         assertThat(list.path("security").get(0).has("jwtBearerAuth")).isTrue();
         assertThat(list.path("parameters").toString())
-                .contains("taskTagId", "aiModelTagId", "outputType", "page", "size");
+                .contains("taskTagIds", "aiModelTagIds", "outputTypes", "page", "size");
     }
 
     @DisplayName("JWT 없이 북마크 등록과 내 북마크 목록을 호출하면 401을 반환한다")

@@ -13,11 +13,11 @@ import java.util.List;
 
 @Schema(description = "내 북마크 프롬프트 목록")
 public record BookmarkListResponse(
-        List<BookmarkPromptResponse> content,
-        int page,
-        int size,
-        long totalElements,
-        boolean hasNext
+        @Schema(description = "북마크 프롬프트 카드 목록")
+        List<BookmarkPromptResponse> prompts,
+
+        @Schema(description = "페이지 정보")
+        BookmarkPageResponse page
 ) {
 
     public static BookmarkListResponse from(BookmarkListInfo info) {
@@ -25,11 +25,28 @@ public record BookmarkListResponse(
                 info.content().stream()
                         .map(BookmarkPromptResponse::from)
                         .toList(),
-                info.page(),
-                info.size(),
-                info.totalElements(),
-                info.hasNext()
+                BookmarkPageResponse.from(info)
         );
+    }
+
+    @Schema(description = "북마크 목록 페이지 정보")
+    public record BookmarkPageResponse(
+            @Schema(description = "0부터 시작하는 페이지 번호", example = "0")
+            int page,
+
+            @Schema(description = "페이지 크기", example = "12")
+            int size,
+
+            @Schema(description = "조건에 맞는 전체 북마크 수", example = "24")
+            long totalElements,
+
+            @Schema(description = "다음 페이지 존재 여부", example = "true")
+            boolean hasNext
+    ) {
+
+        private static BookmarkPageResponse from(BookmarkListInfo info) {
+            return new BookmarkPageResponse(info.page(), info.size(), info.totalElements(), info.hasNext());
+        }
     }
 
     @Schema(description = "북마크 프롬프트 카드")

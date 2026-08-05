@@ -127,9 +127,9 @@ class BookmarkQueryIntegrationTest {
 
         BookmarkListInfo result = bookmarkQueryService.list(new BookmarkListQuery(
                 userId,
-                task.getId(),
-                aiModel.getId(),
-                PromptOutputType.TEXT,
+                List.of(task.getId()),
+                List.of(aiModel.getId()),
+                List.of(PromptOutputType.TEXT),
                 0,
                 6
         ));
@@ -174,9 +174,9 @@ class BookmarkQueryIntegrationTest {
         bookmarkCommandService.bookmark(new BookmarkPromptCommand(userId, secondPromptId));
         BookmarkListInfo firstPage = bookmarkQueryService.list(new BookmarkListQuery(
                 userId,
-                null,
-                null,
-                null,
+                List.of(),
+                List.of(),
+                List.of(),
                 0,
                 1
         ));

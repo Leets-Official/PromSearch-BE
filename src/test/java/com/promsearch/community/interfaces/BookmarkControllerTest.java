@@ -96,24 +96,25 @@ class BookmarkControllerTest {
                 .thenReturn(new BookmarkListInfo(List.of(), 1, 6, 0, false));
 
         mockMvc.perform(get("/api/v1/users/me/bookmarks")
-                        .param("taskTagId", "3")
-                        .param("aiModelTagId", "7")
-                        .param("outputType", "IMAGE")
+                        .param("taskTagIds", "3")
+                        .param("aiModelTagIds", "7")
+                        .param("outputTypes", "IMAGE")
                         .param("page", "1")
+                        .param("size", "6")
                         .with(request -> authenticated(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.content").isArray())
-                .andExpect(jsonPath("$.result.page").value(1))
-                .andExpect(jsonPath("$.result.size").value(6));
+                .andExpect(jsonPath("$.result.prompts").isArray())
+                .andExpect(jsonPath("$.result.page.page").value(1))
+                .andExpect(jsonPath("$.result.page.size").value(6));
 
         ArgumentCaptor<BookmarkListQuery> captor =
                 ArgumentCaptor.forClass(BookmarkListQuery.class);
         Mockito.verify(listBookmarksUseCase).list(captor.capture());
         assertThat(captor.getValue()).isEqualTo(new BookmarkListQuery(
                 1L,
-                3L,
-                7L,
-                PromptOutputType.IMAGE,
+                List.of(3L),
+                List.of(7L),
+                List.of(PromptOutputType.IMAGE),
                 1,
                 6
         ));

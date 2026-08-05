@@ -25,7 +25,8 @@ public enum CommunityErrorCode implements BaseCode {
     COMMENT_COUNT_UPDATE_FAILED(HttpStatus.CONFLICT, "COMMUNITY-018", "댓글 수를 갱신할 수 없습니다."),
     INTERACTION_TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "COMMUNITY-019", "상호작용할 수 있는 프롬프트를 찾을 수 없습니다."),
     INTERACTION_COUNT_INCONSISTENT(HttpStatus.CONFLICT, "COMMUNITY-020", "프롬프트 상호작용 수가 올바르지 않습니다."),
-    INVALID_BOOKMARK_PAGE(HttpStatus.BAD_REQUEST, "COMMUNITY-021", "북마크 페이지 정보가 유효하지 않습니다.");
+    INVALID_BOOKMARK_PAGE(HttpStatus.BAD_REQUEST, "COMMUNITY-021", "북마크 페이지 정보가 유효하지 않습니다."),
+    INVALID_BOOKMARK_FILTER(HttpStatus.BAD_REQUEST, "COMMUNITY-022", "북마크 필터 정보가 유효하지 않습니다.");
 
     private final HttpStatus httpStatus;
     private final String code;
