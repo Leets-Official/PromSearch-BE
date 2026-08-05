@@ -14,6 +14,8 @@ public record GradeRequestSummaryResponse(
         Long userId,
         @Schema(description = "신청자 닉네임", example = "hanharam")
         String username,
+        @Schema(description = "신청자 닉네임", example = "prompt-master")
+        String nickname,
         @Schema(description = "신청 시점의 등급", example = "PRIME")
         UserGrade currentGrade,
         @Schema(description = "신청 등급", example = "ORIGIN")
@@ -23,7 +25,7 @@ public record GradeRequestSummaryResponse(
         @Schema(description = "게시글 수", example = "12")
         long postCount,
         @Schema(description = "누적 추천(좋아요) 수", example = "84")
-        long cumulativeLikeCount,
+        long totalLikeCount,
         @Schema(description = "신청 시각(Prime 등급업 시각)", example = "2026-07-23T12:00:00Z")
         Instant requestedAt,
         @Schema(description = "처리 시각", example = "2026-07-24T09:00:00Z")
@@ -35,11 +37,12 @@ public record GradeRequestSummaryResponse(
                 info.gradeRequestId(),
                 info.userId(),
                 info.username(),
+                info.nickname(),
                 info.currentGrade(),
                 info.requestedGrade(),
                 info.status(),
                 info.postCount(),
-                info.cumulativeLikeCount(),
+                info.totalLikeCount(),
                 info.requestedAt(),
                 info.processedAt()
         );

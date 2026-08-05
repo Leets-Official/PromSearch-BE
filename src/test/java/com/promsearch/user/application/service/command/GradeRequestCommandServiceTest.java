@@ -58,7 +58,7 @@ class GradeRequestCommandServiceTest {
         when(loadGradeRequestPort.getById(1L)).thenReturn(pending);
         when(loadUserPort.getById(5L)).thenReturn(primeUser());
         GradeRequestSummaryInfo expected = new GradeRequestSummaryInfo(
-                1L, 5L, "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.APPROVED,
+                1L, 5L, "hanharam", "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.APPROVED,
                 0L, 0L, Instant.now(), Instant.now()
         );
         when(loadGradeRequestSummaryPort.getById(any())).thenReturn(expected);
@@ -83,7 +83,7 @@ class GradeRequestCommandServiceTest {
         GradeRequest pending = GradeRequest.createPendingOriginRequest(5L);
         when(loadGradeRequestPort.getById(1L)).thenReturn(pending);
         when(loadGradeRequestSummaryPort.getById(any())).thenReturn(new GradeRequestSummaryInfo(
-                1L, 5L, "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.REJECTED,
+                1L, 5L, "hanharam", "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.REJECTED,
                 0L, 0L, Instant.now(), Instant.now()
         ));
 

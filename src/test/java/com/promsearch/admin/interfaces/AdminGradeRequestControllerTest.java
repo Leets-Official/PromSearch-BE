@@ -50,7 +50,7 @@ class AdminGradeRequestControllerTest {
     @Test
     void getGradeRequestsReturnsSummaries() throws Exception {
         GradeRequestSummaryInfo summary = new GradeRequestSummaryInfo(
-                1L, 5L, "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.PENDING,
+                1L, 5L, "hanharam", "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.PENDING,
                 12L, 84L, Instant.parse("2026-07-23T12:00:00Z"), null
         );
         when(listGradeRequestsUseCase.list(new GradeRequestListQuery(GradeRequestStatus.PENDING, 0, 20)))
@@ -61,7 +61,8 @@ class AdminGradeRequestControllerTest {
                 .andExpect(jsonPath("$.result.content[0].gradeRequestId").value(1))
                 .andExpect(jsonPath("$.result.content[0].username").value("hanharam"))
                 .andExpect(jsonPath("$.result.content[0].postCount").value(12))
-                .andExpect(jsonPath("$.result.content[0].cumulativeLikeCount").value(84))
+                .andExpect(jsonPath("$.result.content[0].nickname").value("hanharam"))
+                .andExpect(jsonPath("$.result.content[0].totalLikeCount").value(84))
                 .andExpect(jsonPath("$.result.totalElements").value(1));
     }
 
@@ -69,7 +70,7 @@ class AdminGradeRequestControllerTest {
     @Test
     void processGradeRequestApproves() throws Exception {
         GradeRequestSummaryInfo processed = new GradeRequestSummaryInfo(
-                1L, 5L, "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.APPROVED,
+                1L, 5L, "hanharam", "hanharam", UserGrade.PRIME, UserGrade.ORIGIN, GradeRequestStatus.APPROVED,
                 12L, 84L, Instant.parse("2026-07-23T12:00:00Z"), Instant.parse("2026-07-24T09:00:00Z")
         );
         when(processGradeRequestUseCase.process(new ProcessGradeRequestCommand(1L, GradeRequestStatus.APPROVED)))

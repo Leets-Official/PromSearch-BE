@@ -8,11 +8,12 @@ public record GradeRequestSummaryInfo(
         Long gradeRequestId,
         Long userId,
         String username,
+        String nickname,
         UserGrade currentGrade,
         UserGrade requestedGrade,
         GradeRequestStatus status,
         long postCount,
-        long cumulativeLikeCount,
+        long totalLikeCount,
         Instant requestedAt,
         Instant processedAt
 ) {

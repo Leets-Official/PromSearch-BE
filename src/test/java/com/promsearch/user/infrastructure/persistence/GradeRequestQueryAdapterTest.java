@@ -70,10 +70,11 @@ class GradeRequestQueryAdapterTest {
         assertThat(summary.gradeRequestId()).isEqualTo(gradeRequest.getId());
         assertThat(summary.userId()).isEqualTo(user.getId());
         assertThat(summary.username()).isEqualTo("hanharam");
+        assertThat(summary.nickname()).isEqualTo("hanharam");
         assertThat(summary.currentGrade()).isEqualTo(UserGrade.PRIME);
         assertThat(summary.requestedGrade()).isEqualTo(UserGrade.ORIGIN);
         assertThat(summary.postCount()).isEqualTo(2);
-        assertThat(summary.cumulativeLikeCount()).isEqualTo(8);
+        assertThat(summary.totalLikeCount()).isEqualTo(8);
 
         GradeRequestListInfo rejected = adapter.list(new GradeRequestListQuery(GradeRequestStatus.REJECTED, 0, 20));
         assertThat(rejected.content()).isEmpty();
@@ -95,7 +96,7 @@ class GradeRequestQueryAdapterTest {
 
         assertThat(summary.userId()).isEqualTo(user.getId());
         assertThat(summary.postCount()).isZero();
-        assertThat(summary.cumulativeLikeCount()).isZero();
+        assertThat(summary.totalLikeCount()).isZero();
     }
 
     @DisplayName("존재하지 않는 식별자를 조회하면 예외가 발생한다")

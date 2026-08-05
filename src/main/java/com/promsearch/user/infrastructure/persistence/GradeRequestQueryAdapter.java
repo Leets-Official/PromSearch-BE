@@ -88,6 +88,7 @@ public class GradeRequestQueryAdapter implements LoadGradeRequestListPort, LoadG
                 (Long) row[0],
                 (Long) row[1],
                 (String) row[2],
+                (String) row[2],
                 (UserGrade) row[3],
                 (UserGrade) row[4],
                 (GradeRequestStatus) row[5],
