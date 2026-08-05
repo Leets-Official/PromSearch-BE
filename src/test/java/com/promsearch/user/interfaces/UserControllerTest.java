@@ -170,11 +170,10 @@ class UserControllerTest {
                 1L,
                 "user@test.com",
                 "nickname",
-                "name",
                 "https://s3.test/signed-profile",
                 100L,
                 UserRole.USER,
-                UserGrade.NORMAL,
+                UserGrade.NODE,
                 UserStatus.ACTIVE,
                 now,
                 now

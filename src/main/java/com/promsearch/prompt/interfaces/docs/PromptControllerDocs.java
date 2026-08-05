@@ -11,6 +11,7 @@ import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
 import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptEditResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageStatusesResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
@@ -87,6 +88,23 @@ public interface PromptControllerDocs {
 
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
+
+    @Operation(
+            summary = "[PROMPT-006] 작성자용 프롬프트 수정 데이터 조회",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "작성자만 수정 폼에 필요한 전체 데이터를 조회합니다. 비공개 프롬프트도 작성자는 조회할 수 있습니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 데이터 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아님"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음")
+    })
+    ApiResponse<PromptEditResponse> getPromptEdit(
+            @Parameter(description = "프롬프트 ID", example = "10", required = true)
+            @PathVariable Long promptId,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 
     @Operation(

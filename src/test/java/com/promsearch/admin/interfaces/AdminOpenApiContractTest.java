@@ -23,7 +23,7 @@ class AdminOpenApiContractTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @DisplayName("Swagger에 신고함·등급업 관리자 API 4개를 노출한다")
+    @DisplayName("Swagger에 신고함·등급업 관리자 API 5개를 노출한다")
     @Test
     void adminEndpointsAreDocumented() throws Exception {
         JsonNode document = openApiDocument();
@@ -32,11 +32,7 @@ class AdminOpenApiContractTest {
         assertThat(document.at("/paths/~1api~1v1~1admin~1reports~1{reportId}/patch").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests/get").isMissingNode()).isFalse();
         assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests~1{requestId}/patch").isMissingNode()).isFalse();
-
-        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests/get/description").asText())
-                .contains("작업자: kallin1", "구현 상태: 미구현");
-        assertThat(document.at("/paths/~1api~1v1~1admin~1grade-requests~1{requestId}/patch/description").asText())
-                .contains("작업자: kallin1", "구현 상태: 미구현");
+        assertThat(document.at("/paths/~1api~1v1~1admin~1origin-users/get").isMissingNode()).isFalse();
     }
 
     @DisplayName("신고함 관리자 API는 구현 완료 상태로 문서화된다")
@@ -59,13 +55,13 @@ class AdminOpenApiContractTest {
         assertThat(reportTagDescription).contains("신고 생성 API는 이번 범위에서 미구현");
     }
 
-    @DisplayName("등급업 신청 생성 방식 미정 상태를 Swagger 설명에 명시한다")
+    @DisplayName("Origin 등급업 심사 대기/승인 정책을 Swagger 설명에 명시한다")
     @Test
-    void gradeRequestTagDocumentsUndecidedPolicy() throws Exception {
+    void gradeRequestTagDocumentsReviewQueuePolicy() throws Exception {
         JsonNode document = openApiDocument();
 
         String gradeTagDescription = tagDescription(document, "Admin | Origin 등급업");
-        assertThat(gradeTagDescription).contains("정책 미정");
+        assertThat(gradeTagDescription).contains("Prime에 도달하면", "자동 생성");
     }
 
     private String tagDescription(JsonNode document, String tagName) {

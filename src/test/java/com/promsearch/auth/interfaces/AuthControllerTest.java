@@ -208,7 +208,6 @@ class AuthControllerTest {
                 "gildong",
                 "gildong@example.com",
                 "password123",
-                "https://cdn.promsearch.com/profiles/me.png",
                 List.of(),
                 List.of()
         );
@@ -231,8 +230,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.result.expiresIn").value(3600))
                 .andExpect(jsonPath("$.result.userId", notNullValue()))
                 .andExpect(jsonPath("$.result.name").doesNotExist())
-                .andExpect(jsonPath("$.result.profileImageUrl")
-                        .value("https://cdn.promsearch.com/profiles/me.png"))
+                .andExpect(jsonPath("$.result.profileImageUrl").doesNotExist())
                 .andExpect(jsonPath("$.result.nickname").value("gildong"))
                 .andExpect(jsonPath("$.result.email").value("gildong@example.com"))
                 .andExpect(jsonPath("$.result.password").doesNotExist());
@@ -294,7 +292,7 @@ class AuthControllerTest {
     @DisplayName("보호된 API는 access token 없이 접근할 수 없다")
     @Test
     void protectedApiRequiresAccessToken() throws Exception {
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -311,7 +309,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest("새이름", null, null);
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest("newnick", null);
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
@@ -320,8 +318,8 @@ class AuthControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.result.name").value("새이름"))
-                .andExpect(jsonPath("$.result.nickname").value("gildong"));
+                .andExpect(jsonPath("$.result.name").doesNotExist())
+                .andExpect(jsonPath("$.result.nickname").value("newnick"));
     }
 
     @DisplayName("회원 탈퇴 시 10자를 초과하는 익명화 닉네임을 저장한다")
@@ -361,7 +359,7 @@ class AuthControllerTest {
         String accessToken = loginAndGetResult("gildong@example.com", "password123")
                 .get("accessToken")
                 .asText();
-        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, null, "invalid-email");
+        UpdateUserProfileRequest request = new UpdateUserProfileRequest(null, "invalid-email");
 
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken)
