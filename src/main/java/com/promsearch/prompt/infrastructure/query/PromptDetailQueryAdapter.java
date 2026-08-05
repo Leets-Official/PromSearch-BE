@@ -91,6 +91,7 @@ public class PromptDetailQueryAdapter implements LoadPromptDetailPort {
                         author.getProfileImageUrl(),
                         author.getProfileImageObjectKey()
                 ),
+                author.getGrade().name(),
                 post.getOutputType(),
                 post.getContentType(),
                 post.getPricePoint(),

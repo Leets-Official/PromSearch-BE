@@ -18,6 +18,7 @@ public interface LoadPromptDetailPort {
             String title,
             String authorNickname,
             String authorProfileImageUrl,
+            String authorGradeName,
             PromptOutputType outputType,
             PromptContentType contentType,
             Long pricePoint,

@@ -15,6 +15,9 @@ public record PromptAuthorResponse(
                 example = "https://cdn.promsearch.com/profiles/12.jpg",
                 nullable = true
         )
-        String profileImageUrl
+        String profileImageUrl,
+
+        @Schema(description = "작성자 크리에이터 등급 이름", example = "ORIGIN")
+        String gradeName
 ) {
 }

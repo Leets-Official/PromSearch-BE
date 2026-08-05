@@ -51,7 +51,8 @@ public class PromptDetailQueryService implements GetPromptDetailUseCase {
                 new Author(
                         prompt.authorId(),
                         prompt.authorNickname(),
-                        prompt.authorProfileImageUrl()),
+                        prompt.authorProfileImageUrl(),
+                        prompt.authorGradeName()),
                 prompt.outputType(),
                 prompt.contentType(),
                 prompt.pricePoint(),
