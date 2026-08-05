@@ -1,5 +1,6 @@
 package com.promsearch.community.interfaces.docs;
 
+import com.promsearch.community.application.usecase.dto.BookmarkListQuery;
 import com.promsearch.community.interfaces.dto.response.BookmarkListResponse;
 import com.promsearch.community.interfaces.dto.response.BookmarkResponse;
 import com.promsearch.global.response.ApiResponse;
@@ -12,6 +13,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
+import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -80,22 +83,22 @@ public interface BookmarkControllerDocs {
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
-            @Parameter(description = "TASK 태그 식별자")
-            @Positive(message = "taskTagId must be greater than 0")
-            @RequestParam(required = false) Long taskTagId,
+            @Parameter(description = "TASK 태그 식별자 목록 (콤마 구분)")
+            @Size(max = BookmarkListQuery.MAX_FILTER_TAGS, message = "taskTagIds size must be " + BookmarkListQuery.MAX_FILTER_TAGS + " or less")
+            @RequestParam(required = false) List<@Positive(message = "taskTagIds must contain values greater than 0") Long> taskTagIds,
 
-            @Parameter(description = "AI_MODEL 태그 식별자")
-            @Positive(message = "aiModelTagId must be greater than 0")
-            @RequestParam(required = false) Long aiModelTagId,
+            @Parameter(description = "AI_MODEL 태그 식별자 목록 (콤마 구분)")
+            @Size(max = BookmarkListQuery.MAX_FILTER_TAGS, message = "aiModelTagIds size must be " + BookmarkListQuery.MAX_FILTER_TAGS + " or less")
+            @RequestParam(required = false) List<@Positive(message = "aiModelTagIds must contain values greater than 0") Long> aiModelTagIds,
 
-            @Parameter(description = "결과물 타입")
-            @RequestParam(required = false) PromptOutputType outputType,
+            @Parameter(description = "결과물 타입 목록 (콤마 구분)")
+            @RequestParam(required = false) List<PromptOutputType> outputTypes,
 
             @Min(value = 0, message = "page must be greater than or equal to 0")
             @RequestParam(defaultValue = "0") int page,
 
             @Min(value = 1, message = "size must be greater than 0")
             @Max(value = 50, message = "size must be less than or equal to 50")
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "12") int size
     );
 }
