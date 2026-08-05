@@ -73,7 +73,7 @@ worker:
   watermark:
     # 실행기 작업 수와 SQS 선점 수를 함께 제한한다. 동시성 증가 전에는 이미지 디코딩 메모리,
     # JVM heap, S3 대역폭, DB 풀 사용량을 부하 테스트로 확인해야 한다.
-    concurrency: ${WATERMARK_WORKER_CONCURRENCY:2}
+    concurrency: ${WATERMARK_WORKER_CONCURRENCY:1}
     logo: classpath:watermark/wordmark.png
     logo-color: "${WATERMARK_LOGO_COLOR:#6B7280}"
     opacity: ${WATERMARK_OPACITY:0.26}
