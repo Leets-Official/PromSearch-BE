@@ -30,6 +30,17 @@ class CorsConfigTest {
                 .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "https://promsearch.kr"));
     }
 
+    @DisplayName("Swagger API 도메인의 로그인 POST preflight 요청이 통과한다")
+    @Test
+    void swaggerApiOriginPassesLoginPreflight() throws Exception {
+        mockMvc.perform(options("/api/v1/auth/login")
+                        .header(HttpHeaders.ORIGIN, "https://api.promsearch.kr")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "content-type"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(HttpHeaders.ACCESS_CONTROL_ALLOW_ORIGIN, "https://api.promsearch.kr"));
+    }
+
     @DisplayName("Vercel 프리뷰 배포 와일드카드 도메인도 preflight 요청이 통과한다")
     @Test
     void vercelPreviewWildcardOriginPassesPreflight() throws Exception {
