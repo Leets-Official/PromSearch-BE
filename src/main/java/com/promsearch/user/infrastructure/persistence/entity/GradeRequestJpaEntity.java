@@ -61,6 +61,11 @@ public class GradeRequestJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public void updateFrom(GradeRequest gradeRequest) {
+        this.status = gradeRequest.getStatus();
+        this.processedAt = gradeRequest.getProcessedAt();
+    }
+
     public GradeRequest toDomain() {
         return GradeRequest.reconstruct(
                 id,
@@ -71,5 +76,9 @@ public class GradeRequestJpaEntity extends BaseEntity {
                 getCreatedAt(),
                 processedAt
         );
+    }
+
+    public Long getId() {
+        return id;
     }
 }

@@ -51,6 +51,21 @@ public class GradeRequest {
                 .build();
     }
 
+    public GradeRequest process(GradeRequestStatus decision) {
+        if (status != GradeRequestStatus.PENDING) {
+            throw new UserDomainException(UserErrorCode.GRADE_REQUEST_ALREADY_PROCESSED);
+        }
+        return GradeRequest.builder()
+                .gradeRequestId(gradeRequestId)
+                .userId(userId)
+                .currentGrade(currentGrade)
+                .requestedGrade(requestedGrade)
+                .status(decision)
+                .requestedAt(requestedAt)
+                .processedAt(Instant.now())
+                .build();
+    }
+
     public static GradeRequest reconstruct(
             Long gradeRequestId,
             Long userId,

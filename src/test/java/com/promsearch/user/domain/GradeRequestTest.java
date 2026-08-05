@@ -31,4 +31,38 @@ class GradeRequestTest {
                 .extracting("baseCode")
                 .isEqualTo(UserErrorCode.INVALID_ID);
     }
+
+    @DisplayName("PENDING 항목을 승인하면 APPROVED로 전환되고 처리 시각이 기록된다")
+    @Test
+    void processApprovesPendingRequest() {
+        GradeRequest gradeRequest = GradeRequest.createPendingOriginRequest(1L);
+
+        GradeRequest processed = gradeRequest.process(GradeRequestStatus.APPROVED);
+
+        assertThat(processed.getStatus()).isEqualTo(GradeRequestStatus.APPROVED);
+        assertThat(processed.getProcessedAt()).isNotNull();
+        assertThat(processed.getUserId()).isEqualTo(gradeRequest.getUserId());
+    }
+
+    @DisplayName("PENDING 항목을 반려하면 REJECTED로 전환된다")
+    @Test
+    void processRejectsPendingRequest() {
+        GradeRequest gradeRequest = GradeRequest.createPendingOriginRequest(1L);
+
+        GradeRequest processed = gradeRequest.process(GradeRequestStatus.REJECTED);
+
+        assertThat(processed.getStatus()).isEqualTo(GradeRequestStatus.REJECTED);
+        assertThat(processed.getProcessedAt()).isNotNull();
+    }
+
+    @DisplayName("이미 처리된 항목은 다시 처리할 수 없다")
+    @Test
+    void rejectsProcessingAlreadyProcessedRequest() {
+        GradeRequest processed = GradeRequest.createPendingOriginRequest(1L).process(GradeRequestStatus.APPROVED);
+
+        assertThatThrownBy(() -> processed.process(GradeRequestStatus.REJECTED))
+                .isInstanceOf(UserDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(UserErrorCode.GRADE_REQUEST_ALREADY_PROCESSED);
+    }
 }
