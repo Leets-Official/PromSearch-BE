@@ -59,7 +59,7 @@ public class User {
     }
 
     public static User create(String email, String password, String nickname, String name, String profileImageUrl) {
-        validateRequired(email, password, nickname, 0L, UserRole.USER, UserGrade.NORMAL, UserStatus.ACTIVE);
+        validateRequired(email, password, nickname, 0L, UserRole.USER, UserGrade.NODE, UserStatus.ACTIVE);
 
         Instant now = Instant.now();
         return User.builder()
@@ -71,7 +71,7 @@ public class User {
                 .profileImageObjectKey(null)
                 .point(0L)
                 .role(UserRole.USER)
-                .grade(UserGrade.NORMAL)
+                .grade(UserGrade.NODE)
                 .status(UserStatus.ACTIVE)
                 .createdAt(now)
                 .updatedAt(now)
@@ -112,7 +112,7 @@ public class User {
                 .build();
     }
 
-    public User updateProfile(String email, String nickname, String name) {
+    public User updateProfile(String email, String nickname) {
         validateRequired(email, password, nickname, point, role, grade, status);
 
         return User.builder()
@@ -200,6 +200,33 @@ public class User {
                 .point(point)
                 .role(role)
                 .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
+    /**
+     * Origin 등급으로 승급한다. 관리자가 Origin 심사 대기 항목을 승인했을 때만 호출되며,
+     * Prime 등급 유저만 승급 대상이다.
+     *
+     * @return Origin 등급으로 변경된 새 사용자 객체
+     */
+    public User promoteToOrigin() {
+        if (grade != UserGrade.PRIME) {
+            throw new UserDomainException(UserErrorCode.INVALID_GRADE_TRANSITION);
+        }
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
+                .point(point)
+                .role(role)
+                .grade(UserGrade.ORIGIN)
                 .status(status)
                 .createdAt(createdAt)
                 .updatedAt(Instant.now())

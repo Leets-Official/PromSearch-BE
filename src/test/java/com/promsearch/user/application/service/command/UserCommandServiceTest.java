@@ -1,11 +1,12 @@
 package com.promsearch.user.application.service.command;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.user.application.port.out.user.LoadUserPort;
-import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
+import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
@@ -30,25 +31,19 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class UserCommandServiceTest {
 
     private FakeUserRepository userRepository;
+    private FakeSaveUserInterestTagPort saveUserInterestTagPort;
     private UserCommandService userCommandService;
 
     @BeforeEach
     void setUp() {
         userRepository = new FakeUserRepository();
+        saveUserInterestTagPort = new FakeSaveUserInterestTagPort();
         userCommandService = new UserCommandService(
                 userRepository,
                 userId -> List.of(),
                 userRepository,
-                (type, names) -> List.of(),
-                new SaveUserInterestTagPort() {
-                    @Override
-                    public void save(Long userId, List<Long> tagIds) {
-                    }
-
-                    @Override
-                    public void replace(Long userId, List<Long> tagIds) {
-                    }
-                },
+                (type, tagIds) -> tagIds,
+                saveUserInterestTagPort,
                 (userId, agreements) -> {
                 },
                 new TestPasswordEncoder(),
@@ -73,17 +68,36 @@ class UserCommandServiceTest {
         UserInfo userInfo = userCommandService.updateProfile(
                 UpdateUserProfileCommand.of(
                         1L,
-                        " newName ",
                         " newNick ",
-                        " new@example.com "
+                        " new@example.com ",
+                        null,
+                        null
                 )
         );
 
-        assertThat(userInfo.name()).isEqualTo("newName");
         assertThat(userInfo.nickname()).isEqualTo("newNick");
         assertThat(userInfo.email()).isEqualTo("new@example.com");
         assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/original.png");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
+        assertThat(saveUserInterestTagPort.lastReplacedUserId).isNull();
+    }
+
+    @Test
+    void updateProfileReplacesInterestTagsWhenBothProvided() {
+        userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", null, UserStatus.ACTIVE));
+
+        userCommandService.updateProfile(
+                UpdateUserProfileCommand.of(1L, null, null, List.of(1L), List.of(2L, 3L))
+        );
+
+        assertThat(saveUserInterestTagPort.lastReplacedUserId).isEqualTo(1L);
+        assertThat(saveUserInterestTagPort.lastReplacedTagIds).containsExactlyInAnyOrder(1L, 2L, 3L);
+    }
+
+    @Test
+    void updateProfileAllowsPartialInterestTagUpdate() {
+        assertThatCode(() -> UpdateUserProfileCommand.of(1L, null, null, List.of(1L), null))
+                .doesNotThrowAnyException();
     }
 
     @Test
@@ -91,12 +105,11 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, null)
+                UpdateUserProfileCommand.of(1L, null, null, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
         assertThat(userInfo.nickname()).isEqualTo("oldNick");
-        assertThat(userInfo.name()).isEqualTo("oldName");
         assertThat(userInfo.profileImageUrl()).isEqualTo("old-image");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
     }
@@ -107,7 +120,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "two", null)
+                UpdateUserProfileCommand.of(1L, "two", null, null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -120,7 +133,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null, "user2@example.com")
+                UpdateUserProfileCommand.of(1L, null, "user2@example.com", null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -212,7 +225,7 @@ class UserCommandServiceTest {
                 null,
                 0L,
                 UserRole.USER,
-                UserGrade.NORMAL,
+                UserGrade.NODE,
                 status,
                 now,
                 now
@@ -305,6 +318,22 @@ class UserCommandServiceTest {
         @Override
         public boolean matches(CharSequence rawPassword, String encodedPassword) {
             return encodedPassword.equals(encode(rawPassword));
+        }
+    }
+
+    private static class FakeSaveUserInterestTagPort implements SaveUserInterestTagPort {
+
+        private Long lastReplacedUserId;
+        private List<Long> lastReplacedTagIds;
+
+        @Override
+        public void save(Long userId, List<Long> tagIds) {
+        }
+
+        @Override
+        public void replace(Long userId, List<Long> tagIds) {
+            lastReplacedUserId = userId;
+            lastReplacedTagIds = tagIds;
         }
     }
 }

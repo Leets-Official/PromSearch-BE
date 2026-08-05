@@ -1,8 +1,6 @@
 package com.promsearch.user.interfaces.dto.response;
 
-import com.promsearch.user.application.usecase.dto.InterestTagInfo;
 import com.promsearch.user.application.usecase.dto.UserProfileInfo;
-import com.promsearch.user.domain.enums.InterestTagType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 
@@ -31,21 +29,17 @@ public record UserProfileResponse(
                 info.email(),
                 info.point(),
                 info.gradeName(),
-                tagsOfType(info.interestTags(), InterestTagType.JOB),
-                tagsOfType(info.interestTags(), InterestTagType.TASK)
+                info.jobTags().stream().map(InterestTagResponse::from).toList(),
+                info.taskTags().stream().map(InterestTagResponse::from).toList()
         );
-    }
-
-    private static List<InterestTagResponse> tagsOfType(List<InterestTagInfo> tags, InterestTagType type) {
-        return tags.stream()
-                .filter(tag -> tag.type() == type)
-                .map(tag -> new InterestTagResponse(tag.tagId(), tag.name()))
-                .toList();
     }
 
     public record InterestTagResponse(
             @Schema(description = "태그 ID", example = "1") Long tagId,
             @Schema(description = "태그 이름", example = "직장인") String name
     ) {
+        private static InterestTagResponse from(com.promsearch.user.application.usecase.dto.InterestTagInfo info) {
+            return new InterestTagResponse(info.tagId(), info.tagName());
+        }
     }
 }

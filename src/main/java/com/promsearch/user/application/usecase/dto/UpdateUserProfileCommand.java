@@ -47,6 +47,16 @@ public record UpdateUserProfileCommand(
 
     public static UpdateUserProfileCommand of(
             Long userId,
+            String nickname,
+            String email,
+            List<Long> interestJobTagIds,
+            List<Long> interestTaskTagIds
+    ) {
+        return of(userId, null, nickname, email, null, interestJobTagIds, interestTaskTagIds);
+    }
+
+    public static UpdateUserProfileCommand of(
+            Long userId,
             String name,
             String nickname,
             String email,

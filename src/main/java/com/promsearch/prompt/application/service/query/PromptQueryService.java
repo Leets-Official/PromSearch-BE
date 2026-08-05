@@ -1,9 +1,17 @@
 package com.promsearch.prompt.application.service.query;
 
 import com.promsearch.prompt.application.port.out.prompt.HomePromptReader;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptPort;
+import com.promsearch.prompt.application.port.out.prompt.PromptPageResult;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.ListHomePromptsUseCase;
+import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListInfo;
 import com.promsearch.prompt.application.usecase.dto.HomePromptListQuery;
+import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
+import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
+import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -11,7 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
-public class PromptQueryService implements ListHomePromptsUseCase {
+public class PromptQueryService implements ListHomePromptsUseCase, ListMyPromptsUseCase, GetMyPromptInsightsUseCase {
 
     /*
      * application 계층은 JPA Repository나 EntityManager를 직접 알지 않습니다.
@@ -19,6 +27,7 @@ public class PromptQueryService implements ListHomePromptsUseCase {
      * 실제 JPQL/영속성 세부사항은 infrastructure adapter가 담당합니다.
      */
     private final HomePromptReader homePromptReader;
+    private final LoadPromptPort loadPromptPort;
 
     @Override
     public HomePromptListInfo listPrompts(HomePromptListQuery query) {
@@ -45,5 +54,26 @@ public class PromptQueryService implements ListHomePromptsUseCase {
          * 이 차이는 persistence adapter에서 query.jobTagId() 조건으로 분기합니다.
          */
         return homePromptReader.listJobPrompts(query);
+    }
+
+    @Override
+    public MyPromptPageInfo listMyPrompts(ListMyPromptsQuery query) {
+        PromptPageResult result = loadPromptPort.listByUserIdAndStatus(
+                query.userId(),
+                query.status(),
+                query.visibility(),
+                query.page(),
+                query.size()
+        );
+
+        return new MyPromptPageInfo(
+                result.content().stream().map(MyPromptSummaryInfo::from).toList(),
+                result.totalElements()
+        );
+    }
+
+    @Override
+    public PromptInsightInfo getMyPromptInsights(Long userId) {
+        return PromptInsightInfo.from(loadPromptPort.sumInsightsByUserId(userId));
     }
 }

@@ -104,13 +104,13 @@ class LocalSwaggerAuthControllerTest {
                 .asText();
         assertThat(authorizationHeader).startsWith("Bearer ");
 
-        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("스웨거", null, null);
+        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest(null, "스웨거", null);
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.result.name").value("스웨거"));
+                .andExpect(jsonPath("$.result.nickname").value("스웨거"));
     }
 
     private Long signupAndGetUserId() throws Exception {

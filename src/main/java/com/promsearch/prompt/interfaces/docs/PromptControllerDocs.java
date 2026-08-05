@@ -5,12 +5,14 @@ import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
 import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
 import com.promsearch.prompt.interfaces.dto.response.MyPromptSummaryResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptCommandResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDetailResponse;
+import com.promsearch.prompt.interfaces.dto.response.PromptEditResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptDraftResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageStatusesResponse;
 import com.promsearch.prompt.interfaces.dto.response.PromptImageUploadCompleteResponse;
@@ -45,8 +47,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PromptControllerDocs {
 
     String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
-    String NOT_IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 미구현**\n\n";
-    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
+    String IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 구현완료**\n\n";
     String IMPLEMENTED_BY_LEE_GUNHEE = "**작업자: 이건희 | 구현 상태: 구현완료 (PR #51)**\n\n";
 
     @Operation(
@@ -87,6 +88,23 @@ public interface PromptControllerDocs {
 
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
+    );
+
+    @Operation(
+            summary = "[PROMPT-006] 작성자용 프롬프트 수정 데이터 조회",
+            description = IMPLEMENTED_BY_HANHARAM
+                    + "작성자만 수정 폼에 필요한 전체 데이터를 조회합니다. 비공개 프롬프트도 작성자는 조회할 수 있습니다."
+    )
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "수정 데이터 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아님"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음")
+    })
+    ApiResponse<PromptEditResponse> getPromptEdit(
+            @Parameter(description = "프롬프트 ID", example = "10", required = true)
+            @PathVariable Long promptId,
+            @Parameter(hidden = true) @AuthenticationPrincipal AuthenticatedUserPrincipal user
     );
 
     @Operation(
@@ -234,7 +252,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-009] 프롬프트 게시물 삭제",
-            description = NOT_IMPLEMENTED_BY_HANHARAM
+            description = IMPLEMENTED_BY_KALLIN1
                     + "작성자 본인의 프롬프트를 즉시 일반 조회에서 제외하도록 논리 삭제합니다. "
                     + "deletedAt 기록 후 30일이 지나면 DB 데이터와 S3 이미지를 물리 삭제합니다."
     )
@@ -243,8 +261,7 @@ public interface PromptControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 프롬프트 식별자"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자 권한 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 삭제 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음")
     })
     ApiResponse<Void> deletePrompt(
             @Parameter(hidden = true)
@@ -255,26 +272,25 @@ public interface PromptControllerDocs {
     );
 
     @Operation(
-            summary = "[PROMPT-010] 내 게시완료 목록 조회",
-            description = NOT_IMPLEMENTED_BY_KALLIN1
-                    + "인증된 사용자가 작성한 게시완료(status=ACTIVE) 프롬프트 목록을 최신순으로 페이지네이션 조회합니다. "
+            summary = "[PROMPT-010] 내 프롬프트 목록 조회",
+            description = IMPLEMENTED_BY_KALLIN1
+                    + "인증된 사용자가 작성한 프롬프트 목록을 상태별로 최신순 페이지네이션 조회합니다. "
                     + "논리 삭제된 게시물은 제외하며, 목록 카드에 필요한 필드만 포함하고 프롬프트 본문은 포함하지 않습니다."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "게시완료 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "내 프롬프트 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPublishedPrompts(
+    ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPrompts(
             @Parameter(hidden = true)
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
 
-            @Parameter(
-                    description = "조회할 게시물 처리 상태. 이 API는 게시완료된 게시물만 다루므로 ACTIVE만 지원합니다.",
-                    example = "ACTIVE"
-            )
+            @Parameter(description = "조회할 게시물 처리 상태", example = "ACTIVE")
             @RequestParam PromptStatus status,
+
+            @Parameter(description = "조회할 게시물 공개 범위. 생략하면 공개 범위와 무관하게 조회합니다.", example = "PUBLIC")
+            @RequestParam(required = false) PromptVisibility visibility,
 
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
             @Min(value = 0, message = "page must be 0 or greater")
@@ -288,13 +304,12 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-011] 내 게시글 인사이트 조회",
-            description = NOT_IMPLEMENTED_BY_KALLIN1
+            description = IMPLEMENTED_BY_KALLIN1
                     + "인증된 사용자가 작성한 전체 게시물(논리 삭제 제외) 기준으로 누적 조회수·추천수·복사수를 실시간 합산(SUM)해 반환합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "인사이트 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     ApiResponse<PromptInsightResponse> getMyPromptInsights(
             @Parameter(hidden = true)

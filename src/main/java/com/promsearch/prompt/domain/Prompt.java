@@ -33,6 +33,7 @@ public class Prompt {
     private final Instant createdAt;
     private final Instant updatedAt;
     private final Instant deletedAt;
+    private final Instant publishedAt;
     private final List<PromptImage> images;
     private final PostStatistics statistics;
     private final List<PostTag> postTags;
@@ -55,6 +56,7 @@ public class Prompt {
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt,
+            Instant publishedAt,
             List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
@@ -75,6 +77,7 @@ public class Prompt {
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
         this.deletedAt = deletedAt;
+        this.publishedAt = publishedAt;
         this.images = images == null ? List.of() : List.copyOf(images);
         this.statistics = statistics;
         this.postTags = postTags == null ? List.of() : List.copyOf(postTags);
@@ -193,6 +196,7 @@ public class Prompt {
             Instant createdAt,
             Instant updatedAt,
             Instant deletedAt,
+            Instant publishedAt,
             List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
@@ -231,6 +235,7 @@ public class Prompt {
                 .createdAt(createdAt)
                 .updatedAt(updatedAt)
                 .deletedAt(deletedAt)
+                .publishedAt(publishedAt)
                 .images(images)
                 .statistics(statistics)
                 .postTags(postTags)

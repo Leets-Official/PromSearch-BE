@@ -1,5 +1,6 @@
 package com.promsearch.admin.interfaces.dto.response;
 
+import com.promsearch.moderation.application.usecase.dto.ReportInfo;
 import com.promsearch.moderation.domain.enums.ReportReason;
 import com.promsearch.moderation.domain.enums.ReportStatus;
 import com.promsearch.moderation.domain.enums.ReportTargetType;
@@ -25,4 +26,17 @@ public record ReportSummaryResponse(
         @Schema(description = "신고 접수 시각", example = "2026-07-23T12:00:00Z")
         Instant createdAt
 ) {
+
+    public static ReportSummaryResponse from(ReportInfo info) {
+        return new ReportSummaryResponse(
+                info.reportId(),
+                info.targetType(),
+                info.targetId(),
+                info.reason(),
+                info.description(),
+                info.status(),
+                info.reporterId(),
+                info.createdAt()
+        );
+    }
 }

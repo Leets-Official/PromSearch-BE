@@ -67,7 +67,7 @@ class OpenApiDocumentationTest {
                 AuthController.class.getMethod("logout", AuthenticatedUserPrincipal.class)
         ));
         Operation promptDetailOperation = customizer.customize(new Operation(), handlerMethod(
-                new PromptController(null, null, null, null, null, null, null, null),
+                new PromptController(null, null, null, null, null, null, null, null, null, null, null, null),
                 PromptController.class.getMethod(
                         "getPromptDetail",
                         Long.class,

@@ -75,7 +75,6 @@ public class SocialLoginCompletionService {
         SignupInfo signupInfo = registerSocialUserUseCase.registerSocialUser(RegisterSocialUserCommand.of(
                 socialLoginResult.email(),
                 socialLoginResult.nickname(),
-                socialLoginResult.nickname(),
                 socialLoginResult.profileImageUrl()
         ));
 

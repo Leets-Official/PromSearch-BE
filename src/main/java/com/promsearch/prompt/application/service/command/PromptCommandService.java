@@ -1,17 +1,20 @@
 package com.promsearch.prompt.application.service.command;
 
 import com.promsearch.prompt.application.port.out.author.LoadPromptAuthorPort;
+import com.promsearch.prompt.application.port.out.prompt.DeletePromptPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptPort;
+import com.promsearch.prompt.application.port.out.user.PromoteUserGradePort;
 import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePort;
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
 import com.promsearch.prompt.application.port.out.tag.LoadTagPort;
 import com.promsearch.prompt.application.port.out.tag.SaveTagPort;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptUseCase;
 import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
@@ -47,7 +50,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class PromptCommandService implements
         CreatePromptUseCase,
         SavePromptDraftUseCase,
-        DeletePromptDraftUseCase {
+        DeletePromptDraftUseCase,
+        DeletePromptUseCase {
 
     private static final int MAX_IMAGE_COUNT = 10;
 
@@ -61,6 +65,8 @@ public class PromptCommandService implements
     private final SavePromptDraftPort savePromptDraftPort;
     private final LockPromptDraftPort lockPromptDraftPort;
     private final LoadPromptPricingPort loadPromptPricingPort;
+    private final PromoteUserGradePort promoteUserGradePort;
+    private final DeletePromptPort deletePromptPort;
 
     @Override
     public PromptCommandInfo create(CreatePromptCommand command) {
@@ -82,6 +88,7 @@ public class PromptCommandService implements
         List<Tag> tags = resolveTags(command);
         Map<UUID, PromptImage> imagesById = loadImagesForUpdate(command.images());
         Prompt savedPrompt = savePromptPort.create(prompt, tags);
+        promoteUserGradePort.promoteForPostCreation(command.userId());
 
         Optional<Long> reusableDraftPromptId = loadPromptDraftPort.findDraftPromptIdByUserId(command.userId());
         List<PromptImage> existingDraftImages = reusableDraftPromptId
@@ -156,6 +163,15 @@ public class PromptCommandService implements
         }
         savePromptImagePort.updateAll(detachedImages);
         savePromptDraftPort.deleteDraft(userId);
+    }
+
+    @Override
+    public void delete(Long promptId, Long userId) {
+        validateUserId(userId);
+        if (promptId == null || promptId <= 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_ID);
+        }
+        deletePromptPort.delete(promptId, userId);
     }
 
     private List<Tag> resolveTags(CreatePromptCommand command) {

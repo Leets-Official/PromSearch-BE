@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.time.Instant;
 
@@ -16,4 +17,14 @@ public record MyPromptSummaryResponse(
         @Schema(description = "누적 추천수", example = "12")
         long recommendCount
 ) {
+
+    public static MyPromptSummaryResponse from(MyPromptSummaryInfo info) {
+        return new MyPromptSummaryResponse(
+                info.promptId(),
+                info.title(),
+                info.publishedAt(),
+                info.viewCount(),
+                info.recommendCount()
+        );
+    }
 }

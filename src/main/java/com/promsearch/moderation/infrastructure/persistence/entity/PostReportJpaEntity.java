@@ -22,7 +22,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @Table(
         name = "post_reports",
-        uniqueConstraints = @UniqueConstraint(name = "uk_post_reports_user_post", columnNames = {"reporter_id", "post_id"})
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_post_reports_user_post",
+                columnNames = {"reporter_id", "post_id"}
+        )
 )
 public class PostReportJpaEntity extends BaseEntity {
 
@@ -49,7 +52,12 @@ public class PostReportJpaEntity extends BaseEntity {
     private ReportStatus status;
 
     @Builder(access = AccessLevel.PRIVATE)
-    private PostReportJpaEntity(Long reporterId, Long postId, ReportReason reason, String description) {
+    private PostReportJpaEntity(
+            Long reporterId,
+            Long postId,
+            ReportReason reason,
+            String description
+    ) {
         this.reporterId = reporterId;
         this.postId = postId;
         this.reason = reason;
@@ -64,6 +72,10 @@ public class PostReportJpaEntity extends BaseEntity {
                 .reason(report.getReason())
                 .description(report.getDescription())
                 .build();
+    }
+
+    public void updateStatus(ReportStatus status) {
+        this.status = status;
     }
 
     public PostReport toDomain() {

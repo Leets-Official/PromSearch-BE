@@ -101,6 +101,7 @@ public class SwaggerSecurityConfig {
                         .requestMatchers(RegexRequestMatcher.regexMatcher(
                                 HttpMethod.GET,
                                 "^/api/v1/prompts/(?!draft$)[^/]+$")).permitAll()
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();

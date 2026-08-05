@@ -1,5 +1,6 @@
 package com.promsearch.prompt.interfaces;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -13,16 +14,25 @@ import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptUseCase;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.GetPromptEditUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
+import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
+import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
+import com.promsearch.prompt.application.usecase.dto.MyPromptSummaryInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptEditInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageStatusesInfo;
+import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import com.promsearch.prompt.application.usecase.dto.SavePromptDraftCommand;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptImageUploadUrlsInfo;
@@ -84,7 +94,19 @@ class PromptControllerTest {
     private GetPromptDraftUseCase getPromptDraftUseCase;
 
     @MockitoBean
+    private GetPromptEditUseCase getPromptEditUseCase;
+
+    @MockitoBean
     private DeletePromptDraftUseCase deletePromptDraftUseCase;
+
+    @MockitoBean
+    private DeletePromptUseCase deletePromptUseCase;
+
+    @MockitoBean
+    private ListMyPromptsUseCase listMyPromptsUseCase;
+
+    @MockitoBean
+    private GetMyPromptInsightsUseCase getMyPromptInsightsUseCase;
 
     @AfterEach
     void clearSecurityContext() {
@@ -185,6 +207,32 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.result.updatedAt").value("2026-07-28T21:00:00+09:00"));
     }
 
+    @DisplayName("작성자용 프롬프트 수정 데이터를 조회한다")
+    @Test
+    void getPromptEdit() throws Exception {
+        UUID imageId = UUID.fromString("123e4567-e89b-12d3-a456-426614174000");
+        Mockito.when(getPromptEditUseCase.get(7L, 1L))
+                .thenReturn(new PromptEditInfo(
+                        7L, "회의록 자동 정리", "설명", PromptOutputType.TEXT,
+                        List.of(1L), List.of(2L), List.of(3L), null, PromptContentType.FREE,
+                        "본문", PromptVisibility.PRIVATE,
+                        List.of(new PromptEditInfo.ImageInfo(imageId, "https://image.example.com/signed", 0, true)),
+                        PromptStatus.ACTIVE, 0L, Instant.parse("2026-07-28T12:00:00Z")
+                ));
+
+        mockMvc.perform(get("/api/v1/prompts/7/edit")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.jobTagIds[0]").value(1))
+                .andExpect(jsonPath("$.result.taskTagIds[0]").value(2))
+                .andExpect(jsonPath("$.result.aiModelTagIds[0]").value(3))
+                .andExpect(jsonPath("$.result.visibility").value("PRIVATE"))
+                .andExpect(jsonPath("$.result.images[0].imageUrl").value("https://image.example.com/signed"));
+    }
+
     @DisplayName("인증 사용자의 임시저장을 삭제한다")
     @Test
     void deleteDraft() throws Exception {
@@ -239,6 +287,20 @@ class PromptControllerTest {
                 .hasSize(Prompt.MAX_TITLE_LENGTH);
         org.assertj.core.api.Assertions.assertThat(captor.getValue().visibility())
                 .isEqualTo(PromptVisibility.PUBLIC);
+    }
+
+    @DisplayName("인증 사용자의 프롬프트를 논리 삭제한다")
+    @Test
+    void deletePrompt() throws Exception {
+        mockMvc.perform(delete("/api/v1/prompts/10")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Mockito.verify(deletePromptUseCase).delete(10L, 1L);
     }
 
     @DisplayName("인증 사용자의 이미지 업로드 URL을 발급한다")
@@ -342,11 +404,83 @@ class PromptControllerTest {
                 .andExpect(jsonPath("$.code").value("COMMON-400"));
     }
 
-    @DisplayName("내 게시완료 목록·인사이트 조회는 가짜 성공 대신 구현 중 응답을 반환한다")
+    @DisplayName("내 게시글 인사이트 조회는 누적 조회수·추천수·복사수를 반환한다")
     @Test
-    void promptQueryEndpointsReturnNotImplemented() throws Exception {
-        expectNotImplemented(get("/api/v1/prompts/me").param("status", "ACTIVE"));
-        expectNotImplemented(get("/api/v1/prompts/me/insights"));
+    void getMyPromptInsightsReturnsTotals() throws Exception {
+        given(getMyPromptInsightsUseCase.getMyPromptInsights(1L))
+                .willReturn(new PromptInsightInfo(1024L, 88L, 42L));
+
+        mockMvc.perform(get("/api/v1/prompts/me/insights")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalViews").value(1024))
+                .andExpect(jsonPath("$.result.totalRecommends").value(88))
+                .andExpect(jsonPath("$.result.totalCopies").value(42));
+    }
+
+    @DisplayName("내 프롬프트 목록 조회는 목록 카드 필드를 반환한다")
+    @Test
+    void getMyPromptsReturnsSummaries() throws Exception {
+        Instant publishedAt = Instant.parse("2026-07-23T12:00:00Z");
+        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, null, 0, 20)))
+                .willReturn(new MyPromptPageInfo(
+                        List.of(new MyPromptSummaryInfo(1L, "금융 앱 온보딩 UI", publishedAt, 128L, 12L)),
+                        1L
+                ));
+
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "ACTIVE")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.content[0].promptId").value(1))
+                .andExpect(jsonPath("$.result.content[0].title").value("금융 앱 온보딩 UI"))
+                .andExpect(jsonPath("$.result.content[0].viewCount").value(128))
+                .andExpect(jsonPath("$.result.content[0].recommendCount").value(12))
+                .andExpect(jsonPath("$.result.totalElements").value(1));
+    }
+
+    @DisplayName("내 프롬프트 목록 조회는 ACTIVE 외의 상태도 조회할 수 있다")
+    @Test
+    void getMyPromptsSupportsNonActiveStatus() throws Exception {
+        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.DRAFT, null, 0, 20)))
+                .willReturn(new MyPromptPageInfo(List.of(), 0L));
+
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "DRAFT")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalElements").value(0));
+    }
+
+    @DisplayName("내 프롬프트 목록 조회는 visibility로 비공개 게시물만 필터링할 수 있다")
+    @Test
+    void getMyPromptsFiltersByVisibility() throws Exception {
+        given(listMyPromptsUseCase.listMyPrompts(
+                ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, PromptVisibility.PRIVATE, 0, 20)))
+                .willReturn(new MyPromptPageInfo(List.of(), 0L));
+
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "ACTIVE")
+                        .param("visibility", "PRIVATE")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalElements").value(0));
     }
 
     @DisplayName("생성과 임시저장은 500자 제목을 허용하고 공백이거나 500자를 초과하면 거절한다")
@@ -522,38 +656,30 @@ class PromptControllerTest {
                         .value("이미지 형식은 JPEG 또는 PNG만 지원합니다."));
     }
 
-    @DisplayName("게시완료 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
+    @DisplayName("내 프롬프트 목록 조회는 status 값이 유효하지 않으면 400을 반환한다")
     @Test
-    void getMyPublishedPromptsRejectsInvalidStatus() throws Exception {
+    void getMyPromptsRejectsInvalidStatus() throws Exception {
         mockMvc.perform(get("/api/v1/prompts/me").param("status", "PUBLISHED"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value("COMMON-001"));
     }
 
-    @DisplayName("게시완료 목록 조회는 status 파라미터가 없으면 400을 반환한다")
+    @DisplayName("내 프롬프트 목록 조회는 status 파라미터가 없으면 400을 반환한다")
     @Test
-    void getMyPublishedPromptsRequiresStatus() throws Exception {
+    void getMyPromptsRequiresStatus() throws Exception {
         mockMvc.perform(get("/api/v1/prompts/me"))
                 .andExpect(status().isBadRequest());
     }
 
-    @DisplayName("게시완료 목록 조회는 size가 100을 초과하면 400을 반환한다")
+    @DisplayName("내 프롬프트 목록 조회는 size가 100을 초과하면 400을 반환한다")
     @Test
-    void getMyPublishedPromptsRejectsOversizedPage() throws Exception {
+    void getMyPromptsRejectsOversizedPage() throws Exception {
         mockMvc.perform(get("/api/v1/prompts/me")
                         .param("status", "ACTIVE")
                         .param("size", "101"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COMMON-400"));
-    }
-
-    private void expectNotImplemented(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)
-            throws Exception {
-        mockMvc.perform(request)
-                .andExpect(status().isNotImplemented())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("COMMON-501"));
     }
 
     private void expectBadRequest(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)

@@ -1,7 +1,7 @@
 package com.promsearch.user.application.service.query;
 
+import com.promsearch.user.application.port.out.tag.LoadUserInterestTagsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
-import com.promsearch.user.application.port.out.user.LoadUserInterestTagPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.application.port.out.user.UserProfileStats;
 import com.promsearch.user.application.port.out.user.UserProfileStatsReader;
@@ -24,7 +24,6 @@ public class UserProfileQueryService implements GetPublicUserProfileUseCase, Get
      * 이렇게 하면 사용자 조회 실패 시 기존 UserErrorCode.USER_NOT_FOUND 흐름을 그대로 따릅니다.
      */
     private final LoadUserPort loadUserPort;
-    private final LoadUserInterestTagPort loadUserInterestTagPort;
 
     /*
      * 프로필 상단에 표시할 누적 통계는 user aggregate 자체의 책임이 아니라 prompt 통계를 집계한 값입니다.
@@ -32,6 +31,7 @@ public class UserProfileQueryService implements GetPublicUserProfileUseCase, Get
      */
     private final UserProfileStatsReader userProfileStatsReader;
     private final ProfileImageDeliveryPort profileImageDeliveryPort;
+    private final LoadUserInterestTagsPort loadUserInterestTagsPort;
 
     @Override
     public PublicUserProfileInfo getProfile(Long userId) {
@@ -44,7 +44,7 @@ public class UserProfileQueryService implements GetPublicUserProfileUseCase, Get
     @Override
     public UserProfileInfo getMyProfile(Long userId) {
         User user = loadUserPort.getById(userId);
-        return UserProfileInfo.from(user, resolveProfileImageUrl(user), loadUserInterestTagPort.listByUserId(userId));
+        return UserProfileInfo.from(user, resolveProfileImageUrl(user), loadUserInterestTagsPort.loadByUserId(userId));
     }
 
     private String resolveProfileImageUrl(User user) {

@@ -1,5 +1,6 @@
 package com.promsearch.global.exception;
 
+import com.promsearch.auth.domain.exception.AuthErrorCode;
 import com.promsearch.global.exception.constant.CommonErrorCode;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.code.BaseCode;
@@ -16,6 +17,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -109,6 +111,14 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 e.getDomain(), e.getBaseCode().getCode(), e.getMessage());
 
         return buildResponse(e, e.getBaseCode(), HttpHeaders.EMPTY, request, null);
+    }
+
+    // 인증은 됐지만 권한(@PreAuthorize 등)이 없어 거부된 요청을 처리한다.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleAccessDenied(AccessDeniedException e, WebRequest request) {
+        log.warn("[ACCESS DENIED] {}", e.getMessage());
+
+        return buildResponse(e, AuthErrorCode.FORBIDDEN, HttpHeaders.EMPTY, request, null);
     }
 
     // 예상하지 못한 서버 예외를 공통 500 응답으로 변환한다.

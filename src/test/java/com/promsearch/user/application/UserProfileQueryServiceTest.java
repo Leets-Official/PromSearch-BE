@@ -2,17 +2,22 @@ package com.promsearch.user.application;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.promsearch.user.application.port.out.tag.InterestTagRow;
+import com.promsearch.user.application.port.out.tag.LoadUserInterestTagsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.UserProfileStats;
 import com.promsearch.user.application.port.out.user.UserProfileStatsReader;
 import com.promsearch.user.application.service.query.UserProfileQueryService;
 import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
+import com.promsearch.user.application.usecase.dto.UserProfileInfo;
 import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.User.UserId;
+import com.promsearch.user.domain.enums.InterestTagType;
 import com.promsearch.user.domain.enums.UserGrade;
 import com.promsearch.user.domain.enums.UserRole;
 import com.promsearch.user.domain.enums.UserStatus;
 import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -21,17 +26,19 @@ class UserProfileQueryServiceTest {
 
     private FakeUserRepository userRepository;
     private FakeUserProfileStatsReader userProfileStatsReader;
+    private FakeLoadUserInterestTagsPort loadUserInterestTagsPort;
     private UserProfileQueryService userProfileQueryService;
 
     @BeforeEach
     void setUp() {
         userRepository = new FakeUserRepository();
         userProfileStatsReader = new FakeUserProfileStatsReader();
+        loadUserInterestTagsPort = new FakeLoadUserInterestTagsPort();
         userProfileQueryService = new UserProfileQueryService(
                 userRepository,
-                userId -> java.util.List.of(),
                 userProfileStatsReader,
-                (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey
+                (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
+                loadUserInterestTagsPort
         );
     }
 
@@ -49,6 +56,20 @@ class UserProfileQueryServiceTest {
         assertThat(profile.promptCount()).isEqualTo(5);
         assertThat(profile.totalLikeCount()).isEqualTo(42);
         assertThat(profile.totalViewCount()).isEqualTo(120);
+    }
+
+    @Test
+    void getMyProfileGroupsInterestTagsByType() {
+        userRepository.user = testUser();
+        loadUserInterestTagsPort.rows = List.of(
+                new InterestTagRow(1L, InterestTagType.JOB, "직장인"),
+                new InterestTagRow(2L, InterestTagType.TASK, "PPT")
+        );
+
+        UserProfileInfo profile = userProfileQueryService.getMyProfile(1L);
+
+        assertThat(profile.jobTags()).extracting("tagName").containsExactly("직장인");
+        assertThat(profile.taskTags()).extracting("tagName").containsExactly("PPT");
     }
 
     private User testUser() {
@@ -107,6 +128,16 @@ class UserProfileQueryServiceTest {
         @Override
         public UserProfileStats getByUserId(Long userId) {
             return stats;
+        }
+    }
+
+    private static class FakeLoadUserInterestTagsPort implements LoadUserInterestTagsPort {
+
+        private List<InterestTagRow> rows = List.of();
+
+        @Override
+        public List<InterestTagRow> loadByUserId(Long userId) {
+            return rows;
         }
     }
 }

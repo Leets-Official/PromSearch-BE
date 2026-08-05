@@ -42,6 +42,7 @@ public class PostReport {
 
     public static PostReport create(Long reporterId, Long postId, ReportReason reason, String description) {
         validateRequired(reporterId, postId, reason, description);
+
         return PostReport.builder()
                 .reporterId(reporterId)
                 .postId(postId)
@@ -72,6 +73,22 @@ public class PostReport {
                 .reason(reason)
                 .description(description)
                 .status(status)
+                .createdAt(createdAt)
+                .build();
+    }
+
+    public PostReport updateStatus(ReportStatus newStatus) {
+        if (newStatus != ReportStatus.RESOLVED && newStatus != ReportStatus.REJECTED) {
+            throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_STATUS);
+        }
+
+        return PostReport.builder()
+                .postReportId(postReportId)
+                .reporterId(reporterId)
+                .postId(postId)
+                .reason(reason)
+                .description(description)
+                .status(newStatus)
                 .createdAt(createdAt)
                 .build();
     }
