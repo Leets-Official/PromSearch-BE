@@ -1,5 +1,6 @@
 package com.promsearch.user.interfaces;
 
+import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -19,6 +20,7 @@ import com.promsearch.user.application.usecase.IssueProfileImageUploadUrlUseCase
 import com.promsearch.user.application.usecase.CompleteProfileImageUploadUseCase;
 import com.promsearch.user.application.usecase.RemoveProfileImageUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
+import com.promsearch.user.application.usecase.dto.InterestTagInfo;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityInfo;
 import com.promsearch.user.application.usecase.dto.NicknameAvailabilityQuery;
 import com.promsearch.user.application.usecase.dto.PublicUserProfileInfo;
@@ -31,6 +33,7 @@ import com.promsearch.user.domain.enums.UserRole;
 import com.promsearch.user.domain.enums.UserStatus;
 import java.net.URI;
 import java.time.Instant;
+import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,7 +110,7 @@ class UserControllerTest {
                 .andExpect(status().isBadRequest());
     }
 
-    @DisplayName("내 프로필 조회는 저장된 프로필 정보를 반환한다")
+    @DisplayName("내 프로필 조회는 저장된 프로필 정보와 관심 태그를 반환한다")
     @Test
     void getMyProfileReturnsProfile() throws Exception {
         when(getMyProfileUseCase.getMyProfile(1L)).thenReturn(new UserProfileInfo(
@@ -115,7 +118,9 @@ class UserControllerTest {
                 "https://s3.test/signed-profile.png",
                 "user@test.com",
                 100L,
-                "NORMAL"
+                "NORMAL",
+                List.of(new InterestTagInfo(1L, "직장인")),
+                List.of(new InterestTagInfo(2L, "PPT"))
         ));
 
         SecurityContextHolder.getContext().setAuthentication(new UsernamePasswordAuthenticationToken(
@@ -127,7 +132,9 @@ class UserControllerTest {
             mockMvc.perform(get("/api/v1/users/me"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.username").value("nickname"))
-                    .andExpect(jsonPath("$.result.profileImageUrl").value("https://s3.test/signed-profile.png"));
+                    .andExpect(jsonPath("$.result.profileImageUrl").value("https://s3.test/signed-profile.png"))
+                    .andExpect(jsonPath("$.result.jobTags[0].tagName").value("직장인"))
+                    .andExpect(jsonPath("$.result.taskTags[0].tagName").value("PPT"));
         } finally {
             SecurityContextHolder.clearContext();
         }

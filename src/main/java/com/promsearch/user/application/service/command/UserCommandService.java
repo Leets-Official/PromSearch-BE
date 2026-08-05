@@ -104,6 +104,15 @@ public class UserCommandService implements
                 nickname
         );
         User savedUser = saveUserPort.update(updatedUser);
+
+        if (command.jobTagIds() != null && command.taskTagIds() != null) {
+            InterestTagSelectionPolicy.validate(command.jobTagIds(), command.taskTagIds());
+            List<Long> interestTagIds = new ArrayList<>();
+            interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTagIds()));
+            interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTagIds()));
+            saveUserInterestTagPort.replaceAll(savedUser.getUserId().id(), interestTagIds);
+        }
+
         UserInfo userInfo = UserInfo.from(savedUser, resolveProfileImageUrl(savedUser));
         log.info("user_profile_updated userId={}", userInfo.userId());
         return userInfo;

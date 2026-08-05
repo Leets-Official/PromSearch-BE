@@ -1,6 +1,5 @@
 package com.promsearch.prompt.interfaces;
 
-import com.promsearch.global.exception.NotImplementedException;
 import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.response.code.SuccessCode;
@@ -8,15 +7,21 @@ import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptUseCase;
+import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptEditUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDetailUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptImageStatusesUseCase;
 import com.promsearch.prompt.application.usecase.IssuePromptImageUploadUrlsUseCase;
+import com.promsearch.prompt.application.usecase.ListMyPromptsUseCase;
 import com.promsearch.prompt.application.usecase.SavePromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.dto.CompletePromptImageUploadCommand;
 import com.promsearch.prompt.application.usecase.dto.GetPromptImageStatusesQuery;
+import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
+import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.interfaces.docs.PromptControllerDocs;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
@@ -65,6 +70,9 @@ public class PromptController implements PromptControllerDocs {
     private final GetPromptDraftUseCase getPromptDraftUseCase;
     private final GetPromptEditUseCase getPromptEditUseCase;
     private final DeletePromptDraftUseCase deletePromptDraftUseCase;
+    private final ListMyPromptsUseCase listMyPromptsUseCase;
+    private final GetMyPromptInsightsUseCase getMyPromptInsightsUseCase;
+    private final DeletePromptUseCase deletePromptUseCase;
 
     @GetMapping("/prompts/{promptId}")
     @Override
@@ -179,21 +187,29 @@ public class PromptController implements PromptControllerDocs {
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @PathVariable Long promptId
     ) {
-        throw new NotImplementedException();
+        deletePromptUseCase.delete(promptId, user.userId());
+        return ApiResponse.onSuccess(null);
     }
 
     @GetMapping("/prompts/me")
     @Override
-    public ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPublishedPrompts(
+    public ApiResponse<PageResponse<MyPromptSummaryResponse>> getMyPrompts(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
             @RequestParam PromptStatus status,
+            @RequestParam(required = false) PromptVisibility visibility,
             @Min(value = 0, message = "page must be 0 or greater")
             @RequestParam(defaultValue = "0") int page,
             @Min(value = 1, message = "size must be 1 or greater")
             @Max(value = 100, message = "size must be 100 or less")
             @RequestParam(defaultValue = "20") int size
     ) {
-        throw new NotImplementedException();
+        MyPromptPageInfo pageInfo = listMyPromptsUseCase.listMyPrompts(
+                ListMyPromptsQuery.of(user.userId(), status, visibility, page, size)
+        );
+        List<MyPromptSummaryResponse> content = pageInfo.content().stream()
+                .map(MyPromptSummaryResponse::from)
+                .toList();
+        return ApiResponse.onSuccess(PageResponse.of(content, page, size, pageInfo.totalElements()));
     }
 
     @GetMapping("/prompts/me/insights")
@@ -201,6 +217,8 @@ public class PromptController implements PromptControllerDocs {
     public ApiResponse<PromptInsightResponse> getMyPromptInsights(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user
     ) {
-        throw new NotImplementedException();
+        return ApiResponse.onSuccess(
+                PromptInsightResponse.from(getMyPromptInsightsUseCase.getMyPromptInsights(user.userId()))
+        );
     }
 }

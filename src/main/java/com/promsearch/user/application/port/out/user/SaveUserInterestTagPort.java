@@ -5,4 +5,6 @@ import java.util.List;
 public interface SaveUserInterestTagPort {
 
     void save(Long userId, List<Long> tagIds);
+
+    void replaceAll(Long userId, List<Long> tagIds);
 }

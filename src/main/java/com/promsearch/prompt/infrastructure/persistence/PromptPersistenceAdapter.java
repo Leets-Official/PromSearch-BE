@@ -1,15 +1,22 @@
 package com.promsearch.prompt.infrastructure.persistence;
 
+import com.promsearch.prompt.application.port.out.prompt.DeletePromptPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort.ImageProjection;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort.PromptEditProjection;
+import com.promsearch.prompt.application.port.out.prompt.LoadPromptPort;
+import com.promsearch.prompt.application.port.out.prompt.MyPromptSummaryRow;
+import com.promsearch.prompt.application.port.out.prompt.PromptInsightTotals;
+import com.promsearch.prompt.application.port.out.prompt.PromptPageResult;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.SavePromptPort;
 import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo.ImageInfo;
 import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.Tag;
+import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
@@ -23,6 +30,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -31,11 +40,63 @@ public class PromptPersistenceAdapter implements
         SavePromptPort,
         LoadPromptDraftPort,
         LoadPromptEditPort,
-        SavePromptDraftPort {
+        SavePromptDraftPort,
+        LoadPromptPort,
+        DeletePromptPort {
 
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final PromptImageRepository promptImageRepository;
+
+    @Override
+    public PromptPageResult listByUserIdAndStatus(
+            Long userId,
+            PromptStatus status,
+            PromptVisibility visibility,
+            int page,
+            int size
+    ) {
+        Page<MyPromptSummaryProjection> result = postRepository.findMyPromptSummaries(
+                userId,
+                status,
+                visibility,
+                PageRequest.of(page, size)
+        );
+
+        List<MyPromptSummaryRow> content = result.getContent().stream()
+                .map(row -> new MyPromptSummaryRow(
+                        row.getPromptId(),
+                        row.getTitle(),
+                        row.getPublishedAt(),
+                        row.getViewCount(),
+                        row.getRecommendCount()
+                ))
+                .toList();
+
+        return new PromptPageResult(content, result.getTotalElements());
+    }
+
+    @Override
+    public PromptInsightTotals sumInsightsByUserId(Long userId) {
+        PromptInsightProjection projection = postRepository.sumInsightsByUserId(userId);
+
+        return new PromptInsightTotals(
+                projection.getTotalViews(),
+                projection.getTotalRecommends(),
+                projection.getTotalCopies()
+        );
+    }
+
+    @Override
+    public void delete(Long promptId, Long userId) {
+        PostJpaEntity post = postRepository.findByIdForUpdate(promptId)
+                .orElseThrow(() -> new PromptDomainException(PromptErrorCode.PROMPT_NOT_FOUND));
+        if (!post.getUserId().equals(userId)) {
+            throw new PromptDomainException(PromptErrorCode.PROMPT_NOT_OWNED);
+        }
+        post.delete();
+        postRepository.flush();
+    }
 
     @Override
     public Prompt create(Prompt prompt, List<Tag> tags) {

@@ -10,6 +10,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.promsearch.prompt.application.port.out.author.LoadPromptAuthorPort;
+import com.promsearch.prompt.application.port.out.prompt.DeletePromptPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.LockPromptDraftPort;
 import com.promsearch.prompt.application.port.out.pricing.LoadPromptPricingPort;
@@ -77,6 +78,8 @@ class PromptCommandServiceTest {
     private LoadPromptPricingPort loadPromptPricingPort;
     @Mock
     private PromoteUserGradePort promoteUserGradePort;
+    @Mock
+    private DeletePromptPort deletePromptPort;
 
     private PromptCommandService service;
 
@@ -93,7 +96,8 @@ class PromptCommandServiceTest {
                 savePromptDraftPort,
                 lockPromptDraftPort,
                 loadPromptPricingPort,
-                promoteUserGradePort
+                promoteUserGradePort,
+                deletePromptPort
         );
         lenient().when(loadTagPort.batchGetByIds(any())).thenReturn(List.of(
                 tag(1L, TagType.JOB, "개발"),
@@ -413,6 +417,21 @@ class PromptCommandServiceTest {
         verify(savePromptDraftPort).deleteDraft(1L);
     }
 
+    @DisplayName("게시글 삭제는 유효성 검증 후 포트로 위임한다")
+    @Test
+    void deletePromptDelegatesToPort() {
+        service.delete(10L, 1L);
+
+        verify(deletePromptPort).delete(10L, 1L);
+    }
+
+    @DisplayName("게시글 삭제는 잘못된 식별자를 거절한다")
+    @Test
+    void deletePromptRejectsInvalidId() {
+        assertPromptError(() -> service.delete(0L, 1L), PromptErrorCode.INVALID_ID);
+        assertPromptError(() -> service.delete(10L, null), PromptErrorCode.INVALID_PROMPT_USER_ID);
+    }
+
     @DisplayName("게시 생성은 현재 사용자 초안에 연결된 READY 이미지를 새 ACTIVE 프롬프트로 재사용할 수 있다")
     @Test
     void createCanReuseImagesAttachedToOwnDraft() {
@@ -520,6 +539,7 @@ class PromptCommandServiceTest {
                 null,
                 now,
                 now,
+                null,
                 null,
                 List.of(),
                 null,

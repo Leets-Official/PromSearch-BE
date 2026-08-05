@@ -82,6 +82,9 @@ public class PostJpaEntity extends BaseEntity {
     @Column(name = "hidden_at")
     private Instant hiddenAt;
 
+    @Column(name = "published_at")
+    private Instant publishedAt;
+
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<PostTagJpaEntity> postTags = new ArrayList<>();
 
@@ -137,6 +140,7 @@ public class PostJpaEntity extends BaseEntity {
                 getCreatedAt(),
                 getUpdatedAt(),
                 getDeletedAt(),
+                publishedAt,
                 // PromptImage는 독립 Aggregate이므로 조회 어댑터에서 필요한 경우 별도로 일괄 조회한다.
                 List.of(),
                 statistics != null ? statistics.toDomain() : null,
@@ -186,6 +190,10 @@ public class PostJpaEntity extends BaseEntity {
         if (status != PromptStatus.DRAFT) {
             throw new IllegalArgumentException("DRAFT 상태만 임시저장에서 삭제할 수 있습니다.");
         }
+        markDeleted();
+    }
+
+    public void delete() {
         markDeleted();
     }
 }

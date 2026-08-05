@@ -1,5 +1,6 @@
 package com.promsearch.user.application.service.query;
 
+import com.promsearch.user.application.port.out.tag.LoadUserInterestTagsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.application.port.out.user.UserProfileStats;
@@ -30,6 +31,7 @@ public class UserProfileQueryService implements GetPublicUserProfileUseCase, Get
      */
     private final UserProfileStatsReader userProfileStatsReader;
     private final ProfileImageDeliveryPort profileImageDeliveryPort;
+    private final LoadUserInterestTagsPort loadUserInterestTagsPort;
 
     @Override
     public PublicUserProfileInfo getProfile(Long userId) {
@@ -42,7 +44,7 @@ public class UserProfileQueryService implements GetPublicUserProfileUseCase, Get
     @Override
     public UserProfileInfo getMyProfile(Long userId) {
         User user = loadUserPort.getById(userId);
-        return UserProfileInfo.from(user, resolveProfileImageUrl(user));
+        return UserProfileInfo.from(user, resolveProfileImageUrl(user), loadUserInterestTagsPort.loadByUserId(userId));
     }
 
     private String resolveProfileImageUrl(User user) {

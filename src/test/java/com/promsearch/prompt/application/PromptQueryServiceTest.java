@@ -21,7 +21,7 @@ class PromptQueryServiceTest {
     @BeforeEach
     void setUp() {
         homePromptReader = new FakeHomePromptReader();
-        promptQueryService = new PromptQueryService(homePromptReader);
+        promptQueryService = new PromptQueryService(homePromptReader, null);
     }
 
     @Test

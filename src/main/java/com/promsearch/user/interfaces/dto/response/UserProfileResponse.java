@@ -2,6 +2,7 @@ package com.promsearch.user.interfaces.dto.response;
 
 import com.promsearch.user.application.usecase.dto.UserProfileInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
+import java.util.List;
 
 @Schema(description = "마이페이지 프로필 조회 응답")
 public record UserProfileResponse(
@@ -14,7 +15,11 @@ public record UserProfileResponse(
         @Schema(description = "보유 포인트", example = "1200")
         Long point,
         @Schema(description = "크리에이터 등급 이름", example = "ORIGIN")
-        String gradeName
+        String gradeName,
+        @Schema(description = "관심 직군 태그")
+        List<InterestTagResponse> jobTags,
+        @Schema(description = "관심 태스크 태그")
+        List<InterestTagResponse> taskTags
 ) {
 
     public static UserProfileResponse from(UserProfileInfo info) {
@@ -23,7 +28,9 @@ public record UserProfileResponse(
                 info.profileImageUrl(),
                 info.email(),
                 info.point(),
-                info.gradeName()
+                info.gradeName(),
+                info.jobTags().stream().map(InterestTagResponse::from).toList(),
+                info.taskTags().stream().map(InterestTagResponse::from).toList()
         );
     }
 }
