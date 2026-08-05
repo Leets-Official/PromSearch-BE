@@ -70,7 +70,8 @@ jobs:
           AWS_REGION: ap-northeast-2
           AWS_SQS_WATERMARK_ENABLED: ${{ secrets.AWS_SQS_WATERMARK_ENABLED }}
           AWS_SQS_WATERMARK_QUEUE_URL: ${{ secrets.AWS_SQS_WATERMARK_QUEUE_URL }}
-          WATERMARK_WORKER_CONCURRENCY: ${{ vars.WATERMARK_WORKER_CONCURRENCY || '2' }}
+          # 비교 배포 동안 컨테이너별 워터마크 처리 스레드를 하나만 사용한다.
+          WATERMARK_WORKER_CONCURRENCY: 1
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
