@@ -30,7 +30,8 @@ public interface AdminGradeRequestControllerDocs {
             summary = "[ADMIN-GRADE-001] Origin 심사 대기 목록 조회",
             description = IMPLEMENTED_BY_KALLIN1
                     + "처리 상태로 필터링해 Origin 심사 대기 목록을 페이지네이션 조회합니다. "
-                    + "각 항목은 신청자 정보와 함께 게시글 수, 누적 추천 수를 포함합니다."
+                    + "각 항목은 신청자 정보와 함께 게시글 수, 누적 추천 수를 포함합니다. "
+                    + "q를 지정하면 신청자 아이디(이메일) 또는 닉네임 부분일치로 필터링합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "심사 대기 목록 조회 성공"),
@@ -41,6 +42,9 @@ public interface AdminGradeRequestControllerDocs {
     ApiResponse<PageResponse<GradeRequestSummaryResponse>> getGradeRequests(
             @Parameter(description = "처리 상태 필터", example = "PENDING")
             @RequestParam(required = false) GradeRequestStatus status,
+
+            @Parameter(description = "신청자 아이디(이메일)/닉네임 부분일치 검색어", example = "hanharam")
+            @RequestParam(required = false) String q,
 
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
             @Min(value = 0, message = "page must be 0 or greater")

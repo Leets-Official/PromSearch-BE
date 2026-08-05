@@ -15,7 +15,16 @@ public interface CommentReportRepository extends JpaRepository<CommentReportJpaE
     @Query("""
             select r from CommentReportJpaEntity r
             where (:status is null or r.status = :status)
+              and (:q is null or exists (
+                    select 1 from CommentJpaEntity c
+                    where c.id = r.commentId
+                      and (lower(c.content) like :q
+                           or exists (
+                                select 1 from UserJpaEntity u
+                                where u.id = c.userId and lower(u.nickname) like :q
+                           ))
+              ))
             order by r.createdAt desc
             """)
-    Page<CommentReportJpaEntity> search(@Param("status") ReportStatus status, Pageable pageable);
+    Page<CommentReportJpaEntity> search(@Param("status") ReportStatus status, @Param("q") String q, Pageable pageable);
 }

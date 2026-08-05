@@ -35,13 +35,24 @@ class PostReportQueryServiceTest {
         loadPostReportPort.result = new ReportPageResult(List.of(report), 1L);
 
         ReportPageInfo pageInfo = postReportQueryService.searchReports(
-                SearchReportsQuery.of(ReportTargetType.POST, ReportStatus.PENDING, 0, 20)
+                SearchReportsQuery.of(ReportTargetType.POST, ReportStatus.PENDING, null, 0, 20)
         );
 
         assertThat(pageInfo.totalElements()).isEqualTo(1L);
         assertThat(pageInfo.content()).hasSize(1);
         assertThat(pageInfo.content().get(0).targetType()).isEqualTo(ReportTargetType.POST);
         assertThat(pageInfo.content().get(0).reporterId()).isEqualTo(5L);
+    }
+
+    @Test
+    void searchReportsForwardsSearchTermToPort() {
+        loadPostReportPort.result = new ReportPageResult(List.of(), 0L);
+
+        postReportQueryService.searchReports(
+                SearchReportsQuery.of(ReportTargetType.POST, null, "도배", 0, 20)
+        );
+
+        assertThat(loadPostReportPort.lastQ).isEqualTo("도배");
     }
 
     @Test
@@ -53,7 +64,7 @@ class PostReportQueryServiceTest {
         loadCommentReportPort.result = new CommentReportPageResult(List.of(report), 1L);
 
         ReportPageInfo pageInfo = postReportQueryService.searchReports(
-                SearchReportsQuery.of(ReportTargetType.COMMENT, ReportStatus.PENDING, 0, 20)
+                SearchReportsQuery.of(ReportTargetType.COMMENT, ReportStatus.PENDING, null, 0, 20)
         );
 
         assertThat(pageInfo.totalElements()).isEqualTo(1L);
@@ -76,7 +87,7 @@ class PostReportQueryServiceTest {
         loadCommentReportPort.result = new CommentReportPageResult(List.of(commentReport), 1L);
 
         ReportPageInfo pageInfo = postReportQueryService.searchReports(
-                SearchReportsQuery.of(null, ReportStatus.PENDING, 0, 20)
+                SearchReportsQuery.of(null, ReportStatus.PENDING, null, 0, 20)
         );
 
         assertThat(pageInfo.totalElements()).isEqualTo(2L);
@@ -88,6 +99,7 @@ class PostReportQueryServiceTest {
     private static class FakeLoadPostReportPort implements LoadPostReportPort {
 
         private ReportPageResult result = new ReportPageResult(List.of(), 0L);
+        private String lastQ;
 
         @Override
         public PostReport getById(Long reportId) {
@@ -95,7 +107,8 @@ class PostReportQueryServiceTest {
         }
 
         @Override
-        public ReportPageResult search(ReportStatus status, int page, int size) {
+        public ReportPageResult search(ReportStatus status, String q, int page, int size) {
+            this.lastQ = q;
             return result;
         }
     }
@@ -110,7 +123,7 @@ class PostReportQueryServiceTest {
         }
 
         @Override
-        public CommentReportPageResult search(ReportStatus status, int page, int size) {
+        public CommentReportPageResult search(ReportStatus status, String q, int page, int size) {
             return result;
         }
     }

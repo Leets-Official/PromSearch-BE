@@ -15,7 +15,16 @@ public interface PostReportRepository extends JpaRepository<PostReportJpaEntity,
     @Query("""
             select r from PostReportJpaEntity r
             where (:status is null or r.status = :status)
+              and (:q is null or exists (
+                    select 1 from PostJpaEntity p
+                    where p.id = r.postId
+                      and (lower(p.title) like :q
+                           or exists (
+                                select 1 from UserJpaEntity u
+                                where u.id = p.userId and lower(u.nickname) like :q
+                           ))
+              ))
             order by r.createdAt desc
             """)
-    Page<PostReportJpaEntity> search(@Param("status") ReportStatus status, Pageable pageable);
+    Page<PostReportJpaEntity> search(@Param("status") ReportStatus status, @Param("q") String q, Pageable pageable);
 }

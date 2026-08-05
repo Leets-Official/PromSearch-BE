@@ -47,7 +47,7 @@ public class PostReportQueryService implements SearchReportsUseCase {
     }
 
     private ReportPageInfo searchPostReports(SearchReportsQuery query) {
-        ReportPageResult result = loadPostReportPort.search(query.status(), query.page(), query.size());
+        ReportPageResult result = loadPostReportPort.search(query.status(), query.q(), query.page(), query.size());
         Map<Long, ReportTargetSummary> summaries = indexById(
                 loadPostReportTargetSummaryPort.list(
                         result.content().stream().map(PostReport::getPostId).distinct().toList()
@@ -61,7 +61,8 @@ public class PostReportQueryService implements SearchReportsUseCase {
     }
 
     private ReportPageInfo searchCommentReports(SearchReportsQuery query) {
-        CommentReportPageResult result = loadCommentReportPort.search(query.status(), query.page(), query.size());
+        CommentReportPageResult result =
+                loadCommentReportPort.search(query.status(), query.q(), query.page(), query.size());
         Map<Long, ReportTargetSummary> summaries = indexById(
                 loadCommentReportTargetSummaryPort.list(
                         result.content().stream().map(CommentReport::getCommentId).distinct().toList()
@@ -82,9 +83,10 @@ public class PostReportQueryService implements SearchReportsUseCase {
          * 병합 결과의 상위 K개를 항상 포함한다).
          */
         int limit = (query.page() + 1) * query.size();
-        ReportPageInfo postPage = searchPostReports(new SearchReportsQuery(ReportTargetType.POST, query.status(), 0, limit));
+        ReportPageInfo postPage = searchPostReports(
+                new SearchReportsQuery(ReportTargetType.POST, query.status(), query.q(), 0, limit));
         ReportPageInfo commentPage = searchCommentReports(
-                new SearchReportsQuery(ReportTargetType.COMMENT, query.status(), 0, limit));
+                new SearchReportsQuery(ReportTargetType.COMMENT, query.status(), query.q(), 0, limit));
 
         List<ReportInfo> merged = Stream.concat(postPage.content().stream(), commentPage.content().stream())
                 .sorted(Comparator.comparing(ReportInfo::createdAt).reversed())

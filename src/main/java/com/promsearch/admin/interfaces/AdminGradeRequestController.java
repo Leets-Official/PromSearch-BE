@@ -39,13 +39,14 @@ public class AdminGradeRequestController implements AdminGradeRequestControllerD
     @Override
     public ApiResponse<PageResponse<GradeRequestSummaryResponse>> getGradeRequests(
             @RequestParam(required = false) GradeRequestStatus status,
+            @RequestParam(required = false) String q,
             @Min(value = 0, message = "page must be 0 or greater")
             @RequestParam(defaultValue = "0") int page,
             @Min(value = 1, message = "size must be 1 or greater")
             @Max(value = 100, message = "size must be 100 or less")
             @RequestParam(defaultValue = "20") int size
     ) {
-        GradeRequestListInfo info = listGradeRequestsUseCase.list(new GradeRequestListQuery(status, page, size));
+        GradeRequestListInfo info = listGradeRequestsUseCase.list(new GradeRequestListQuery(status, q, page, size));
         PageResponse<GradeRequestSummaryResponse> response = PageResponse.of(
                 info.content().stream().map(GradeRequestSummaryResponse::from).toList(),
                 info.page(),

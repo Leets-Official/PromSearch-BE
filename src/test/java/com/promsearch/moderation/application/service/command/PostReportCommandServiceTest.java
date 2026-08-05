@@ -132,7 +132,7 @@ class PostReportCommandServiceTest {
         }
 
         @Override
-        public ReportPageResult search(ReportStatus status, int page, int size) {
+        public ReportPageResult search(ReportStatus status, String q, int page, int size) {
             return new ReportPageResult(List.copyOf(reports.values()), reports.size());
         }
 
@@ -161,7 +161,7 @@ class PostReportCommandServiceTest {
         }
 
         @Override
-        public CommentReportPageResult search(ReportStatus status, int page, int size) {
+        public CommentReportPageResult search(ReportStatus status, String q, int page, int size) {
             return new CommentReportPageResult(List.copyOf(reports.values()), reports.size());
         }
 

@@ -69,7 +69,7 @@ class AdminReportControllerTest {
     void getReportsReturnsSummariesForAdmin() throws Exception {
         authenticateAs("ADMIN");
         Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
-        given(searchReportsUseCase.searchReports(SearchReportsQuery.of(ReportTargetType.POST, ReportStatus.PENDING, 0, 20)))
+        given(searchReportsUseCase.searchReports(SearchReportsQuery.of(ReportTargetType.POST, ReportStatus.PENDING, null, 0, 20)))
                 .willReturn(new ReportPageInfo(
                         List.of(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.PENDING, 5L, createdAt,
                                 ReportInfo.TargetSummaryInfo.notFound())),
@@ -92,7 +92,7 @@ class AdminReportControllerTest {
     void getReportsMergesAllTypesWhenTargetTypeMissing() throws Exception {
         authenticateAs("ADMIN");
         Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
-        given(searchReportsUseCase.searchReports(SearchReportsQuery.of(null, null, 0, 20)))
+        given(searchReportsUseCase.searchReports(SearchReportsQuery.of(null, null, null, 0, 20)))
                 .willReturn(new ReportPageInfo(
                         List.of(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.PENDING, 5L, createdAt,
                                 ReportInfo.TargetSummaryInfo.notFound())),

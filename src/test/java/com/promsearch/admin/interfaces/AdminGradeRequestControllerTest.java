@@ -53,7 +53,7 @@ class AdminGradeRequestControllerTest {
                 1L, 5L, "hanharam@promsearch.com", "prompt-master", UserGrade.PRIME, UserGrade.ORIGIN,
                 GradeRequestStatus.PENDING, 12L, 84L, Instant.parse("2026-07-23T12:00:00Z"), null
         );
-        when(listGradeRequestsUseCase.list(new GradeRequestListQuery(GradeRequestStatus.PENDING, 0, 20)))
+        when(listGradeRequestsUseCase.list(new GradeRequestListQuery(GradeRequestStatus.PENDING, null, 0, 20)))
                 .thenReturn(new GradeRequestListInfo(List.of(summary), 0, 20, 1, false));
 
         mockMvc.perform(get("/api/v1/admin/grade-requests").param("status", "PENDING"))
