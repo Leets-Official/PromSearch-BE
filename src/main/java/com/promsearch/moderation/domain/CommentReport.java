@@ -67,6 +67,22 @@ public class CommentReport {
                 .build();
     }
 
+    public CommentReport updateStatus(ReportStatus newStatus) {
+        if (newStatus != ReportStatus.RESOLVED && newStatus != ReportStatus.REJECTED) {
+            throw new ModerationDomainException(ModerationErrorCode.INVALID_REPORT_STATUS);
+        }
+
+        return CommentReport.builder()
+                .commentReportId(commentReportId)
+                .reporterId(reporterId)
+                .commentId(commentId)
+                .reason(reason)
+                .description(description)
+                .status(newStatus)
+                .createdAt(createdAt)
+                .build();
+    }
+
     private static void validateRequired(
             Long reporterId,
             Long commentId,

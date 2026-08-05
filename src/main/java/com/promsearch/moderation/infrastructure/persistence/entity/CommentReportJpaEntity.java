@@ -64,6 +64,10 @@ public class CommentReportJpaEntity extends BaseEntity {
                 .build();
     }
 
+    public void updateStatus(ReportStatus status) {
+        this.status = status;
+    }
+
     public CommentReport toDomain() {
         return CommentReport.reconstruct(
                 new CommentReportId(id), reporterId, commentId, reason, description, status, getCreatedAt());
