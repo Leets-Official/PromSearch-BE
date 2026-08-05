@@ -12,7 +12,7 @@ public record GradeRequestSummaryResponse(
         Long gradeRequestId,
         @Schema(description = "신청자 식별자", example = "5")
         Long userId,
-        @Schema(description = "신청자 닉네임", example = "hanharam")
+        @Schema(description = "신청자 로그인 아이디(이메일)", example = "hanharam@promsearch.com")
         String username,
         @Schema(description = "신청자 닉네임", example = "prompt-master")
         String nickname,
