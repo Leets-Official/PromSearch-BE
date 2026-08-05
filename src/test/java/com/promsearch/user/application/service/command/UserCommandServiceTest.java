@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
 import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
+import com.promsearch.user.application.usecase.dto.BootstrapAdminAccountCommand;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
 import com.promsearch.user.application.usecase.dto.SignupInfo;
@@ -203,6 +204,35 @@ class UserCommandServiceTest {
         assertThat(signupInfo.userId()).isEqualTo(2L);
         assertThat(signupInfo.email()).isEqualTo("old@example.com");
         assertThat(signupInfo.nickname()).isEqualTo("oldNick");
+    }
+
+    @Test
+    void bootstrapCreatesAdminAccountWhenNotExists() {
+        userCommandService.bootstrap(BootstrapAdminAccountCommand.of("admin@example.com", "Admin1234!", "admin"));
+
+        User admin = userRepository.users.values().iterator().next();
+        assertThat(admin.getEmail()).isEqualTo("admin@example.com");
+        assertThat(admin.getNickname()).isEqualTo("admin");
+        assertThat(admin.getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(admin.getPassword()).isEqualTo("encoded:Admin1234!");
+    }
+
+    @Test
+    void bootstrapSkipsWhenAdminAlreadyExists() {
+        userRepository.save(testUser(1L, "admin@example.com", "old-password", "admin", "admin", null, UserStatus.ACTIVE));
+
+        userCommandService.bootstrap(BootstrapAdminAccountCommand.of("admin@example.com", "Admin1234!", "admin"));
+
+        assertThat(userRepository.users).hasSize(1);
+        assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
+    }
+
+    @Test
+    void bootstrapSkipsWhenEmailOrPasswordBlank() {
+        userCommandService.bootstrap(BootstrapAdminAccountCommand.of("", "Admin1234!", "admin"));
+        userCommandService.bootstrap(BootstrapAdminAccountCommand.of("admin@example.com", " ", "admin"));
+
+        assertThat(userRepository.users).isEmpty();
     }
 
     private User testUser(
