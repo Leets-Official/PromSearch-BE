@@ -2,6 +2,7 @@ package com.promsearch.global.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import org.junit.jupiter.api.DisplayName;
@@ -29,6 +30,23 @@ class JacksonConfigTest {
                 """);
     }
 
+    @DisplayName("숫자 응답은 JSON 숫자 타입으로 직렬화한다")
+    @Test
+    void serializeNumbersAsJsonNumbers() throws Exception {
+        NumericResponse response = new NumericResponse(1L, 0, 2, 3600L, 128L);
+
+        JsonNode json = objectMapper.readTree(objectMapper.writeValueAsString(response));
+
+        assertThat(json.path("tagId").isIntegralNumber()).isTrue();
+        assertThat(json.path("page").isIntegralNumber()).isTrue();
+        assertThat(json.path("size").isIntegralNumber()).isTrue();
+        assertThat(json.path("totalElements").isIntegralNumber()).isTrue();
+        assertThat(json.path("expiresIn").isIntegralNumber()).isTrue();
+    }
+
     private record TimeResponse(Instant occurredAt) {
+    }
+
+    private record NumericResponse(long tagId, int page, int size, long totalElements, long expiresIn) {
     }
 }
