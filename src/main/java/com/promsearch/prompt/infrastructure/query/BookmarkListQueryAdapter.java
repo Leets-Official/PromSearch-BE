@@ -96,44 +96,44 @@ public class BookmarkListQueryAdapter implements LoadBookmarkListPort {
 
     private String filters(BookmarkListQuery query) {
         StringBuilder filters = new StringBuilder();
-        if (query.taskTagId() != null) {
+        if (!query.taskTagIds().isEmpty()) {
             filters.append("""
                       and exists (
                           select postTag.id
                           from PostTagJpaEntity postTag
                           where postTag.post.id = post.id
-                            and postTag.tag.id = :taskTagId
+                            and postTag.tag.id in :taskTagIds
                             and postTag.tag.tagType = com.promsearch.prompt.domain.enums.TagType.TASK
                       )
                     """);
         }
-        if (query.aiModelTagId() != null) {
+        if (!query.aiModelTagIds().isEmpty()) {
             filters.append("""
                       and exists (
                           select postTag.id
                           from PostTagJpaEntity postTag
                           where postTag.post.id = post.id
-                            and postTag.tag.id = :aiModelTagId
+                            and postTag.tag.id in :aiModelTagIds
                             and postTag.tag.tagType = com.promsearch.prompt.domain.enums.TagType.AI_MODEL
                       )
                     """);
         }
-        if (query.outputType() != null) {
-            filters.append(" and post.outputType = :outputType");
+        if (!query.outputTypes().isEmpty()) {
+            filters.append(" and post.outputType in :outputTypes");
         }
         return filters.toString();
     }
 
     private void applyParameters(TypedQuery<?> typedQuery, BookmarkListQuery query) {
         typedQuery.setParameter("userId", query.userId());
-        if (query.taskTagId() != null) {
-            typedQuery.setParameter("taskTagId", query.taskTagId());
+        if (!query.taskTagIds().isEmpty()) {
+            typedQuery.setParameter("taskTagIds", query.taskTagIds());
         }
-        if (query.aiModelTagId() != null) {
-            typedQuery.setParameter("aiModelTagId", query.aiModelTagId());
+        if (!query.aiModelTagIds().isEmpty()) {
+            typedQuery.setParameter("aiModelTagIds", query.aiModelTagIds());
         }
-        if (query.outputType() != null) {
-            typedQuery.setParameter("outputType", query.outputType());
+        if (!query.outputTypes().isEmpty()) {
+            typedQuery.setParameter("outputTypes", query.outputTypes());
         }
     }
 

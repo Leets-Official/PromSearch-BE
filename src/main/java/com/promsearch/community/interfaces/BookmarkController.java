@@ -12,6 +12,7 @@ import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.code.SuccessCode;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -63,18 +64,18 @@ public class BookmarkController implements BookmarkControllerDocs {
     @Override
     public ApiResponse<BookmarkListResponse> list(
             @AuthenticationPrincipal AuthenticatedUserPrincipal user,
-            @RequestParam(required = false) Long taskTagId,
-            @RequestParam(required = false) Long aiModelTagId,
-            @RequestParam(required = false) PromptOutputType outputType,
+            @RequestParam(required = false) List<Long> taskTagIds,
+            @RequestParam(required = false) List<Long> aiModelTagIds,
+            @RequestParam(required = false) List<PromptOutputType> outputTypes,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "6") int size
+            @RequestParam(defaultValue = "12") int size
     ) {
         return ApiResponse.onSuccess(BookmarkListResponse.from(listBookmarksUseCase.list(
                 new BookmarkListQuery(
                         user.userId(),
-                        taskTagId,
-                        aiModelTagId,
-                        outputType,
+                        taskTagIds,
+                        aiModelTagIds,
+                        outputTypes,
                         page,
                         size
                 )
