@@ -200,7 +200,7 @@ class InitialSchemaMigrationTest {
                     user_id, email, password, nickname, name, points, role, grade, status,
                     created_at, updated_at
                 ) values (
-                    %d, '%s', 'password', '%s', '%s', 0, 'USER', 'NORMAL', 'ACTIVE',
+                    %d, '%s', 'password', '%s', '%s', 0, 'USER', 'NODE', 'ACTIVE',
                     current_timestamp, current_timestamp
                 )
                 """.formatted(userId, email, nickname, nickname));

@@ -19,6 +19,7 @@ import com.promsearch.prompt.application.port.out.promptimage.LoadPromptImagePor
 import com.promsearch.prompt.application.port.out.promptimage.SavePromptImagePort;
 import com.promsearch.prompt.application.port.out.tag.LoadTagPort;
 import com.promsearch.prompt.application.port.out.tag.SaveTagPort;
+import com.promsearch.prompt.application.port.out.user.PromoteUserGradePort;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand;
 import com.promsearch.prompt.application.usecase.dto.CreatePromptCommand.ImageReference;
 import com.promsearch.prompt.application.usecase.dto.PromptCommandInfo;
@@ -74,6 +75,8 @@ class PromptCommandServiceTest {
     private LockPromptDraftPort lockPromptDraftPort;
     @Mock
     private LoadPromptPricingPort loadPromptPricingPort;
+    @Mock
+    private PromoteUserGradePort promoteUserGradePort;
 
     private PromptCommandService service;
 
@@ -89,7 +92,8 @@ class PromptCommandServiceTest {
                 loadPromptDraftPort,
                 savePromptDraftPort,
                 lockPromptDraftPort,
-                loadPromptPricingPort
+                loadPromptPricingPort,
+                promoteUserGradePort
         );
         lenient().when(loadTagPort.batchGetByIds(any())).thenReturn(List.of(
                 tag(1L, TagType.JOB, "개발"),
@@ -117,6 +121,7 @@ class PromptCommandServiceTest {
         assertThat(info.status()).isEqualTo(PromptStatus.ACTIVE);
         verify(lockPromptDraftPort).lockByUserId(1L);
         verify(loadPromptPricingPort, never()).getPremiumPricePoint();
+        verify(promoteUserGradePort).promoteForPostCreation(1L);
     }
 
     @DisplayName("PREMIUM 가격은 서버 설정 포트에서 결정한다")
