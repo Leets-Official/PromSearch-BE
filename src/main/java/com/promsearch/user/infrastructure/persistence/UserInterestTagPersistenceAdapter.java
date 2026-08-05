@@ -18,4 +18,10 @@ public class UserInterestTagPersistenceAdapter implements SaveUserInterestTagPor
                 .map(tagId -> UserInterestTagJpaEntity.create(userId, tagId))
                 .toList());
     }
+
+    @Override
+    public void replaceAll(Long userId, List<Long> tagIds) {
+        userInterestTagRepository.deleteByIdUserId(userId);
+        save(userId, tagIds);
+    }
 }

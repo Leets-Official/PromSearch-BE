@@ -104,7 +104,7 @@ class LocalSwaggerAuthControllerTest {
                 .asText();
         assertThat(authorizationHeader).startsWith("Bearer ");
 
-        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("swagger", null);
+        UpdateUserProfileRequest updateRequest = new UpdateUserProfileRequest("swagger", null, null, null);
         mockMvc.perform(patch("/api/v1/users/me")
                         .header(HttpHeaders.AUTHORIZATION, authorizationHeader)
                         .contentType(MediaType.APPLICATION_JSON)

@@ -192,4 +192,8 @@ public class PostJpaEntity extends BaseEntity {
         }
         markDeleted();
     }
+
+    public void delete() {
+        markDeleted();
+    }
 }

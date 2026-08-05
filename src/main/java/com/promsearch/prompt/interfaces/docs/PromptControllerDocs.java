@@ -5,6 +5,7 @@ import com.promsearch.global.response.ApiResponse;
 import com.promsearch.global.response.PageResponse;
 import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.interfaces.dto.request.CreatePromptRequest;
 import com.promsearch.prompt.interfaces.dto.request.PromptImageUploadUrlRequest;
 import com.promsearch.prompt.interfaces.dto.request.SavePromptDraftRequest;
@@ -46,8 +47,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 public interface PromptControllerDocs {
 
     String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
-    String NOT_IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 미구현**\n\n";
-    String NOT_IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 미구현**\n\n";
     String IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 구현완료**\n\n";
     String IMPLEMENTED_BY_LEE_GUNHEE = "**작업자: 이건희 | 구현 상태: 구현완료 (PR #51)**\n\n";
 
@@ -252,7 +251,7 @@ public interface PromptControllerDocs {
 
     @Operation(
             summary = "[PROMPT-009] 프롬프트 게시물 삭제",
-            description = NOT_IMPLEMENTED_BY_HANHARAM
+            description = IMPLEMENTED_BY_KALLIN1
                     + "작성자 본인의 프롬프트를 즉시 일반 조회에서 제외하도록 논리 삭제합니다. "
                     + "deletedAt 기록 후 30일이 지나면 DB 데이터와 S3 이미지를 물리 삭제합니다."
     )
@@ -261,8 +260,7 @@ public interface PromptControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 프롬프트 식별자"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자 권한 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 삭제 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프롬프트 없음")
     })
     ApiResponse<Void> deletePrompt(
             @Parameter(hidden = true)
@@ -289,6 +287,9 @@ public interface PromptControllerDocs {
 
             @Parameter(description = "조회할 게시물 처리 상태", example = "ACTIVE")
             @RequestParam PromptStatus status,
+
+            @Parameter(description = "조회할 게시물 공개 범위. 생략하면 공개 범위와 무관하게 조회합니다.", example = "PUBLIC")
+            @RequestParam(required = false) PromptVisibility visibility,
 
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
             @Min(value = 0, message = "page must be 0 or greater")

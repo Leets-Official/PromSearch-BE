@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.promsearch.user.application.port.out.user.LoadUserPort;
+import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
 import com.promsearch.user.application.usecase.dto.SignupCommand;
@@ -29,17 +30,18 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 class UserCommandServiceTest {
 
     private FakeUserRepository userRepository;
+    private FakeSaveUserInterestTagPort saveUserInterestTagPort;
     private UserCommandService userCommandService;
 
     @BeforeEach
     void setUp() {
         userRepository = new FakeUserRepository();
+        saveUserInterestTagPort = new FakeSaveUserInterestTagPort();
         userCommandService = new UserCommandService(
                 userRepository,
                 userRepository,
-                (type, names) -> List.of(),
-                (userId, tagIds) -> {
-                },
+                (type, tagIds) -> tagIds,
+                saveUserInterestTagPort,
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {
@@ -63,7 +65,9 @@ class UserCommandServiceTest {
                 UpdateUserProfileCommand.of(
                         1L,
                         " newNick ",
-                        " new@example.com "
+                        " new@example.com ",
+                        null,
+                        null
                 )
         );
 
@@ -71,6 +75,27 @@ class UserCommandServiceTest {
         assertThat(userInfo.email()).isEqualTo("new@example.com");
         assertThat(userInfo.profileImageUrl()).isEqualTo("https://image.test/original.png");
         assertThat(userRepository.users.get(1L).getPassword()).isEqualTo("old-password");
+        assertThat(saveUserInterestTagPort.lastReplacedUserId).isNull();
+    }
+
+    @Test
+    void updateProfileReplacesInterestTagsWhenBothProvided() {
+        userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", null, UserStatus.ACTIVE));
+
+        userCommandService.updateProfile(
+                UpdateUserProfileCommand.of(1L, null, null, List.of(1L), List.of(2L, 3L))
+        );
+
+        assertThat(saveUserInterestTagPort.lastReplacedUserId).isEqualTo(1L);
+        assertThat(saveUserInterestTagPort.lastReplacedTagIds).containsExactlyInAnyOrder(1L, 2L, 3L);
+    }
+
+    @Test
+    void updateProfileRejectsPartialInterestTagUpdate() {
+        assertThatThrownBy(() -> UpdateUserProfileCommand.of(1L, null, null, List.of(1L), null))
+                .isInstanceOf(UserDomainException.class)
+                .extracting("baseCode")
+                .isEqualTo(UserErrorCode.INVALID_INTEREST_TAG);
     }
 
     @Test
@@ -78,7 +103,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(1L, "old@example.com", "old-password", "oldNick", "oldName", "old-image", UserStatus.ACTIVE));
 
         UserInfo userInfo = userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, null)
+                UpdateUserProfileCommand.of(1L, null, null, null, null)
         );
 
         assertThat(userInfo.email()).isEqualTo("old@example.com");
@@ -93,7 +118,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, "two", null)
+                UpdateUserProfileCommand.of(1L, "two", null, null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -106,7 +131,7 @@ class UserCommandServiceTest {
         userRepository.save(testUser(2L, "user2@example.com", "password", "two", "two", null, UserStatus.ACTIVE));
 
         assertThatThrownBy(() -> userCommandService.updateProfile(
-                UpdateUserProfileCommand.of(1L, null, "user2@example.com")
+                UpdateUserProfileCommand.of(1L, null, "user2@example.com", null, null)
         ))
                 .isInstanceOf(UserDomainException.class)
                 .extracting("baseCode")
@@ -291,6 +316,22 @@ class UserCommandServiceTest {
         @Override
         public boolean matches(CharSequence rawPassword, String encodedPassword) {
             return encodedPassword.equals(encode(rawPassword));
+        }
+    }
+
+    private static class FakeSaveUserInterestTagPort implements SaveUserInterestTagPort {
+
+        private Long lastReplacedUserId;
+        private List<Long> lastReplacedTagIds;
+
+        @Override
+        public void save(Long userId, List<Long> tagIds) {
+        }
+
+        @Override
+        public void replaceAll(Long userId, List<Long> tagIds) {
+            lastReplacedUserId = userId;
+            lastReplacedTagIds = tagIds;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.promsearch.prompt.infrastructure.persistence;
 
+import com.promsearch.prompt.application.port.out.prompt.DeletePromptPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptDraftPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort;
 import com.promsearch.prompt.application.port.out.prompt.LoadPromptEditPort.ImageProjection;
@@ -15,6 +16,7 @@ import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo.ImageInfo;
 import com.promsearch.prompt.domain.Prompt;
 import com.promsearch.prompt.domain.Tag;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
@@ -39,17 +41,25 @@ public class PromptPersistenceAdapter implements
         LoadPromptDraftPort,
         LoadPromptEditPort,
         SavePromptDraftPort,
-        LoadPromptPort {
+        LoadPromptPort,
+        DeletePromptPort {
 
     private final PostRepository postRepository;
     private final TagRepository tagRepository;
     private final PromptImageRepository promptImageRepository;
 
     @Override
-    public PromptPageResult listByUserIdAndStatus(Long userId, PromptStatus status, int page, int size) {
+    public PromptPageResult listByUserIdAndStatus(
+            Long userId,
+            PromptStatus status,
+            PromptVisibility visibility,
+            int page,
+            int size
+    ) {
         Page<MyPromptSummaryProjection> result = postRepository.findMyPromptSummaries(
                 userId,
                 status,
+                visibility,
                 PageRequest.of(page, size)
         );
 
@@ -75,6 +85,17 @@ public class PromptPersistenceAdapter implements
                 projection.getTotalRecommends(),
                 projection.getTotalCopies()
         );
+    }
+
+    @Override
+    public void delete(Long promptId, Long userId) {
+        PostJpaEntity post = postRepository.findByIdForUpdate(promptId)
+                .orElseThrow(() -> new PromptDomainException(PromptErrorCode.PROMPT_NOT_FOUND));
+        if (!post.getUserId().equals(userId)) {
+            throw new PromptDomainException(PromptErrorCode.PROMPT_NOT_OWNED);
+        }
+        post.delete();
+        postRepository.flush();
     }
 
     @Override

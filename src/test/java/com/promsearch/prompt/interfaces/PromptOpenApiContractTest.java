@@ -55,7 +55,7 @@ class PromptOpenApiContractTest {
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/get", "PROMPT-006", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1draft/delete", "PROMPT-007", "한하람", "구현완료");
         assertOperationMetadata(document, "/paths/~1api~1v1~1prompts/post", "PROMPT-008", "한하람", "구현완료");
-        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "한하람", "미구현");
+        assertOperationMetadata(document, "/paths/~1api~1v1~1prompts~1{promptId}/delete", "PROMPT-009", "kallin1", "구현완료");
     }
 
     @DisplayName("생성 요청 스키마는 가격 입력과 MASTER를 노출하지 않고 제목을 500자로 제한한다")

@@ -10,6 +10,7 @@ import com.promsearch.prompt.application.usecase.dto.ListMyPromptsQuery;
 import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 import com.promsearch.prompt.application.usecase.dto.PromptInsightInfo;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import java.time.Instant;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -26,7 +27,7 @@ class PromptQueryServiceTest {
                 List.of(new MyPromptSummaryRow(1L, "금융 앱 온보딩 UI", publishedAt, 128L, 12L)), 1L);
 
         MyPromptPageInfo pageInfo = promptQueryService.listMyPrompts(
-                ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, 0, 20)
+                ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, PromptVisibility.PUBLIC, 0, 20)
         );
 
         assertThat(pageInfo.totalElements()).isEqualTo(1L);
@@ -36,6 +37,7 @@ class PromptQueryServiceTest {
         assertThat(pageInfo.content().get(0).publishedAt()).isEqualTo(publishedAt);
         assertThat(pageInfo.content().get(0).viewCount()).isEqualTo(128L);
         assertThat(pageInfo.content().get(0).recommendCount()).isEqualTo(12L);
+        assertThat(loadPromptPort.lastRequestedVisibility).isEqualTo(PromptVisibility.PUBLIC);
     }
 
     @Test
@@ -43,10 +45,11 @@ class PromptQueryServiceTest {
         loadPromptPort.result = new PromptPageResult(List.of(), 0L);
 
         MyPromptPageInfo pageInfo = promptQueryService.listMyPrompts(
-                ListMyPromptsQuery.of(1L, PromptStatus.DRAFT, 0, 20)
+                ListMyPromptsQuery.of(1L, PromptStatus.DRAFT, null, 0, 20)
         );
 
         assertThat(loadPromptPort.lastRequestedStatus).isEqualTo(PromptStatus.DRAFT);
+        assertThat(loadPromptPort.lastRequestedVisibility).isNull();
         assertThat(pageInfo.totalElements()).isZero();
     }
 
@@ -66,10 +69,18 @@ class PromptQueryServiceTest {
         private PromptPageResult result = new PromptPageResult(List.of(), 0L);
         private PromptInsightTotals insightTotals = new PromptInsightTotals(0L, 0L, 0L);
         private PromptStatus lastRequestedStatus;
+        private PromptVisibility lastRequestedVisibility;
 
         @Override
-        public PromptPageResult listByUserIdAndStatus(Long userId, PromptStatus status, int page, int size) {
+        public PromptPageResult listByUserIdAndStatus(
+                Long userId,
+                PromptStatus status,
+                PromptVisibility visibility,
+                int page,
+                int size
+        ) {
             lastRequestedStatus = status;
+            lastRequestedVisibility = visibility;
             return result;
         }
 

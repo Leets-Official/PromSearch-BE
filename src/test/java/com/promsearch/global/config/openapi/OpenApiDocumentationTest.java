@@ -63,7 +63,7 @@ class OpenApiDocumentationTest {
                 AuthController.class.getMethod("login", com.promsearch.auth.interfaces.dto.request.LoginRequest.class)
         ));
         Operation promptDetailOperation = customizer.customize(new Operation(), handlerMethod(
-                new PromptController(null, null, null, null, null, null, null, null, null, null, null),
+                new PromptController(null, null, null, null, null, null, null, null, null, null, null, null),
                 PromptController.class.getMethod(
                         "getPromptDetail",
                         Long.class,

@@ -23,12 +23,14 @@ public interface PostRepository extends JpaRepository<PostJpaEntity, Long> {
               left join p.statistics s
              where p.userId = :userId
                and p.status = :status
+               and (:visibility is null or p.visibility = :visibility)
                and p.deletedAt is null
              order by p.publishedAt desc
             """)
     Page<MyPromptSummaryProjection> findMyPromptSummaries(
             @Param("userId") Long userId,
             @Param("status") PromptStatus status,
+            @Param("visibility") PromptVisibility visibility,
             Pageable pageable
     );
 
@@ -104,4 +106,13 @@ public interface PostRepository extends JpaRepository<PostJpaEntity, Long> {
     @EntityGraph(attributePaths = {"statistics", "postTags", "postTags.tag"})
     Optional<PostJpaEntity> findByIdAndStatusAndVisibilityAndDeletedAtIsNull(
             Long id, PromptStatus status, PromptVisibility visibility);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("""
+            select post
+            from PostJpaEntity post
+            where post.id = :postId
+              and post.deletedAt is null
+            """)
+    Optional<PostJpaEntity> findByIdForUpdate(@Param("postId") Long postId);
 }

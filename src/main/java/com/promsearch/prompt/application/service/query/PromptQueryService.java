@@ -61,6 +61,7 @@ public class PromptQueryService implements ListHomePromptsUseCase, ListMyPrompts
         PromptPageResult result = loadPromptPort.listByUserIdAndStatus(
                 query.userId(),
                 query.status(),
+                query.visibility(),
                 query.page(),
                 query.size()
         );

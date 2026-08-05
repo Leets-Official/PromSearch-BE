@@ -14,6 +14,7 @@ import com.promsearch.global.security.AuthenticatedUserPrincipal;
 import com.promsearch.prompt.application.usecase.CompletePromptImageUploadUseCase;
 import com.promsearch.prompt.application.usecase.CreatePromptUseCase;
 import com.promsearch.prompt.application.usecase.DeletePromptDraftUseCase;
+import com.promsearch.prompt.application.usecase.DeletePromptUseCase;
 import com.promsearch.prompt.application.usecase.GetMyPromptInsightsUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptDraftUseCase;
 import com.promsearch.prompt.application.usecase.GetPromptEditUseCase;
@@ -97,6 +98,9 @@ class PromptControllerTest {
 
     @MockitoBean
     private DeletePromptDraftUseCase deletePromptDraftUseCase;
+
+    @MockitoBean
+    private DeletePromptUseCase deletePromptUseCase;
 
     @MockitoBean
     private ListMyPromptsUseCase listMyPromptsUseCase;
@@ -285,6 +289,20 @@ class PromptControllerTest {
                 .isEqualTo(PromptVisibility.PUBLIC);
     }
 
+    @DisplayName("인증 사용자의 프롬프트를 논리 삭제한다")
+    @Test
+    void deletePrompt() throws Exception {
+        mockMvc.perform(delete("/api/v1/prompts/10")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true));
+
+        Mockito.verify(deletePromptUseCase).delete(10L, 1L);
+    }
+
     @DisplayName("인증 사용자의 이미지 업로드 URL을 발급한다")
     @Test
     void issueImageUploadUrls() throws Exception {
@@ -401,7 +419,7 @@ class PromptControllerTest {
     @Test
     void getMyPromptsReturnsSummaries() throws Exception {
         Instant publishedAt = Instant.parse("2026-07-23T12:00:00Z");
-        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, 0, 20)))
+        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, null, 0, 20)))
                 .willReturn(new MyPromptPageInfo(
                         List.of(new MyPromptSummaryInfo(1L, "금융 앱 온보딩 UI", publishedAt, 128L, 12L)),
                         1L
@@ -425,11 +443,30 @@ class PromptControllerTest {
     @DisplayName("내 프롬프트 목록 조회는 ACTIVE 외의 상태도 조회할 수 있다")
     @Test
     void getMyPromptsSupportsNonActiveStatus() throws Exception {
-        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.DRAFT, 0, 20)))
+        given(listMyPromptsUseCase.listMyPrompts(ListMyPromptsQuery.of(1L, PromptStatus.DRAFT, null, 0, 20)))
                 .willReturn(new MyPromptPageInfo(List.of(), 0L));
 
         mockMvc.perform(get("/api/v1/prompts/me")
                         .param("status", "DRAFT")
+                        .with(request -> {
+                            SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
+                            return request;
+                        }))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.result.totalElements").value(0));
+    }
+
+    @DisplayName("내 프롬프트 목록 조회는 visibility로 비공개 게시물만 필터링할 수 있다")
+    @Test
+    void getMyPromptsFiltersByVisibility() throws Exception {
+        given(listMyPromptsUseCase.listMyPrompts(
+                ListMyPromptsQuery.of(1L, PromptStatus.ACTIVE, PromptVisibility.PRIVATE, 0, 20)))
+                .willReturn(new MyPromptPageInfo(List.of(), 0L));
+
+        mockMvc.perform(get("/api/v1/prompts/me")
+                        .param("status", "ACTIVE")
+                        .param("visibility", "PRIVATE")
                         .with(request -> {
                             SecurityContextHolder.getContext().setAuthentication(authenticationPrincipal());
                             return request;
@@ -636,14 +673,6 @@ class PromptControllerTest {
                         .param("size", "101"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("COMMON-400"));
-    }
-
-    private void expectNotImplemented(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)
-            throws Exception {
-        mockMvc.perform(request)
-                .andExpect(status().isNotImplemented())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value("COMMON-501"));
     }
 
     private void expectBadRequest(org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder request)
