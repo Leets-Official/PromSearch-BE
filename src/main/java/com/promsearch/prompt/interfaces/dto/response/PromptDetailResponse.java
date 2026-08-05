@@ -69,7 +69,8 @@ public record PromptDetailResponse(
                 new PromptAuthorResponse(
                         info.author().userId(),
                         info.author().nickname(),
-                        info.author().profileImageUrl()),
+                        info.author().profileImageUrl(),
+                        info.author().gradeName()),
                 info.outputType(),
                 info.contentType(),
                 info.pricePoint(),
