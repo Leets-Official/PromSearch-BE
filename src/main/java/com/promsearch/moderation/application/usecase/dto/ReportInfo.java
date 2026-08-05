@@ -1,5 +1,6 @@
 package com.promsearch.moderation.application.usecase.dto;
 
+import com.promsearch.moderation.application.port.out.target.ReportTargetSummary;
 import com.promsearch.moderation.domain.CommentReport;
 import com.promsearch.moderation.domain.PostReport;
 import com.promsearch.moderation.domain.enums.ReportReason;
@@ -15,10 +16,11 @@ public record ReportInfo(
         String description,
         ReportStatus status,
         Long reporterId,
-        Instant createdAt
+        Instant createdAt,
+        TargetSummaryInfo targetSummary
 ) {
 
-    public static ReportInfo from(PostReport postReport) {
+    public static ReportInfo from(PostReport postReport, TargetSummaryInfo targetSummary) {
         return new ReportInfo(
                 postReport.getPostReportId().id(),
                 ReportTargetType.POST,
@@ -27,11 +29,12 @@ public record ReportInfo(
                 postReport.getDescription(),
                 postReport.getStatus(),
                 postReport.getReporterId(),
-                postReport.getCreatedAt()
+                postReport.getCreatedAt(),
+                targetSummary
         );
     }
 
-    public static ReportInfo from(CommentReport commentReport) {
+    public static ReportInfo from(CommentReport commentReport, TargetSummaryInfo targetSummary) {
         return new ReportInfo(
                 commentReport.getCommentReportId().id(),
                 ReportTargetType.COMMENT,
@@ -40,7 +43,24 @@ public record ReportInfo(
                 commentReport.getDescription(),
                 commentReport.getStatus(),
                 commentReport.getReporterId(),
-                commentReport.getCreatedAt()
+                commentReport.getCreatedAt(),
+                targetSummary
         );
+    }
+
+    public record TargetSummaryInfo(String content, Long authorId, String authorNickname, boolean deleted) {
+
+        public static TargetSummaryInfo from(ReportTargetSummary summary) {
+            return new TargetSummaryInfo(
+                    summary.content(),
+                    summary.authorId(),
+                    summary.authorNickname(),
+                    summary.deleted()
+            );
+        }
+
+        public static TargetSummaryInfo notFound() {
+            return new TargetSummaryInfo(null, null, null, true);
+        }
     }
 }

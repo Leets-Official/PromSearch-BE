@@ -10,8 +10,10 @@ import com.promsearch.community.domain.enums.CommentStatus;
 import com.promsearch.community.domain.exception.CommunityDomainException;
 import com.promsearch.community.domain.exception.CommunityErrorCode;
 import com.promsearch.community.infrastructure.persistence.entity.CommentJpaEntity;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -20,6 +22,12 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPort {
+
+    /*
+     * HIDDEN 댓글은 삭제와 달리 스레드에서 사라지지 않고 마스킹된 채로 계속 노출되어야 하므로
+     * 조회 시 ACTIVE와 동일하게 "보이는" 상태로 취급한다.
+     */
+    private static final Set<CommentStatus> VISIBLE_STATUSES = EnumSet.of(CommentStatus.ACTIVE, CommentStatus.HIDDEN);
 
     private final CommentRepository commentRepository;
 
@@ -52,7 +60,7 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
                                 CommunityErrorCode.COMMENT_NOT_FOUND));
         List<CommentJpaEntity> fetched = commentRepository.findParentPage(
                 postId,
-                CommentStatus.ACTIVE,
+                VISIBLE_STATUSES,
                 CommentStatus.DELETED,
                 cursorEntity == null ? null : cursorEntity.getCreatedAt(),
                 cursorEntity == null ? null : cursor,
@@ -70,7 +78,7 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
                 .toList();
         Map<Long, Long> replyCounts = parentIds.isEmpty()
                 ? Map.of()
-                : commentRepository.countRepliesByParentIds(parentIds, CommentStatus.ACTIVE)
+                : commentRepository.countRepliesByParentIds(parentIds, VISIBLE_STATUSES)
                         .stream()
                         .collect(Collectors.toMap(
                                 CommentRepository.ParentReplyCountProjection::getParentId,
@@ -88,15 +96,15 @@ public class CommentPersistenceAdapter implements LoadCommentPort, SaveCommentPo
         validatePageSize(size);
 
         CommentJpaEntity cursorEntity = cursor == null ? null
-                : commentRepository.findByIdAndParentCommentIdAndStatus(
+                : commentRepository.findByIdAndParentCommentIdAndStatusIn(
                                 cursor,
                                 parentCommentId,
-                                CommentStatus.ACTIVE)
+                                VISIBLE_STATUSES)
                         .orElseThrow(() -> new CommunityDomainException(
                                 CommunityErrorCode.COMMENT_NOT_FOUND));
         List<CommentJpaEntity> fetched = commentRepository.findReplyPage(
                 parentCommentId,
-                CommentStatus.ACTIVE,
+                VISIBLE_STATUSES,
                 cursorEntity == null ? null : cursorEntity.getCreatedAt(),
                 cursorEntity == null ? null : cursor,
                 PageRequest.of(0, size + 1)

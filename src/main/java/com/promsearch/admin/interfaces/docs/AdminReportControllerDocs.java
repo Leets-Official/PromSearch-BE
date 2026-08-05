@@ -27,7 +27,7 @@ public interface AdminReportControllerDocs {
             summary = "[ADMIN-REPORT-001] 신고 목록 조회",
             description = IMPLEMENTED_BY_KALLIN1
                     + "신고 대상 타입(POST, COMMENT)별로 처리 상태 필터를 적용해 신고 목록을 페이지네이션 조회합니다. "
-                    + "게시글 신고와 댓글 신고는 서로 다른 테이블에 저장되므로 targetType은 필수입니다."
+                    + "targetType을 지정하지 않으면 게시글/댓글 신고를 createdAt 기준으로 병합해 조회합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 목록 조회 성공"),
@@ -36,8 +36,8 @@ public interface AdminReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
     })
     ApiResponse<PageResponse<ReportSummaryResponse>> getReports(
-            @Parameter(description = "신고 대상 타입", example = "POST", required = true)
-            @RequestParam ReportTargetType targetType,
+            @Parameter(description = "신고 대상 타입. 지정하지 않으면 게시글/댓글 신고를 병합해 조회합니다.", example = "POST")
+            @RequestParam(required = false) ReportTargetType targetType,
 
             @Parameter(description = "처리 상태 필터", example = "PENDING")
             @RequestParam(required = false) ReportStatus status,
@@ -56,7 +56,8 @@ public interface AdminReportControllerDocs {
             summary = "[ADMIN-REPORT-002] 신고 처리 상태 변경",
             description = IMPLEMENTED_BY_KALLIN1
                     + "신고를 RESOLVED 또는 REJECTED 상태로 변경합니다. PENDING으로는 되돌릴 수 없습니다. "
-                    + "게시글 신고와 댓글 신고가 별도 테이블에 저장되어 있어 요청 바디의 targetType으로 대상을 구분합니다."
+                    + "게시글 신고와 댓글 신고가 별도 테이블에 저장되어 있어 요청 바디의 targetType으로 대상을 구분합니다. "
+                    + "RESOLVED로 변경하면 대상 게시글/댓글이 실제로 블라인드 처리됩니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 처리 성공"),

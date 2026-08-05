@@ -115,6 +115,55 @@ class CommentQueryServiceTest {
         assertThat(result.hasNext()).isFalse();
     }
 
+    @DisplayName("블라인드 처리된 부모 댓글은 마스킹되어 노출된다")
+    @Test
+    void getParentCommentPageMasksHiddenComment() {
+        Comment hiddenParent =
+                comment(30L, 1L, 4L, null, "블라인드 대상", CommentStatus.HIDDEN, 7);
+        given(loadCommentTargetPort.getActivePublicById(1L))
+                .willReturn(new CommentTargetSnapshot(1L, 1L));
+        given(loadCommentPort.listParentPage(1L, null, 2))
+                .willReturn(new CommentPage(List.of(hiddenParent), Map.of(), null, false));
+
+        CommentListInfo result = commentQueryService.getComments(
+                GetCommentsQuery.of(1L, 2L, null, 2));
+
+        assertThat(result.comments()).singleElement()
+                .satisfies(comment -> {
+                    assertThat(comment.status()).isEqualTo(CommentStatus.HIDDEN);
+                    assertThat(comment.content()).isEqualTo("블라인드 처리된 댓글입니다.");
+                    assertThat(comment.author()).isNull();
+                    assertThat(comment.mine()).isFalse();
+                });
+    }
+
+    @DisplayName("블라인드 처리된 대댓글은 마스킹되어 노출된다")
+    @Test
+    void getReplyPageMasksHiddenReply() {
+        Comment parent =
+                comment(20L, 1L, 2L, null, "부모 댓글", CommentStatus.ACTIVE, 1);
+        Comment hiddenReply =
+                comment(23L, 1L, 4L, 20L, "블라인드 대상", CommentStatus.HIDDEN, 4);
+        given(loadCommentPort.getById(20L)).willReturn(parent);
+        given(loadCommentTargetPort.getActivePublicById(1L))
+                .willReturn(new CommentTargetSnapshot(1L, 1L));
+        given(loadCommentPort.listReplyPage(20L, null, 2))
+                .willReturn(new ReplyPage(List.of(hiddenReply), null, false));
+        given(loadCommentAuthorPort.batchGetByIds(Set.of(4L)))
+                .willReturn(Map.of(4L, new CommentAuthorSnapshot(4L, "reported-user", null)));
+
+        CommentReplyListInfo result = commentQueryService.getReplies(
+                GetCommentRepliesQuery.of(20L, 2L, null, 2));
+
+        assertThat(result.replies()).singleElement()
+                .satisfies(reply -> {
+                    assertThat(reply.status()).isEqualTo(CommentStatus.HIDDEN);
+                    assertThat(reply.content()).isEqualTo("블라인드 처리된 댓글입니다.");
+                    assertThat(reply.author()).isNull();
+                    assertThat(reply.mine()).isFalse();
+                });
+    }
+
     private Comment comment(
             Long id,
             Long postId,
