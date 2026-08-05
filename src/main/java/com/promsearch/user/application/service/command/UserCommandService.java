@@ -26,11 +26,13 @@ import com.promsearch.user.domain.User;
 import com.promsearch.user.domain.InterestTagSelectionPolicy;
 import com.promsearch.user.domain.NicknamePolicy;
 import com.promsearch.user.domain.enums.InterestTagType;
+import com.promsearch.user.domain.enums.UserRole;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -170,8 +172,10 @@ public class UserCommandService implements
             log.warn("admin_bootstrap_skipped reason=missing_config");
             return;
         }
-        if (loadUserPort.existsByEmail(command.email())) {
-            log.info("admin_bootstrap_skipped reason=already_exists email={}", command.email());
+
+        Optional<User> existingUser = loadUserPort.findByEmail(command.email());
+        if (existingUser.isPresent()) {
+            promoteToAdminIfNeeded(existingUser.get());
             return;
         }
 
@@ -179,6 +183,16 @@ public class UserCommandService implements
         User admin = User.createAdmin(command.email(), encodedPassword, command.nickname(), command.nickname());
         User savedAdmin = saveUserPort.create(admin);
         log.info("admin_bootstrap_completed userId={}", savedAdmin.getUserId().id());
+    }
+
+    private void promoteToAdminIfNeeded(User user) {
+        if (user.getRole() == UserRole.ADMIN) {
+            log.info("admin_bootstrap_skipped reason=already_admin email={}", user.getEmail());
+            return;
+        }
+
+        User promotedAdmin = saveUserPort.update(user.promoteToAdmin());
+        log.info("admin_bootstrap_promoted userId={}", promotedAdmin.getUserId().id());
     }
 
     private boolean isBlank(String value) {

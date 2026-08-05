@@ -33,5 +33,14 @@ jobs:
       - name: Build and Test
         run: ./gradlew --no-daemon build
 
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build Docker image
-        run: docker build --tag promsearch:ci .
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          tags: promsearch:ci
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

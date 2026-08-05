@@ -218,8 +218,35 @@ class UserCommandServiceTest {
     }
 
     @Test
-    void bootstrapSkipsWhenAdminAlreadyExists() {
+    void bootstrapPromotesExistingUserToAdminWhenRoleIsNotAdmin() {
         userRepository.save(testUser(1L, "admin@example.com", "old-password", "admin", "admin", null, UserStatus.ACTIVE));
+
+        userCommandService.bootstrap(BootstrapAdminAccountCommand.of("admin@example.com", "Admin1234!", "admin"));
+
+        assertThat(userRepository.users).hasSize(1);
+        User promoted = userRepository.users.get(1L);
+        assertThat(promoted.getRole()).isEqualTo(UserRole.ADMIN);
+        assertThat(promoted.getPassword()).isEqualTo("old-password");
+    }
+
+    @Test
+    void bootstrapSkipsWhenAdminAlreadyExistsWithAdminRole() {
+        User existingAdmin = User.reconstruct(
+                new UserId(1L),
+                "admin@example.com",
+                "old-password",
+                "admin",
+                "admin",
+                null,
+                null,
+                0L,
+                UserRole.ADMIN,
+                UserGrade.NODE,
+                UserStatus.ACTIVE,
+                Instant.now(),
+                Instant.now()
+        );
+        userRepository.save(existingAdmin);
 
         userCommandService.bootstrap(BootstrapAdminAccountCommand.of("admin@example.com", "Admin1234!", "admin"));
 

@@ -257,6 +257,30 @@ public class User {
                 .build();
     }
 
+    /**
+     * 관리자 권한으로 승급한다. 배포 환경의 관리자 부트스트랩 계정이 일반 가입으로
+     * 먼저 생성돼 있던 경우, 재기동 시 이 메서드로 role을 맞춘다.
+     *
+     * @return ADMIN 권한으로 변경된 새 사용자 객체
+     */
+    public User promoteToAdmin() {
+        return User.builder()
+                .userId(userId)
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(profileImageUrl)
+                .profileImageObjectKey(profileImageObjectKey)
+                .point(point)
+                .role(UserRole.ADMIN)
+                .grade(grade)
+                .status(status)
+                .createdAt(createdAt)
+                .updatedAt(Instant.now())
+                .build();
+    }
+
     public User changePassword(String password) {
         validateRequired(email, password, nickname, point, role, grade, status);
 
