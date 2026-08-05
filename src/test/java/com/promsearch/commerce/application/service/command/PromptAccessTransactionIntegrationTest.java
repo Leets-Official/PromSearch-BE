@@ -202,6 +202,7 @@ class PromptAccessTransactionIntegrationTest {
                 "prompt title",
                 "author",
                 null,
+                "NODE",
                 PromptOutputType.TEXT,
                 PromptContentType.PREMIUM,
                 100L,

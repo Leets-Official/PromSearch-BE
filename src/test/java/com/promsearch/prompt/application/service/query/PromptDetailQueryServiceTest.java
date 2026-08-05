@@ -138,6 +138,7 @@ class PromptDetailQueryServiceTest {
                 "회의록 정리",
                 "작성자",
                 null,
+                "NODE",
                 PromptOutputType.TEXT,
                 contentType,
                 contentType == PromptContentType.FREE ? 0L : 500L,
