@@ -10,8 +10,8 @@ public record PromptStatisticsResponse(
         @Schema(description = "복사 수", example = "15")
         long copyCount,
 
-        @Schema(description = "좋아요 수", example = "32")
-        long likeCount,
+        @Schema(description = "추천 수", example = "32")
+        long recommendCount,
 
         @Schema(description = "댓글 수", example = "7")
         long commentCount

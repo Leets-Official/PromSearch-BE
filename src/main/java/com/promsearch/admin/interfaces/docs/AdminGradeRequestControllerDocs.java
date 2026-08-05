@@ -19,19 +19,24 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(
         name = "Admin | Origin 등급업",
-        description = "Origin 등급업 신청 목록 조회 및 승인/반려 API | 신청 생성 방식은 정책 미정으로 이번 범위에서 미구현"
+        description = "Origin 심사 대기 목록 조회 및 승인/반려 API. 유저가 자동 승급으로 Prime에 도달하면 "
+                + "심사 대기 항목이 자동 생성되며, 관리자는 이 목록을 조회하고 승인/반려만 처리합니다."
 )
 public interface AdminGradeRequestControllerDocs {
 
+    String IMPLEMENTED_BY_KALLIN1 = "**작업자: kallin1 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
-            summary = "[ADMIN-GRADE-001] 등급업 신청 목록 조회",
-            description = "처리 상태로 필터링해 Origin 등급업 신청 목록을 페이지네이션 조회합니다."
+            summary = "[ADMIN-GRADE-001] Origin 심사 대기 목록 조회",
+            description = IMPLEMENTED_BY_KALLIN1
+                    + "처리 상태로 필터링해 Origin 심사 대기 목록을 페이지네이션 조회합니다. "
+                    + "각 항목은 신청자 정보와 함께 게시글 수, 누적 추천 수를 포함합니다."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "등급업 신청 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "심사 대기 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 조회 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요")
     })
     ApiResponse<PageResponse<GradeRequestSummaryResponse>> getGradeRequests(
             @Parameter(description = "처리 상태 필터", example = "PENDING")
@@ -48,16 +53,19 @@ public interface AdminGradeRequestControllerDocs {
     );
 
     @Operation(
-            summary = "[ADMIN-GRADE-002] 등급업 신청 승인/반려",
-            description = "신청을 승인하거나 반려합니다. 승인 시 신청 상태 변경과 유저 등급 변경을 하나의 트랜잭션으로 처리하며, "
-                    + "반려 시 유저 등급은 변경하지 않습니다."
+            summary = "[ADMIN-GRADE-002] Origin 심사 대기 항목 승인/반려",
+            description = IMPLEMENTED_BY_KALLIN1
+                    + "심사 대기 항목을 승인하거나 반려합니다. 승인 시 항목 상태 변경과 유저 등급 변경(Origin)을 "
+                    + "하나의 트랜잭션으로 처리하며, 반려 시 유저 등급은 변경하지 않습니다. "
+                    + "이미 처리된 항목을 다시 처리하려 하면 409를 반환합니다."
     )
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "등급업 신청 처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "심사 대기 항목 처리 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 값 검증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "등급업 신청 없음"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "501", description = "인터페이스 계약만 작성되어 실제 처리 기능은 구현 중")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 필요"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "심사 대기 항목 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 처리된 항목")
     })
     ApiResponse<GradeRequestSummaryResponse> processGradeRequest(
             @Parameter(description = "처리할 등급업 신청 식별자", example = "1")

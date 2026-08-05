@@ -24,12 +24,41 @@ http://localhost:8080/test/health-check
 → OK
 ```
 
+### 이미지 Worker 실행
+
+이미지 Worker는 API와 별도 JVM으로 실행되며 HTTP 포트를 열지 않습니다.
+두 JVM은 같은 이미지 상태를 봐야 하므로 `SPRING_DATASOURCE_URL`에 동일한 외부 DB를 지정해야 합니다.
+인메모리 H2는 프로세스 사이에 공유되지 않습니다.
+
+```bash
+./gradlew :worker:bootRun
+```
+
+API는 업로드 완료와 같은 트랜잭션에 Outbox 작업을 저장하고, 별도 발행기가 이를 SQS로 전달합니다.
+Worker는 SQS Long Polling으로 한 건씩 받아 S3 다운로드, 반복 wordmark 합성, 결과 업로드,
+`PROCESSING → READY/FAILED` 상태 전환을 수행합니다. 처리가 끝난 메시지만 삭제하며 실패 메시지는
+Visibility Timeout 이후 재시도되고 큐의 Redrive Policy에 따라 DLQ로 이동합니다.
+
+워터마크의 투명도·로고 크기·간격·여백은 `WATERMARK_*` 환경변수로 조정할 수 있습니다.
+기본값은 1280×720 기준 짝수 행 5개, 홀수 행 4개가 반 칸씩 교차하는 시안을 따릅니다.
+
 ## Docker로 로컬 실행
 
 ```bash
 docker build -t promsearch .
 docker run -p 8080:8080 promsearch
+
+# 동일한 이미지에서 HTTP 서버 없이 이미지 Worker 실행
+docker run --no-healthcheck promsearch worker.jar
 ```
+
+API와 Worker 컨테이너에는 동일한 `SPRING_DATASOURCE_*`, `AWS_S3_BUCKET`,
+`AWS_SQS_WATERMARK_*` 환경변수를 전달해야 합니다. Flyway의 PostgreSQL 런타임 의존성은
+API 이미지에 포함됩니다. 새 빈 PostgreSQL에는 `SPRING_FLYWAY_ENABLED=true`를 전달해
+`V1__create_initial_schema.sql`을 적용하고, `SPRING_FLYWAY_BASELINE_ON_MIGRATE`는 `false`로 유지합니다.
+Worker는 Flyway를 실행하지 않으며 운영 배포는 API 헬스체크 성공 후 Worker를 시작합니다.
+기존 V1~V8을 적용한 로컬 DB는 새 V1과 Flyway 체크섬이 호환되지 않으므로 데이터를 보존할 필요가
+없을 때 DB를 재생성해야 합니다. 기존 데이터가 있는 DB에는 이 초기화를 적용하지 않습니다.
 
 ## 배포된 서버 확인
 
@@ -70,7 +99,7 @@ feature/기능명   → 작업 브랜치, 예: feature/auth-login, feature/promp
                                     └ 실패 시 Discord #ci-cd 채널 알림
 ```
 
-- CI(`ci.yml`)는 `develop`, `main` 두 브랜치를 대상으로 push/PR 시 모두 실행됩니다.
+- CI(`ci.yml`)는 `develop`, `main` 두 브랜치를 대상으로 push/PR 시 Gradle 빌드·테스트와 Docker 이미지 빌드를 실행합니다.
 - 배포(`deploy.yml`)는 `workflow_run` + `branches: [main]` 조건으로 **`main`에서 CI가 성공했을 때만** 트리거됩니다. `develop`에서의 CI 성공은 배포를 트리거하지 않습니다.
 - CI가 실패한 커밋은 **절대 배포되지 않습니다** (`conclusion == 'success'` 조건으로 연결).
 - 배포된 컨테이너는 `--restart unless-stopped`로 EC2 재부팅 시에도 자동 기동됩니다.

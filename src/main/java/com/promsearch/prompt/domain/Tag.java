@@ -3,6 +3,7 @@ package com.promsearch.prompt.domain;
 import com.promsearch.prompt.domain.enums.TagType;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
+import java.util.Locale;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
@@ -36,6 +37,31 @@ public class Tag {
                 .build();
     }
 
+    public static Tag createCustomAiModel(String tagName) {
+        String normalizedName = normalizeAiModelName(tagName);
+        return create(TagType.AI_MODEL, tagName.strip(), normalizedName, true);
+    }
+
+    public static String normalizeAiModelName(String tagName) {
+        if (tagName == null || tagName.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_TAG_NAME);
+        }
+
+        String normalizedName = tagName.codePoints()
+                .filter(codePoint -> !Character.isWhitespace(codePoint))
+                .collect(
+                        StringBuilder::new,
+                        StringBuilder::appendCodePoint,
+                        StringBuilder::append
+                )
+                .toString()
+                .toLowerCase(Locale.ROOT);
+        if (normalizedName.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_TAG_NAME);
+        }
+        return normalizedName;
+    }
+
     public static Tag reconstruct(
             TagId tagId,
             TagType tagType,
@@ -59,6 +85,9 @@ public class Tag {
             throw new PromptDomainException(PromptErrorCode.INVALID_TAG_TYPE);
         }
         if (tagName == null || tagName.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_TAG_NAME);
+        }
+        if (tagName.length() > 100) {
             throw new PromptDomainException(PromptErrorCode.INVALID_TAG_NAME);
         }
     }

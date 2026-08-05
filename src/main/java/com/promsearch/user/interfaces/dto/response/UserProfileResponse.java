@@ -1,6 +1,6 @@
 package com.promsearch.user.interfaces.dto.response;
 
-import com.promsearch.user.application.usecase.dto.UserInfo;
+import com.promsearch.user.application.usecase.dto.UserProfileInfo;
 import io.swagger.v3.oas.annotations.media.Schema;
 
 @Schema(description = "마이페이지 프로필 조회 응답")
@@ -17,13 +17,13 @@ public record UserProfileResponse(
         String gradeName
 ) {
 
-    public static UserProfileResponse from(UserInfo userInfo) {
+    public static UserProfileResponse from(UserProfileInfo info) {
         return new UserProfileResponse(
-                userInfo.nickname(),
-                userInfo.profileImageUrl(),
-                userInfo.email(),
-                userInfo.point(),
-                userInfo.grade().name()
+                info.username(),
+                info.profileImageUrl(),
+                info.email(),
+                info.point(),
+                info.gradeName()
         );
     }
 }

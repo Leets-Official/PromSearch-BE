@@ -5,5 +5,5 @@ import com.promsearch.prompt.application.usecase.dto.MyPromptPageInfo;
 
 public interface ListMyPromptsUseCase {
 
-    MyPromptPageInfo listMyPublishedPrompts(ListMyPromptsQuery query);
+    MyPromptPageInfo listMyPrompts(ListMyPromptsQuery query);
 }

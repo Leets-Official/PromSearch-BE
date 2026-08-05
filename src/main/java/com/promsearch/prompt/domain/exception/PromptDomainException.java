@@ -12,4 +12,13 @@ public class PromptDomainException extends BusinessException {
     public PromptDomainException(PromptErrorCode errorCode, String message) {
         super(Domain.PROMPT, errorCode, message);
     }
+
+    public PromptDomainException(
+            PromptErrorCode errorCode,
+            String message,
+            Throwable cause
+    ) {
+        super(Domain.PROMPT, errorCode, message);
+        initCause(cause);
+    }
 }

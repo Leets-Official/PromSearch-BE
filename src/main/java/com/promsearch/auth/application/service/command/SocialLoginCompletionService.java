@@ -62,7 +62,7 @@ public class SocialLoginCompletionService {
                 refreshToken.value(),
                 accessToken.expiresInSeconds(),
                 authenticatedUser,
-                user.name(),
+                user.profileImageUrl(),
                 user.nickname()
         );
     }
@@ -70,7 +70,6 @@ public class SocialLoginCompletionService {
     private Long provisionSocialUser(SocialProvider provider, SocialLoginResult socialLoginResult) {
         SignupInfo signupInfo = registerSocialUserUseCase.registerSocialUser(RegisterSocialUserCommand.of(
                 socialLoginResult.email(),
-                socialLoginResult.nickname(),
                 socialLoginResult.nickname(),
                 socialLoginResult.profileImageUrl()
         ));

@@ -8,9 +8,8 @@ public record PromptAccessResponse(
         boolean locked,
 
         @Schema(
-                description = "잠금 사유. 원문 전체를 조회할 수 있으면 null입니다.",
-                example = "PREMIUM",
-                nullable = true
+                description = "본문 접근 상태가 결정된 이유",
+                example = "UNLOCKED"
         )
         PromptAccessReason reason
 ) {

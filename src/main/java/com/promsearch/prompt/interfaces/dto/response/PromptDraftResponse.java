@@ -1,5 +1,7 @@
 package com.promsearch.prompt.interfaces.dto.response;
 
+import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.application.usecase.dto.PromptDraftInfo;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
@@ -13,7 +15,7 @@ public record PromptDraftResponse(
         @Schema(description = "프롬프트 식별자", example = "1")
         Long promptId,
 
-        @Schema(description = "제목", example = "회의록 자동 정리", maxLength = 20)
+        @Schema(description = "제목", example = "회의록 자동 정리", maxLength = Prompt.MAX_TITLE_LENGTH)
         String title,
 
         @Schema(description = "프롬프트 설명")
@@ -52,7 +54,33 @@ public record PromptDraftResponse(
         @Schema(description = "서버에서 결정한 가격", example = "0", accessMode = Schema.AccessMode.READ_ONLY)
         Long pricePoint,
 
-        @Schema(description = "마지막 임시저장 시각", example = "2026-07-23T12:00:00Z")
+        @Schema(description = "마지막 임시저장 시각", example = "2026-07-23T21:00:00+09:00")
         Instant updatedAt
 ) {
+
+    public static PromptDraftResponse from(PromptDraftInfo info) {
+        return new PromptDraftResponse(
+                info.promptId(),
+                info.title(),
+                info.description(),
+                info.outputType(),
+                info.jobTagIds(),
+                info.taskTagIds(),
+                info.aiModelTagIds(),
+                info.customAiModel(),
+                info.contentType(),
+                info.promptBody(),
+                info.visibility(),
+                info.images().stream()
+                        .map(image -> new PromptImageResponse(
+                                image.imageId(),
+                                image.sortOrder(),
+                                image.thumbnail()
+                        ))
+                        .toList(),
+                info.status(),
+                info.pricePoint(),
+                info.updatedAt()
+        );
+    }
 }

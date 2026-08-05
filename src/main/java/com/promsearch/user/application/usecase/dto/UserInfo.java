@@ -10,7 +10,6 @@ public record UserInfo(
         Long userId,
         String email,
         String nickname,
-        String name,
         String profileImageUrl,
         Long point,
         UserRole role,
@@ -20,13 +19,12 @@ public record UserInfo(
         Instant updatedAt
 ) {
 
-    public static UserInfo from(User user) {
+    public static UserInfo from(User user, String profileImageUrl) {
         return new UserInfo(
                 user.getUserId().id(),
                 user.getEmail(),
                 user.getNickname(),
-                user.getName(),
-                user.getProfileImageUrl(),
+                profileImageUrl,
                 user.getPoint(),
                 user.getRole(),
                 user.getGrade(),

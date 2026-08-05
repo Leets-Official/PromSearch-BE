@@ -12,9 +12,11 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Local Dev | Swagger 인증", description = "local profile 전용 Swagger 테스트 토큰 발급 API")
 public interface LocalSwaggerAuthControllerDocs {
 
+    String IMPLEMENTED_BY_HANHARAM = "**작업자: 한하람 | 구현 상태: 구현완료**\n\n";
+
     @Operation(
             summary = "[LOCAL-001] Swagger 테스트 토큰 발급",
-            description = """
+            description = IMPLEMENTED_BY_HANHARAM + """
                     local profile에서만 활성화됩니다.
                     요청 본문을 비우면 기본 사용자(userId=1, role=USER) 기준으로 Access Token을 발급합니다.
                     """

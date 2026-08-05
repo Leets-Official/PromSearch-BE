@@ -1,7 +1,6 @@
 package com.promsearch.prompt.application.usecase.dto;
 
-import com.promsearch.prompt.domain.PostStatistics;
-import com.promsearch.prompt.domain.Prompt;
+import com.promsearch.prompt.application.port.out.prompt.MyPromptSummaryRow;
 import java.time.Instant;
 
 public record MyPromptSummaryInfo(
@@ -12,14 +11,13 @@ public record MyPromptSummaryInfo(
         long recommendCount
 ) {
 
-    public static MyPromptSummaryInfo from(Prompt prompt) {
-        PostStatistics statistics = prompt.getStatistics();
+    public static MyPromptSummaryInfo from(MyPromptSummaryRow row) {
         return new MyPromptSummaryInfo(
-                prompt.getPromptId().id(),
-                prompt.getTitle(),
-                prompt.getPublishedAt(),
-                statistics == null ? 0L : statistics.getViewCount(),
-                statistics == null ? 0L : statistics.getLikeCount()
+                row.promptId(),
+                row.title(),
+                row.publishedAt(),
+                row.viewCount(),
+                row.recommendCount()
         );
     }
 }

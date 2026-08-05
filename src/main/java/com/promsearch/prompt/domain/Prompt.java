@@ -3,6 +3,7 @@ package com.promsearch.prompt.domain;
 import com.promsearch.prompt.domain.enums.PromptContentType;
 import com.promsearch.prompt.domain.enums.PromptOutputType;
 import com.promsearch.prompt.domain.enums.PromptStatus;
+import com.promsearch.prompt.domain.enums.PromptVisibility;
 import com.promsearch.prompt.domain.exception.PromptDomainException;
 import com.promsearch.prompt.domain.exception.PromptErrorCode;
 import java.time.Instant;
@@ -14,6 +15,8 @@ import lombok.Getter;
 @Getter
 public class Prompt {
 
+    public static final int MAX_TITLE_LENGTH = 500;
+
     private final PromptId promptId;
     private final Long userId;
     private final String title;
@@ -23,6 +26,7 @@ public class Prompt {
     private final String description;
     private final PromptContentType contentType;
     private final PromptStatus status;
+    private final PromptVisibility visibility;
     private final Long pricePoint;
     private final String hiddenReason;
     private final Instant hiddenAt;
@@ -30,7 +34,7 @@ public class Prompt {
     private final Instant updatedAt;
     private final Instant deletedAt;
     private final Instant publishedAt;
-    private final List<PostImage> images;
+    private final List<PromptImage> images;
     private final PostStatistics statistics;
     private final List<PostTag> postTags;
 
@@ -45,6 +49,7 @@ public class Prompt {
             String description,
             PromptContentType contentType,
             PromptStatus status,
+            PromptVisibility visibility,
             Long pricePoint,
             String hiddenReason,
             Instant hiddenAt,
@@ -52,7 +57,7 @@ public class Prompt {
             Instant updatedAt,
             Instant deletedAt,
             Instant publishedAt,
-            List<PostImage> images,
+            List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
     ) {
@@ -65,6 +70,7 @@ public class Prompt {
         this.description = description;
         this.contentType = contentType;
         this.status = status;
+        this.visibility = visibility;
         this.pricePoint = pricePoint;
         this.hiddenReason = hiddenReason;
         this.hiddenAt = hiddenAt;
@@ -99,7 +105,73 @@ public class Prompt {
                 .description(description)
                 .contentType(contentType)
                 .status(PromptStatus.DRAFT)
+                .visibility(PromptVisibility.PUBLIC)
                 .pricePoint(pricePoint)
+                .createdAt(now)
+                .updatedAt(now)
+                .images(List.of())
+                .postTags(List.of())
+                .build();
+    }
+
+    public static Prompt createActive(
+            Long userId,
+            String title,
+            String promptBody,
+            PromptOutputType outputType,
+            String description,
+            PromptContentType contentType,
+            PromptVisibility visibility,
+            Long pricePoint
+    ) {
+        validateRequired(userId, title, outputType, contentType, pricePoint);
+        validatePromptBody(promptBody);
+        validateDescription(description);
+        if (visibility == null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_VISIBILITY);
+        }
+        validatePricePolicy(contentType, pricePoint);
+
+        Instant now = Instant.now();
+        return Prompt.builder()
+                .userId(userId)
+                .title(title.strip())
+                .promptBody(promptBody)
+                .outputType(outputType)
+                .description(description)
+                .contentType(contentType)
+                .status(PromptStatus.ACTIVE)
+                .visibility(visibility)
+                .pricePoint(pricePoint)
+                .createdAt(now)
+                .updatedAt(now)
+                .images(List.of())
+                .postTags(List.of())
+                .build();
+    }
+
+    public static Prompt createDraft(
+            Long userId,
+            String title,
+            String promptBody,
+            PromptOutputType outputType,
+            String description,
+            PromptContentType contentType,
+            PromptVisibility visibility
+    ) {
+        validateDraftRequired(userId, title, visibility);
+
+        Instant now = Instant.now();
+        return Prompt.builder()
+                .userId(userId)
+                .title(title.strip())
+                .promptBody(trimToNull(promptBody))
+                .outputType(outputType)
+                .description(trimToNull(description))
+                .contentType(contentType)
+                .status(PromptStatus.DRAFT)
+                .visibility(visibility)
+                .pricePoint(0L)
                 .createdAt(now)
                 .updatedAt(now)
                 .images(List.of())
@@ -117,6 +189,7 @@ public class Prompt {
             String description,
             PromptContentType contentType,
             PromptStatus status,
+            PromptVisibility visibility,
             Long pricePoint,
             String hiddenReason,
             Instant hiddenAt,
@@ -124,13 +197,25 @@ public class Prompt {
             Instant updatedAt,
             Instant deletedAt,
             Instant publishedAt,
-            List<PostImage> images,
+            List<PromptImage> images,
             PostStatistics statistics,
             List<PostTag> postTags
     ) {
-        validateRequired(userId, title, outputType, contentType, pricePoint);
         if (status == null) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_STATUS);
+        }
+        if (status == PromptStatus.DRAFT) {
+            validateDraftRequired(userId, title, visibility);
+        } else {
+            validateRequired(userId, title, outputType, contentType, pricePoint);
+        }
+        if (visibility == null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_VISIBILITY);
+        }
+        if (status == PromptStatus.ACTIVE) {
+            validatePromptBody(promptBody);
+            validateDescription(description);
+            validatePricePolicy(contentType, pricePoint);
         }
 
         return Prompt.builder()
@@ -143,6 +228,7 @@ public class Prompt {
                 .description(description)
                 .contentType(contentType)
                 .status(status)
+                .visibility(visibility)
                 .pricePoint(pricePoint)
                 .hiddenReason(hiddenReason)
                 .hiddenAt(hiddenAt)
@@ -166,7 +252,7 @@ public class Prompt {
         if (userId == null || userId <= 0) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_USER_ID);
         }
-        if (title == null || title.isBlank()) {
+        if (title == null || title.isBlank() || title.strip().length() > MAX_TITLE_LENGTH) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_TITLE);
         }
         if (outputType == null) {
@@ -178,6 +264,44 @@ public class Prompt {
         if (pricePoint == null || pricePoint < 0) {
             throw new PromptDomainException(PromptErrorCode.INVALID_PRICE_POINT);
         }
+    }
+
+    private static void validateDraftRequired(Long userId, String title, PromptVisibility visibility) {
+        if (userId == null || userId <= 0) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_USER_ID);
+        }
+        if (title == null || title.isBlank() || title.strip().length() > MAX_TITLE_LENGTH) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_TITLE);
+        }
+        if (visibility == null) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_VISIBILITY);
+        }
+    }
+
+    private static void validatePromptBody(String promptBody) {
+        if (promptBody == null || promptBody.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_BODY);
+        }
+    }
+
+    private static void validateDescription(String description) {
+        if (description == null || description.isBlank()) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PROMPT_DESCRIPTION);
+        }
+    }
+
+    private static void validatePricePolicy(PromptContentType contentType, Long pricePoint) {
+        if ((contentType == PromptContentType.FREE && pricePoint != 0)
+                || (contentType == PromptContentType.PREMIUM && pricePoint <= 0)) {
+            throw new PromptDomainException(PromptErrorCode.INVALID_PRICE_POINT);
+        }
+    }
+
+    private static String trimToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.strip();
     }
 
     public record PromptId(Long id) {

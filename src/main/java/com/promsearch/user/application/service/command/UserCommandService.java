@@ -1,7 +1,11 @@
 package com.promsearch.user.application.service.command;
 
+import com.promsearch.user.application.port.out.tag.ResolveInterestTagIdsPort;
 import com.promsearch.user.application.port.out.user.LoadUserPort;
+import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
+import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
+import com.promsearch.user.application.port.out.profileimage.ScheduleProfileImageDeletionPort;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
 import com.promsearch.user.application.usecase.RegisterSocialUserUseCase;
@@ -14,8 +18,13 @@ import com.promsearch.user.application.usecase.dto.SignupInfo;
 import com.promsearch.user.application.usecase.dto.UpdateUserProfileCommand;
 import com.promsearch.user.application.usecase.dto.UserInfo;
 import com.promsearch.user.domain.User;
+import com.promsearch.user.domain.InterestTagSelectionPolicy;
+import com.promsearch.user.domain.NicknamePolicy;
+import com.promsearch.user.domain.enums.InterestTagType;
 import com.promsearch.user.domain.exception.UserDomainException;
 import com.promsearch.user.domain.exception.UserErrorCode;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.ThreadLocalRandom;
 import lombok.RequiredArgsConstructor;
@@ -36,29 +45,38 @@ public class UserCommandService implements
         RegisterSocialUserUseCase {
 
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
-    private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
-    private static final int NICKNAME_HINT_MAX_LENGTH = 90;
+    private static final int SOCIAL_NICKNAME_BASE_MAX_LENGTH = 6;
     private static final int NICKNAME_RETRY_LIMIT = 5;
 
     private final LoadUserPort loadUserPort;
     private final SaveUserPort saveUserPort;
+    private final ResolveInterestTagIdsPort resolveInterestTagIdsPort;
+    private final SaveUserInterestTagPort saveUserInterestTagPort;
     private final PasswordEncoder passwordEncoder;
+    private final ProfileImageDeliveryPort profileImageDeliveryPort;
+    private final ScheduleProfileImageDeletionPort profileImageDeletionPort;
 
     @Override
     public SignupInfo signup(SignupCommand command) {
         validateDuplicateEmail(command.email());
         validateDuplicateNickname(command.nickname());
+        InterestTagSelectionPolicy.validate(command.jobTagIds(), command.taskTagIds());
 
         String encodedPassword = passwordEncoder.encode(command.password());
         User user = User.create(
                 command.email(),
                 encodedPassword,
                 command.nickname(),
-                command.name(),
+                null,
                 null
         );
 
-        SignupInfo signupInfo = SignupInfo.from(saveUserPort.create(user));
+        User savedUser = saveUserPort.create(user);
+        List<Long> interestTagIds = new ArrayList<>();
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.JOB, command.jobTagIds()));
+        interestTagIds.addAll(resolveInterestTagIdsPort.resolve(InterestTagType.TASK, command.taskTagIds()));
+        saveUserInterestTagPort.save(savedUser.getUserId().id(), interestTagIds);
+        SignupInfo signupInfo = SignupInfo.from(savedUser);
         log.info("user_signup_completed userId={}", signupInfo.userId());
         return signupInfo;
     }
@@ -67,16 +85,14 @@ public class UserCommandService implements
     public UserInfo updateProfile(UpdateUserProfileCommand command) {
         User user = loadUserPort.getById(command.userId());
 
-        String name = resolveRequiredProfileValue(command.name(), user.getName(), UserErrorCode.INVALID_NAME);
         String nickname = resolveRequiredProfileValue(
                 command.nickname(),
                 user.getNickname(),
                 UserErrorCode.INVALID_NICKNAME
         );
         String email = resolveRequiredProfileValue(command.email(), user.getEmail(), UserErrorCode.INVALID_EMAIL);
-        String profileImageUrl = resolveOptionalProfileValue(command.profileImageUrl(), user.getProfileImageUrl());
-
         if (!nickname.equals(user.getNickname())) {
+            NicknamePolicy.validate(nickname);
             validateDuplicateNickname(nickname);
         }
         if (!email.equals(user.getEmail())) {
@@ -85,11 +101,10 @@ public class UserCommandService implements
 
         User updatedUser = user.updateProfile(
                 email,
-                nickname,
-                name,
-                profileImageUrl
+                nickname
         );
-        UserInfo userInfo = UserInfo.from(saveUserPort.update(updatedUser));
+        User savedUser = saveUserPort.update(updatedUser);
+        UserInfo userInfo = UserInfo.from(savedUser, resolveProfileImageUrl(savedUser));
         log.info("user_profile_updated userId={}", userInfo.userId());
         return userInfo;
     }
@@ -113,6 +128,7 @@ public class UserCommandService implements
     public void delete(Long userId) {
         User user = loadUserPort.getById(userId);
         saveUserPort.update(user.delete());
+        profileImageDeletionPort.afterCommit(user.getProfileImageObjectKey());
         log.info("user_deleted userId={}", userId);
     }
 
@@ -121,10 +137,9 @@ public class UserCommandService implements
         validateDuplicateEmail(command.email());
 
         String nickname = resolveAvailableNickname(command.nickname());
-        String name = resolveSocialName(command.name());
         String placeholderPassword = passwordEncoder.encode(UUID.randomUUID().toString());
 
-        User user = User.create(command.email(), placeholderPassword, nickname, name, command.profileImageUrl());
+        User user = User.create(command.email(), placeholderPassword, nickname, nickname, command.profileImageUrl());
 
         SignupInfo signupInfo = SignupInfo.from(saveUserPort.create(user));
         log.info("user_social_signup_completed userId={}", signupInfo.userId());
@@ -140,7 +155,8 @@ public class UserCommandService implements
             String suffix = attempt <= NICKNAME_RETRY_LIMIT
                     ? String.valueOf(ThreadLocalRandom.current().nextInt(1000, 10000))
                     : UUID.randomUUID().toString().substring(0, 8);
-            candidate = base + "_" + suffix;
+            int baseLength = Math.min(base.length(), NicknamePolicy.MAX_LENGTH - suffix.length());
+            candidate = base.substring(0, baseLength) + suffix;
         }
         return candidate;
     }
@@ -150,13 +166,13 @@ public class UserCommandService implements
         if (trimmed.isBlank()) {
             trimmed = DEFAULT_SOCIAL_NICKNAME;
         }
-        return trimmed.length() > NICKNAME_HINT_MAX_LENGTH
-                ? trimmed.substring(0, NICKNAME_HINT_MAX_LENGTH)
-                : trimmed;
-    }
-
-    private String resolveSocialName(String name) {
-        return (name == null || name.isBlank()) ? DEFAULT_SOCIAL_NAME : name.trim();
+        String sanitized = trimmed.replaceAll("[^가-힣A-Za-z0-9]", "");
+        if (sanitized.isBlank()) {
+            sanitized = DEFAULT_SOCIAL_NICKNAME;
+        }
+        return sanitized.length() > SOCIAL_NICKNAME_BASE_MAX_LENGTH
+                ? sanitized.substring(0, SOCIAL_NICKNAME_BASE_MAX_LENGTH)
+                : sanitized;
     }
 
     private void validateDuplicateNickname(String nickname) {
@@ -188,13 +204,14 @@ public class UserCommandService implements
         return password;
     }
 
-    private String resolveOptionalProfileValue(String requestedValue, String currentValue) {
-        if (requestedValue == null) {
-            return currentValue;
-        }
-        if (requestedValue.isBlank()) {
-            return null;
-        }
-        return requestedValue.trim();
+    private String resolveProfileImageUrl(User user) {
+        return profileImageDeliveryPort.resolve(
+                user.getProfileImageUrl(),
+                user.getProfileImageObjectKey()
+        );
+    }
+
+    private String normalizeOptional(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 }

@@ -11,6 +11,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -18,7 +19,13 @@ import lombok.NoArgsConstructor;
 
 @Entity
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@Table(name = "comments")
+@Table(
+        name = "comments",
+        indexes = @Index(
+                name = "idx_comments_post_id_created_at",
+                columnList = "post_id, created_at"
+        )
+)
 public class CommentJpaEntity extends BaseEntity {
 
     @Id
@@ -58,6 +65,14 @@ public class CommentJpaEntity extends BaseEntity {
                 .content(content)
                 .parentCommentId(parentCommentId)
                 .build();
+    }
+
+    public void updateFrom(Comment comment) {
+        this.content = comment.getContent();
+        this.status = comment.getStatus();
+        if (comment.isDeleted() && getDeletedAt() == null) {
+            markDeleted();
+        }
     }
 
     public Comment toDomain() {

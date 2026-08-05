@@ -1,3 +1,14 @@
+spring:
+  jackson:
+    time-zone: Asia/Seoul
+  jpa:
+    # 운영의 ddl-auto=none을 덮어 테스트 간 격리된 H2 스키마를 생성한다.
+    hibernate:
+      ddl-auto: create-drop
+  flyway:
+    # 단위·슬라이스 테스트는 JPA 테스트 픽스처를 사용하며 운영 마이그레이션은 별도 테스트에서 검증한다.
+    enabled: false
+
 springdoc:
   api-docs:
     enabled: ${SWAGGER_ENABLE:false}
@@ -7,6 +18,10 @@ springdoc:
     path: /docs
     persist-authorization: true
     try-it-out-enabled: true
+
+prompt:
+  pricing:
+    premium-price-point: 100
 
 auth:
   jwt:
@@ -25,3 +40,12 @@ auth:
       client-secret: test-google-client-secret
       token-uri: https://oauth2.googleapis.com/token
       user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+
+storage:
+  s3:
+    bucket: promsearch-test-bucket
+    region: ap-northeast-2
+    original-prefix: prompt-images/original
+    watermarked-prefix: prompt-images/watermarked
+    profile-prefix: profiles
+    upload-url-expiration: 10m
