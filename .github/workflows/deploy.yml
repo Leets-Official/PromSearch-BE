@@ -122,6 +122,9 @@ jobs:
 
             timeout 4m docker pull "$IMAGE"
             docker rm -f promsearch-previous promsearch-worker-previous || true
+            # 이전 복제 배포에서 남은 워커를 제거한다. 이 배포는 단일 JVM 내부의
+            # WATERMARK_WORKER_CONCURRENCY로 병렬성을 제어한다.
+            docker rm -f promsearch-worker-1 promsearch-worker-2 || true
             ROLLBACK_REQUIRED=true
             if docker container inspect promsearch >/dev/null 2>&1; then
               docker rename promsearch promsearch-previous
