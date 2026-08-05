@@ -78,6 +78,30 @@ public class User {
                 .build();
     }
 
+    /**
+     * 배포 환경에 최초 관리자 계정을 마련하기 위한 팩토리다. 일반 가입({@link #create})과 달리
+     * role을 {@link UserRole#ADMIN}으로 고정한다.
+     */
+    public static User createAdmin(String email, String password, String nickname, String name) {
+        validateRequired(email, password, nickname, 0L, UserRole.ADMIN, UserGrade.NODE, UserStatus.ACTIVE);
+
+        Instant now = Instant.now();
+        return User.builder()
+                .email(email)
+                .password(password)
+                .nickname(nickname)
+                .name(name)
+                .profileImageUrl(null)
+                .profileImageObjectKey(null)
+                .point(0L)
+                .role(UserRole.ADMIN)
+                .grade(UserGrade.NODE)
+                .status(UserStatus.ACTIVE)
+                .createdAt(now)
+                .updatedAt(now)
+                .build();
+    }
+
     public static User reconstruct(
             UserId userId,
             String email,
