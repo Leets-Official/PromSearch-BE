@@ -13,6 +13,7 @@ import io.swagger.v3.oas.models.Operation;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 import java.lang.reflect.Method;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -32,7 +33,7 @@ class OpenApiDocumentationTest {
     @DisplayName("OpenAPI 메타데이터에 JWT Bearer 스키마를 등록한다")
     @Test
     void openApiMetadataAndJwtBearerScheme() {
-        OpenAPI openAPI = openApiConfig.promSearchOpenAPI();
+        OpenAPI openAPI = openApiConfig.promSearchOpenAPI("https://api.promsearch.kr");
 
         assertThat(openAPI.getInfo().getTitle()).isEqualTo("PromSearch API");
         assertThat(openAPI.getInfo().getVersion()).isEqualTo("v1");
@@ -43,6 +44,9 @@ class OpenApiDocumentationTest {
         assertThat(jwtBearer.getType()).isEqualTo(SecurityScheme.Type.HTTP);
         assertThat(jwtBearer.getScheme()).isEqualTo("bearer");
         assertThat(jwtBearer.getBearerFormat()).isEqualTo("JWT");
+        assertThat(openAPI.getServers()).singleElement()
+                .extracting(Server::getUrl)
+                .isEqualTo("https://api.promsearch.kr");
     }
 
     @DisplayName("OpenAPI 문서는 실제 인증이 필요한 API에만 JWT 보안 요구사항을 적용한다")

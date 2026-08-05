@@ -18,7 +18,7 @@ public class CorsConfig implements WebMvcConfigurer {
             "https://prom-search-fe.vercel.app",
             "https://*.vercel.app"
     );
-    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "DELETE", "OPTIONS");
+    private static final List<String> ALLOWED_METHODS = List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS");
 
     @Override
     public void addCorsMappings(CorsRegistry registry) {
