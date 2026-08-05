@@ -57,7 +57,7 @@ class LocalSwaggerAuthControllerTest {
         assertThat(properties.has("nickname")).isTrue();
         assertThat(properties.has("email")).isTrue();
         assertThat(properties.has("password")).isTrue();
-        assertThat(properties.has("profileImageUrl")).isTrue();
+        assertThat(properties.has("profileImageUrl")).isFalse();
         assertThat(properties.has("interestJobTagIds")).isTrue();
         assertThat(properties.has("interestTaskTagIds")).isTrue();
     }
