@@ -22,9 +22,6 @@ public record SignupRequest(
         @Schema(description = "로그인 비밀번호", example = "password123!", minLength = 8, maxLength = 20)
         @NotBlank(message = "비밀번호는 필수입니다.")
         String password,
-        @Schema(description = "프로필 이미지 URL(선택)", example = "https://cdn.promsearch.com/profiles/me.png")
-        @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
-        String profileImageUrl,
         @Schema(description = "관심 직군 태그 ID(최대 3개)", example = "[1, 2]")
         @Size(max = 3, message = "관심 직군은 최대 3개까지 선택할 수 있습니다.")
         List<Long> interestJobTagIds,
@@ -37,30 +34,24 @@ public record SignupRequest(
         SignupAgreementsRequest agreements
 ) {
     public SignupRequest(String nickname, String email, String password) {
-        this(nickname, email, password, null, List.of(), List.of(), SignupAgreementsRequest.requiredAndNoMarketing());
-    }
-
-    public SignupRequest(String nickname, String email, String password, String profileImageUrl,
-                         List<Long> interestJobTagIds, List<Long> interestTaskTagIds) {
-        this(nickname, email, password, profileImageUrl, interestJobTagIds, interestTaskTagIds,
-                SignupAgreementsRequest.requiredAndNoMarketing());
+        this(nickname, email, password, List.of(), List.of(), SignupAgreementsRequest.requiredAndNoMarketing());
     }
 
     public SignupRequest(String nickname, String email, String password,
-                         List<Long> interestJobTagIds, List<Long> interestTaskTagIds,
-                         SignupAgreementsRequest agreements) {
-        this(nickname, email, password, null, interestJobTagIds, interestTaskTagIds, agreements);
+                         List<Long> interestJobTagIds, List<Long> interestTaskTagIds) {
+        this(nickname, email, password, interestJobTagIds, interestTaskTagIds,
+                SignupAgreementsRequest.requiredAndNoMarketing());
     }
 
     public SignupCommand toCommand() {
-        return SignupCommand.of(nickname, email, password, profileImageUrl, interestJobTagIds, interestTaskTagIds,
+        return SignupCommand.of(nickname, email, password, interestJobTagIds, interestTaskTagIds,
                 agreements.toCommand());
     }
 
     @Override
     public String toString() {
         return "SignupRequest[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl + ", interestJobTagIds=" + interestJobTagIds
+                + ", password=***, interestJobTagIds=" + interestJobTagIds
                 + ", interestTaskTagIds=" + interestTaskTagIds + ", agreements=" + agreements + "]";
     }
 }

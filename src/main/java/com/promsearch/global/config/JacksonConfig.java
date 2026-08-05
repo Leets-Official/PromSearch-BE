@@ -1,7 +1,6 @@
 package com.promsearch.global.config;
 
 import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.json.JsonWriteFeature;
 import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.SerializerProvider;
@@ -30,7 +29,6 @@ public class JacksonConfig {
         return builder -> builder
                 .timeZone(TimeZone.getTimeZone(zoneId))
                 .modulesToInstall(javaTimeModule)
-                .featuresToEnable(JsonWriteFeature.WRITE_NUMBERS_AS_STRINGS.mappedFeature())
                 .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 

@@ -9,10 +9,12 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirements;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import java.util.List;
 import org.springdoc.core.customizers.OperationCustomizer;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -22,8 +24,8 @@ public class OpenApiConfig {
     private static final String JWT_BEARER_SCHEME = "jwtBearerAuth";
 
     @Bean
-    public OpenAPI promSearchOpenAPI() {
-        return new OpenAPI()
+    public OpenAPI promSearchOpenAPI(@Value("${openapi.server-url:}") String serverUrl) {
+        OpenAPI openAPI = new OpenAPI()
                 .info(new Info()
                         .title("PromSearch API")
                         .version("v1")
@@ -34,6 +36,11 @@ public class OpenApiConfig {
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
                                 .description("문서화된 보호 API에서 사용하는 JWT Bearer 인증 방식입니다.")));
+
+        if (!serverUrl.isBlank()) {
+            openAPI.setServers(List.of(new Server().url(serverUrl)));
+        }
+        return openAPI;
     }
 
     @Bean

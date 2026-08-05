@@ -10,7 +10,6 @@ public record SignupCommand(
         String nickname,
         String email,
         String password,
-        String profileImageUrl,
         List<Long> interestJobTagIds,
         List<Long> interestTaskTagIds,
         SignupAgreements agreements
@@ -27,18 +26,18 @@ public record SignupCommand(
     }
 
     public static SignupCommand of(String nickname, String email, String password) {
-        return new SignupCommand(nickname, email, password, null, List.of(), List.of(), SignupAgreements.requiredAndNoMarketing());
+        return new SignupCommand(nickname, email, password, List.of(), List.of(), SignupAgreements.requiredAndNoMarketing());
     }
 
-    public static SignupCommand of(String nickname, String email, String password, String profileImageUrl,
+    public static SignupCommand of(String nickname, String email, String password,
                                    List<Long> interestJobTagIds, List<Long> interestTaskTagIds) {
-        return new SignupCommand(nickname, email, password, profileImageUrl, interestJobTagIds, interestTaskTagIds,
+        return new SignupCommand(nickname, email, password, interestJobTagIds, interestTaskTagIds,
                 SignupAgreements.requiredAndNoMarketing());
     }
 
-    public static SignupCommand of(String nickname, String email, String password, String profileImageUrl,
+    public static SignupCommand of(String nickname, String email, String password,
                                    List<Long> interestJobTagIds, List<Long> interestTaskTagIds, SignupAgreements agreements) {
-        return new SignupCommand(nickname, email, password, profileImageUrl, interestJobTagIds, interestTaskTagIds, agreements);
+        return new SignupCommand(nickname, email, password, interestJobTagIds, interestTaskTagIds, agreements);
     }
 
     private static List<Long> normalizeTagIds(List<Long> tagIds) {
@@ -48,7 +47,7 @@ public record SignupCommand(
     @Override
     public String toString() {
         return "SignupCommand[nickname=" + nickname + ", email=" + email
-                + ", password=***, profileImageUrl=" + profileImageUrl + ", interestJobTagIds=" + interestJobTagIds
+                + ", password=***, interestJobTagIds=" + interestJobTagIds
                 + ", interestTaskTagIds=" + interestTaskTagIds + ", agreements=" + agreements + "]";
     }
 }

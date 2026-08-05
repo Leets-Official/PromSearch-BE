@@ -80,12 +80,11 @@ class SignupProfileInterestIntegrationTest {
     }
 
     @Test
-    void signupSavesInterestTagsWithoutAcceptingExternalProfileImageUrl() throws Exception {
+    void signupSavesInterestTags() throws Exception {
         SignupRequest request = new SignupRequest(
                 "개발자1",
                 "interest@example.com",
                 "password123",
-                "https://cdn.promsearch.com/profiles/me.png",
                 List.of(studentTagId, developerTagId),
                 List.of(pptTagId, imageGenerationTagId)
         );
@@ -148,7 +147,6 @@ class SignupProfileInterestIntegrationTest {
                 "개발자2",
                 "duplicate-interest@example.com",
                 "password123",
-                null,
                 List.of(developerTagId, developerTagId),
                 List.of()
         );
@@ -165,7 +163,6 @@ class SignupProfileInterestIntegrationTest {
                 "개발자4",
                 "update-interest@example.com",
                 "password123",
-                null,
                 List.of(studentTagId),
                 List.of(pptTagId)
         );
@@ -190,7 +187,6 @@ class SignupProfileInterestIntegrationTest {
                 "개발자3",
                 "invalid-interest@example.com",
                 "password123",
-                null,
                 List.of(Long.MAX_VALUE),
                 List.of()
         );
