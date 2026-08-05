@@ -105,6 +105,13 @@ public class Comment {
         this.status = CommentStatus.DELETED;
     }
 
+    public void hide() {
+        if (status == CommentStatus.DELETED) {
+            return;
+        }
+        this.status = CommentStatus.HIDDEN;
+    }
+
     public void validateCanHaveReply() {
         validateActive();
         if (parentCommentId != null) {
@@ -118,6 +125,10 @@ public class Comment {
 
     public boolean isDeleted() {
         return status == CommentStatus.DELETED;
+    }
+
+    public boolean isHidden() {
+        return status == CommentStatus.HIDDEN;
     }
 
     private static void validateRequired(Long postId, Long userId, String content) {

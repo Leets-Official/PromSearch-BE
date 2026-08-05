@@ -71,7 +71,8 @@ class AdminReportControllerTest {
         Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
         given(searchReportsUseCase.searchReports(SearchReportsQuery.of(ReportTargetType.POST, ReportStatus.PENDING, 0, 20)))
                 .willReturn(new ReportPageInfo(
-                        List.of(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.PENDING, 5L, createdAt)),
+                        List.of(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.PENDING, 5L, createdAt,
+                                ReportInfo.TargetSummaryInfo.notFound())),
                         1L
                 ));
 
@@ -86,13 +87,21 @@ class AdminReportControllerTest {
                 .andExpect(jsonPath("$.result.totalElements").value(1));
     }
 
-    @DisplayName("targetType이 없으면 400을 반환한다")
+    @DisplayName("targetType이 없으면 게시글/댓글 신고를 병합해 조회한다")
     @Test
-    void getReportsRejectsMissingTargetType() throws Exception {
+    void getReportsMergesAllTypesWhenTargetTypeMissing() throws Exception {
         authenticateAs("ADMIN");
+        Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
+        given(searchReportsUseCase.searchReports(SearchReportsQuery.of(null, null, 0, 20)))
+                .willReturn(new ReportPageInfo(
+                        List.of(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.PENDING, 5L, createdAt,
+                                ReportInfo.TargetSummaryInfo.notFound())),
+                        1L
+                ));
 
         mockMvc.perform(get("/api/v1/admin/reports"))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.result.content[0].targetType").value("POST"));
     }
 
     @DisplayName("targetType 값이 유효하지 않으면 400을 반환한다")
@@ -124,7 +133,8 @@ class AdminReportControllerTest {
         authenticateAs("ADMIN");
         Instant createdAt = Instant.parse("2026-07-23T12:00:00Z");
         given(updateReportStatusUseCase.updateStatus(UpdateReportStatusCommand.of(1L, ReportTargetType.POST, ReportStatus.RESOLVED)))
-                .willReturn(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.RESOLVED, 5L, createdAt));
+                .willReturn(new ReportInfo(1L, ReportTargetType.POST, 10L, ReportReason.SPAM, "설명", ReportStatus.RESOLVED, 5L, createdAt,
+                        ReportInfo.TargetSummaryInfo.notFound()));
 
         mockMvc.perform(patch("/api/v1/admin/reports/1")
                         .contentType(MediaType.APPLICATION_JSON)

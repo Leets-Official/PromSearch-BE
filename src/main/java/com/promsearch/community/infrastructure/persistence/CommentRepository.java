@@ -34,10 +34,10 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
 
     Optional<CommentJpaEntity> findByIdAndPostIdAndParentCommentIdIsNull(Long id, Long postId);
 
-    Optional<CommentJpaEntity> findByIdAndParentCommentIdAndStatus(
+    Optional<CommentJpaEntity> findByIdAndParentCommentIdAndStatusIn(
             Long id,
             Long parentCommentId,
-            CommentStatus status
+            Collection<CommentStatus> statuses
     );
 
     @Query("""
@@ -46,14 +46,14 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             where comment.postId = :postId
               and comment.parentCommentId is null
               and (
-                    comment.status = :activeStatus
+                    comment.status in :visibleStatuses
                     or (
                         comment.status = :deletedStatus
                         and exists (
                             select reply.id
                             from CommentJpaEntity reply
                             where reply.parentCommentId = comment.id
-                              and reply.status = :activeStatus
+                              and reply.status in :visibleStatuses
                         )
                     )
               )
@@ -69,7 +69,7 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             """)
     List<CommentJpaEntity> findParentPage(
             @Param("postId") Long postId,
-            @Param("activeStatus") CommentStatus activeStatus,
+            @Param("visibleStatuses") Collection<CommentStatus> visibleStatuses,
             @Param("deletedStatus") CommentStatus deletedStatus,
             @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("cursorId") Long cursorId,
@@ -80,7 +80,7 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             select reply
             from CommentJpaEntity reply
             where reply.parentCommentId = :parentCommentId
-              and reply.status = :status
+              and reply.status in :visibleStatuses
               and (
                     :cursorCreatedAt is null
                     or reply.createdAt > :cursorCreatedAt
@@ -93,7 +93,7 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             """)
     List<CommentJpaEntity> findReplyPage(
             @Param("parentCommentId") Long parentCommentId,
-            @Param("status") CommentStatus status,
+            @Param("visibleStatuses") Collection<CommentStatus> visibleStatuses,
             @Param("cursorCreatedAt") Instant cursorCreatedAt,
             @Param("cursorId") Long cursorId,
             Pageable pageable
@@ -103,22 +103,47 @@ public interface CommentRepository extends JpaRepository<CommentJpaEntity, Long>
             select reply.parentCommentId as parentId, count(reply.id) as replyCount
             from CommentJpaEntity reply
             where reply.parentCommentId in :parentIds
-              and reply.status = :status
+              and reply.status in :visibleStatuses
             group by reply.parentCommentId
             """)
     List<ParentReplyCountProjection> countRepliesByParentIds(
             @Param("parentIds") Collection<Long> parentIds,
-            @Param("status") CommentStatus status
+            @Param("visibleStatuses") Collection<CommentStatus> visibleStatuses
     );
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select comment from CommentJpaEntity comment where comment.id = :commentId")
     Optional<CommentJpaEntity> findByIdForUpdate(@Param("commentId") Long commentId);
 
+    @Query("""
+            select comment.id as commentId, comment.content as content, comment.userId as authorId,
+                   (select u.nickname from UserJpaEntity u where u.id = comment.userId) as authorNickname,
+                   (comment.status = com.promsearch.community.domain.enums.CommentStatus.DELETED
+                        or comment.deletedAt is not null) as deleted
+            from CommentJpaEntity comment
+            where comment.id in :commentIds
+            """)
+    List<CommentReportTargetSummaryProjection> findReportTargetSummaries(
+            @Param("commentIds") Collection<Long> commentIds
+    );
+
     interface ParentReplyCountProjection {
 
         Long getParentId();
 
         long getReplyCount();
+    }
+
+    interface CommentReportTargetSummaryProjection {
+
+        Long getCommentId();
+
+        String getContent();
+
+        Long getAuthorId();
+
+        String getAuthorNickname();
+
+        boolean isDeleted();
     }
 }
