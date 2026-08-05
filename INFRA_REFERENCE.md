@@ -13,7 +13,7 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 - **이미지 레지스트리**: Docker Hub
 - **배포 대상**: AWS EC2, Docker 컨테이너 직접 실행 (오케스트레이션 도구 없음)
 - **API 컨테이너**: `promsearch`, 포트 `8080:8080`
-- **이미지 Worker 컨테이너**: `promsearch-worker`, HTTP 포트 없음
+- **이미지 Worker 컨테이너**: `promsearch-worker-1`, `promsearch-worker-2`, HTTP 포트 없음
 
 ## 워크플로우 구성
 
@@ -35,10 +35,10 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 - 체크아웃 시 `ref: ${{ github.event.workflow_run.head_sha }}`를 사용합니다. `main`의 최신 tip이 아니라 **CI가 실제로 검증한 커밋**을 그대로 배포하기 위함입니다 (CI 종료 시점과 배포 시작 시점 사이에 `main`이 더 앞서가는 레이스 컨디션을 방지).
 - 이미지는 `latest`와 커밋 SHA 두 개 태그로 Docker Hub에 push됩니다. SHA 태그는 롤백 시 특정 커밋의 이미지를 지정해서 재배포할 수 있게 해줍니다.
 - EC2에서는 SSH로 접속해 기존 API/Worker 컨테이너를 내리고 같은 이미지로 재기동합니다.
-  - API는 기본 `api.jar`, Worker는 명시한 `worker.jar`를 실행합니다.
+  - API는 기본 `api.jar`, Worker 두 개는 명시한 `worker.jar`를 실행합니다.
   - CI가 검증한 커밋 SHA 이미지로 API를 기동하고, API 헬스체크가 완료된 뒤 Worker를 시작합니다.
-  - Worker의 첫 SQS Long Polling 성공 로그까지 확인한 뒤 배포를 완료합니다.
-  - API 또는 Worker 검증이 실패하면 직전 컨테이너를 복구합니다.
+  - 두 Worker 모두 첫 SQS Long Polling 성공 로그를 남긴 뒤 배포를 완료합니다.
+  - API 또는 어느 Worker의 검증이 실패해도 직전 컨테이너들을 복구합니다.
   - Docker 명령과 로그 조회에는 제한 시간을 두며, Worker readiness는 최근 200줄만 확인합니다.
   - API와 Worker 로그는 컨테이너별 최대 10MB × 3파일로 순환합니다.
   - API가 Flyway를 실행하며, 새 빈 PostgreSQL에는 V1 전체 초기 스키마를 적용합니다.
