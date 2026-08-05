@@ -84,14 +84,6 @@ public class UserJpaEntity extends BaseEntity {
         this.status = UserStatus.ACTIVE;
     }
 
-    public static UserJpaEntity create(
-            String email,
-            String password,
-            String nickname,
-            String name,
-            String profileImageUrl,
-            String profileImageObjectKey
-    ) {
     /**
      * 게시글 작성에 따른 자동 승급을 1단계 적용한다. Origin은 자동 승급 대상이 아니므로
      * Prime 이상인 경우 아무 변화가 없다.
@@ -107,6 +99,14 @@ public class UserJpaEntity extends BaseEntity {
                 .orElse(false);
     }
 
+    public static UserJpaEntity create(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl,
+            String profileImageObjectKey
+    ) {
         return UserJpaEntity.builder()
                 .email(email)
                 .password(password)
@@ -115,6 +115,16 @@ public class UserJpaEntity extends BaseEntity {
                 .profileImageUrl(profileImageUrl)
                 .profileImageObjectKey(profileImageObjectKey)
                 .build();
+    }
+
+    public static UserJpaEntity create(
+            String email,
+            String password,
+            String nickname,
+            String name,
+            String profileImageUrl
+    ) {
+        return create(email, password, nickname, name, profileImageUrl, null);
     }
 
     public void updateFrom(User user) {

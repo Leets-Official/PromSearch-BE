@@ -173,7 +173,7 @@ class UserControllerTest {
                 "https://s3.test/signed-profile",
                 100L,
                 UserRole.USER,
-                UserGrade.NORMAL,
+                UserGrade.NODE,
                 UserStatus.ACTIVE,
                 now,
                 now

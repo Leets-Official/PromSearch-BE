@@ -162,7 +162,7 @@ class ProfileImageCommandServiceTest {
                 objectKey,
                 100L,
                 UserRole.USER,
-                UserGrade.NORMAL,
+                UserGrade.NODE,
                 UserStatus.ACTIVE,
                 now,
                 now
