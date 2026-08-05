@@ -40,7 +40,7 @@ public class AdminReportController implements AdminReportControllerDocs {
     @GetMapping
     @Override
     public ApiResponse<PageResponse<ReportSummaryResponse>> getReports(
-            @RequestParam ReportTargetType targetType,
+            @RequestParam(required = false) ReportTargetType targetType,
             @RequestParam(required = false) ReportStatus status,
             @RequestParam(required = false) String q,
             @Min(value = 0, message = "page must be 0 or greater")

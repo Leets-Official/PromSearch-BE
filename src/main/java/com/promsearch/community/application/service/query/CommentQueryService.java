@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class CommentQueryService implements GetCommentsUseCase, GetCommentRepliesUseCase {
 
     private static final String DELETED_COMMENT_CONTENT = "삭제된 댓글입니다.";
+    private static final String HIDDEN_COMMENT_CONTENT = "블라인드 처리된 댓글입니다.";
 
     private final LoadCommentPort loadCommentPort;
     private final LoadCommentAuthorPort loadCommentAuthorPort;
@@ -95,15 +96,18 @@ public class CommentQueryService implements GetCommentsUseCase, GetCommentReplie
             Long viewerId,
             long replyCount
     ) {
-        boolean deleted = comment.isDeleted();
+        boolean masked = comment.isDeleted() || comment.isHidden();
+        String content = comment.isDeleted() ? DELETED_COMMENT_CONTENT
+                : comment.isHidden() ? HIDDEN_COMMENT_CONTENT
+                : comment.getContent();
         return new CommentInfo(
                 comment.getCommentId().id(),
                 comment.getParentCommentId(),
-                deleted ? null : toAuthorInfo(getAuthor(authors, comment.getUserId())),
-                deleted ? DELETED_COMMENT_CONTENT : comment.getContent(),
+                masked ? null : toAuthorInfo(getAuthor(authors, comment.getUserId())),
+                content,
                 comment.getStatus(),
-                !deleted && isMine(comment, viewerId),
-                !deleted && target.authorId().equals(comment.getUserId()),
+                !masked && isMine(comment, viewerId),
+                !masked && target.authorId().equals(comment.getUserId()),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),
                 replyCount
@@ -116,14 +120,15 @@ public class CommentQueryService implements GetCommentsUseCase, GetCommentReplie
             CommentTargetSnapshot target,
             Long viewerId
     ) {
+        boolean masked = comment.isHidden();
         return new CommentReplyInfo(
                 comment.getCommentId().id(),
                 comment.getParentCommentId(),
-                toAuthorInfo(getAuthor(authors, comment.getUserId())),
-                comment.getContent(),
+                masked ? null : toAuthorInfo(getAuthor(authors, comment.getUserId())),
+                masked ? HIDDEN_COMMENT_CONTENT : comment.getContent(),
                 comment.getStatus(),
-                isMine(comment, viewerId),
-                target.authorId().equals(comment.getUserId()),
+                !masked && isMine(comment, viewerId),
+                !masked && target.authorId().equals(comment.getUserId()),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt()
         );

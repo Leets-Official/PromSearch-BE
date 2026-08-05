@@ -9,6 +9,9 @@ import com.promsearch.moderation.application.port.out.commentreport.SaveCommentR
 import com.promsearch.moderation.application.port.out.postreport.LoadPostReportPort;
 import com.promsearch.moderation.application.port.out.postreport.ReportPageResult;
 import com.promsearch.moderation.application.port.out.postreport.SavePostReportPort;
+import com.promsearch.moderation.application.port.out.target.HideCommentReportTargetPort;
+import com.promsearch.moderation.application.port.out.target.HidePostReportTargetPort;
+import com.promsearch.moderation.application.port.out.target.ReportTargetSummary;
 import com.promsearch.moderation.application.usecase.dto.ReportInfo;
 import com.promsearch.moderation.application.usecase.dto.UpdateReportStatusCommand;
 import com.promsearch.moderation.domain.CommentReport;
@@ -21,6 +24,7 @@ import com.promsearch.moderation.domain.enums.ReportTargetType;
 import com.promsearch.moderation.domain.exception.ModerationDomainException;
 import com.promsearch.moderation.domain.exception.ModerationErrorCode;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +35,20 @@ class PostReportCommandServiceTest {
 
     private FakePostReportRepository postReportRepository;
     private FakeCommentReportRepository commentReportRepository;
+    private FakeHidePostReportTargetPort hidePostReportTargetPort;
+    private FakeHideCommentReportTargetPort hideCommentReportTargetPort;
     private PostReportCommandService postReportCommandService;
 
     @BeforeEach
     void setUp() {
         postReportRepository = new FakePostReportRepository();
         commentReportRepository = new FakeCommentReportRepository();
+        hidePostReportTargetPort = new FakeHidePostReportTargetPort();
+        hideCommentReportTargetPort = new FakeHideCommentReportTargetPort();
         postReportCommandService = new PostReportCommandService(
-                postReportRepository, postReportRepository, commentReportRepository, commentReportRepository
+                postReportRepository, postReportRepository, commentReportRepository, commentReportRepository,
+                hidePostReportTargetPort, hideCommentReportTargetPort,
+                ids -> List.of(), ids -> List.<ReportTargetSummary>of()
         );
     }
 
@@ -52,6 +62,7 @@ class PostReportCommandServiceTest {
 
         assertThat(reportInfo.status()).isEqualTo(ReportStatus.RESOLVED);
         assertThat(postReportRepository.reports.get(1L).getStatus()).isEqualTo(ReportStatus.RESOLVED);
+        assertThat(hidePostReportTargetPort.hiddenPostIds).containsExactly(10L);
     }
 
     @Test
@@ -64,6 +75,7 @@ class PostReportCommandServiceTest {
 
         assertThat(reportInfo.status()).isEqualTo(ReportStatus.RESOLVED);
         assertThat(commentReportRepository.reports.get(1L).getStatus()).isEqualTo(ReportStatus.RESOLVED);
+        assertThat(hideCommentReportTargetPort.hiddenCommentIds).containsExactly(20L);
     }
 
     @Test
@@ -157,6 +169,26 @@ class PostReportCommandServiceTest {
         public CommentReport update(CommentReport commentReport) {
             reports.put(commentReport.getCommentReportId().id(), commentReport);
             return commentReport;
+        }
+    }
+
+    private static class FakeHidePostReportTargetPort implements HidePostReportTargetPort {
+
+        private final List<Long> hiddenPostIds = new ArrayList<>();
+
+        @Override
+        public void hide(Long postId) {
+            hiddenPostIds.add(postId);
+        }
+    }
+
+    private static class FakeHideCommentReportTargetPort implements HideCommentReportTargetPort {
+
+        private final List<Long> hiddenCommentIds = new ArrayList<>();
+
+        @Override
+        public void hide(Long commentId) {
+            hiddenCommentIds.add(commentId);
         }
     }
 }

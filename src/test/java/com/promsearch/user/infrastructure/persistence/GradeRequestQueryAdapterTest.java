@@ -70,7 +70,7 @@ class GradeRequestQueryAdapterTest {
         GradeRequestSummaryInfo summary = pending.content().get(0);
         assertThat(summary.gradeRequestId()).isEqualTo(gradeRequest.getId());
         assertThat(summary.userId()).isEqualTo(user.getId());
-        assertThat(summary.username()).isEqualTo("hanharam");
+        assertThat(summary.username()).isEqualTo("user@promsearch.com");
         assertThat(summary.nickname()).isEqualTo("hanharam");
         assertThat(summary.currentGrade()).isEqualTo(UserGrade.PRIME);
         assertThat(summary.requestedGrade()).isEqualTo(UserGrade.ORIGIN);
