@@ -40,8 +40,9 @@ public class AdminReportController implements AdminReportControllerDocs {
     @GetMapping
     @Override
     public ApiResponse<PageResponse<ReportSummaryResponse>> getReports(
-            @RequestParam ReportTargetType targetType,
+            @RequestParam(required = false) ReportTargetType targetType,
             @RequestParam(required = false) ReportStatus status,
+            @RequestParam(required = false) String q,
             @Min(value = 0, message = "page must be 0 or greater")
             @RequestParam(defaultValue = "0") int page,
             @Min(value = 1, message = "size must be 1 or greater")
@@ -49,7 +50,7 @@ public class AdminReportController implements AdminReportControllerDocs {
             @RequestParam(defaultValue = "20") int size
     ) {
         ReportPageInfo pageInfo = searchReportsUseCase.searchReports(
-                SearchReportsQuery.of(targetType, status, page, size)
+                SearchReportsQuery.of(targetType, status, q, page, size)
         );
         List<ReportSummaryResponse> content = pageInfo.content().stream()
                 .map(ReportSummaryResponse::from)

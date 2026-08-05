@@ -62,23 +62,53 @@ class GradeRequestQueryAdapterTest {
         );
         entityManager.clear();
 
-        GradeRequestListInfo pending = adapter.list(new GradeRequestListQuery(GradeRequestStatus.PENDING, 0, 20));
+        GradeRequestListInfo pending =
+                adapter.list(new GradeRequestListQuery(GradeRequestStatus.PENDING, null, 0, 20));
 
         assertThat(pending.totalElements()).isEqualTo(1);
         assertThat(pending.hasNext()).isFalse();
         GradeRequestSummaryInfo summary = pending.content().get(0);
         assertThat(summary.gradeRequestId()).isEqualTo(gradeRequest.getId());
         assertThat(summary.userId()).isEqualTo(user.getId());
-        assertThat(summary.username()).isEqualTo("hanharam");
+        assertThat(summary.username()).isEqualTo("user@promsearch.com");
         assertThat(summary.nickname()).isEqualTo("hanharam");
         assertThat(summary.currentGrade()).isEqualTo(UserGrade.PRIME);
         assertThat(summary.requestedGrade()).isEqualTo(UserGrade.ORIGIN);
         assertThat(summary.postCount()).isEqualTo(2);
         assertThat(summary.totalLikeCount()).isEqualTo(8);
 
-        GradeRequestListInfo rejected = adapter.list(new GradeRequestListQuery(GradeRequestStatus.REJECTED, 0, 20));
+        GradeRequestListInfo rejected =
+                adapter.list(new GradeRequestListQuery(GradeRequestStatus.REJECTED, null, 0, 20));
         assertThat(rejected.content()).isEmpty();
         assertThat(rejected.totalElements()).isZero();
+    }
+
+    @DisplayName("q로 이메일 또는 닉네임 부분일치 검색을 할 수 있다")
+    @Test
+    void listFiltersByEmailOrNicknameSubstring() {
+        UserJpaEntity hanharam = userRepository.saveAndFlush(
+                UserJpaEntity.create("hanharam@promsearch.com", "password", "prompt-master", "name", null, null)
+        );
+        UserJpaEntity other = userRepository.saveAndFlush(
+                UserJpaEntity.create("other@promsearch.com", "password", "other-nick", "name", null, null)
+        );
+        gradeRequestRepository.saveAndFlush(GradeRequestJpaEntity.createPendingOriginRequest(hanharam.getId()));
+        gradeRequestRepository.saveAndFlush(GradeRequestJpaEntity.createPendingOriginRequest(other.getId()));
+        entityManager.clear();
+
+        GradeRequestListInfo byEmail =
+                adapter.list(new GradeRequestListQuery(null, "hanharam", 0, 20));
+        assertThat(byEmail.content()).extracting(GradeRequestSummaryInfo::userId)
+                .containsExactly(hanharam.getId());
+
+        GradeRequestListInfo byNickname =
+                adapter.list(new GradeRequestListQuery(null, "PROMPT-MASTER", 0, 20));
+        assertThat(byNickname.content()).extracting(GradeRequestSummaryInfo::userId)
+                .containsExactly(hanharam.getId());
+
+        GradeRequestListInfo noMatch =
+                adapter.list(new GradeRequestListQuery(null, "no-such-user", 0, 20));
+        assertThat(noMatch.content()).isEmpty();
     }
 
     @DisplayName("식별자로 단건 조회하면 동일한 통계를 반환한다")

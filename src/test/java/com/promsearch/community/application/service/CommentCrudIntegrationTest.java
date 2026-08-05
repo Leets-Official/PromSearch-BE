@@ -18,6 +18,7 @@ import com.promsearch.community.application.usecase.dto.UpdateCommentCommand;
 import com.promsearch.community.domain.enums.CommentStatus;
 import com.promsearch.community.domain.exception.CommunityDomainException;
 import com.promsearch.community.domain.exception.CommunityErrorCode;
+import com.promsearch.moderation.application.port.out.target.HideCommentReportTargetPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -35,6 +36,9 @@ class CommentCrudIntegrationTest {
 
     @Autowired
     private CommentQueryService commentQueryService;
+
+    @Autowired
+    private HideCommentReportTargetPort hideCommentReportTargetPort;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -178,6 +182,36 @@ class CommentCrudIntegrationTest {
                 .extracting(CommentReplyInfo::commentId)
                 .containsExactly(thirdReply.commentId());
         assertThat(secondReplyPage.hasNext()).isFalse();
+    }
+
+    @DisplayName("블라인드된 부모 댓글과 대댓글은 스레드에서 사라지지 않고 마스킹된 채로 노출된다")
+    @Test
+    void hiddenCommentsAreMaskedButStillVisibleInThread() {
+        CommentInfo parent = commentCommandService.createComment(
+                CreateCommentCommand.of(10L, 2L, "블라인드될 부모 댓글"));
+        CommentReplyInfo reply = commentCommandService.createReply(
+                CreateCommentReplyCommand.of(parent.commentId(), 1L, "블라인드될 답글"));
+
+        hideCommentReportTargetPort.hide(parent.commentId());
+        hideCommentReportTargetPort.hide(reply.commentId());
+
+        CommentListInfo parentPage = commentQueryService.getComments(GetCommentsQuery.of(10L, null));
+        assertThat(parentPage.comments()).singleElement()
+                .satisfies(comment -> {
+                    assertThat(comment.status()).isEqualTo(CommentStatus.HIDDEN);
+                    assertThat(comment.content()).isEqualTo("블라인드 처리된 댓글입니다.");
+                    assertThat(comment.author()).isNull();
+                    assertThat(comment.replyCount()).isEqualTo(1L);
+                });
+
+        CommentReplyListInfo replyPage = commentQueryService.getReplies(
+                GetCommentRepliesQuery.of(parent.commentId(), null, null, 20));
+        assertThat(replyPage.replies()).singleElement()
+                .satisfies(hiddenReply -> {
+                    assertThat(hiddenReply.status()).isEqualTo(CommentStatus.HIDDEN);
+                    assertThat(hiddenReply.content()).isEqualTo("블라인드 처리된 댓글입니다.");
+                    assertThat(hiddenReply.author()).isNull();
+                });
     }
 
     private Long commentCount() {

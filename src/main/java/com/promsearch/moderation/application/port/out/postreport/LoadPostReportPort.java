@@ -7,5 +7,5 @@ public interface LoadPostReportPort {
 
     PostReport getById(Long reportId);
 
-    ReportPageResult search(ReportStatus status, int page, int size);
+    ReportPageResult search(ReportStatus status, String q, int page, int size);
 }

@@ -8,11 +8,13 @@ import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.application.port.out.profileimage.ScheduleProfileImageDeletionPort;
+import com.promsearch.user.application.usecase.BootstrapAdminAccountUseCase;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
 import com.promsearch.user.application.usecase.RegisterSocialUserUseCase;
 import com.promsearch.user.application.usecase.SignupUseCase;
 import com.promsearch.user.application.usecase.UpdateUserProfileUseCase;
+import com.promsearch.user.application.usecase.dto.BootstrapAdminAccountCommand;
 import com.promsearch.user.application.usecase.dto.ChangePasswordCommand;
 import com.promsearch.user.application.usecase.dto.InterestTagInfo;
 import com.promsearch.user.application.usecase.dto.RegisterSocialUserCommand;
@@ -46,7 +48,8 @@ public class UserCommandService implements
         UpdateUserProfileUseCase,
         ChangePasswordUseCase,
         DeleteUserUseCase,
-        RegisterSocialUserUseCase {
+        RegisterSocialUserUseCase,
+        BootstrapAdminAccountUseCase {
 
     private static final String DEFAULT_SOCIAL_NICKNAME = "user";
     private static final String DEFAULT_SOCIAL_NAME = "소셜 사용자";
@@ -159,6 +162,27 @@ public class UserCommandService implements
         SignupInfo signupInfo = SignupInfo.from(saveUserPort.create(user));
         log.info("user_social_signup_completed userId={}", signupInfo.userId());
         return signupInfo;
+    }
+
+    @Override
+    public void bootstrap(BootstrapAdminAccountCommand command) {
+        if (isBlank(command.email()) || isBlank(command.password())) {
+            log.warn("admin_bootstrap_skipped reason=missing_config");
+            return;
+        }
+        if (loadUserPort.existsByEmail(command.email())) {
+            log.info("admin_bootstrap_skipped reason=already_exists email={}", command.email());
+            return;
+        }
+
+        String encodedPassword = passwordEncoder.encode(command.password());
+        User admin = User.createAdmin(command.email(), encodedPassword, command.nickname(), command.nickname());
+        User savedAdmin = saveUserPort.create(admin);
+        log.info("admin_bootstrap_completed userId={}", savedAdmin.getUserId().id());
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 
     private String resolveAvailableNickname(String nicknameHint) {

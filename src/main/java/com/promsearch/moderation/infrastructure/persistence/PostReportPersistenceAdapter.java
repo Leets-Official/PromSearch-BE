@@ -26,9 +26,10 @@ public class PostReportPersistenceAdapter implements LoadPostReportPort, SavePos
     }
 
     @Override
-    public ReportPageResult search(ReportStatus status, int page, int size) {
+    public ReportPageResult search(ReportStatus status, String q, int page, int size) {
         Page<PostReportJpaEntity> result = postReportRepository.search(
                 status,
+                toLikePattern(q),
                 PageRequest.of(page, size)
         );
 
@@ -50,5 +51,9 @@ public class PostReportPersistenceAdapter implements LoadPostReportPort, SavePos
     private PostReportJpaEntity getJpaEntity(Long reportId) {
         return postReportRepository.findById(reportId)
                 .orElseThrow(() -> new ModerationDomainException(ModerationErrorCode.REPORT_NOT_FOUND));
+    }
+
+    private String toLikePattern(String q) {
+        return q == null ? null : "%" + q.toLowerCase() + "%";
     }
 }

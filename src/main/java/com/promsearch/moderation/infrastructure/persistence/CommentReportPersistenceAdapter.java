@@ -26,9 +26,10 @@ public class CommentReportPersistenceAdapter implements LoadCommentReportPort, S
     }
 
     @Override
-    public CommentReportPageResult search(ReportStatus status, int page, int size) {
+    public CommentReportPageResult search(ReportStatus status, String q, int page, int size) {
         Page<CommentReportJpaEntity> result = commentReportRepository.search(
                 status,
+                toLikePattern(q),
                 PageRequest.of(page, size)
         );
 
@@ -50,5 +51,9 @@ public class CommentReportPersistenceAdapter implements LoadCommentReportPort, S
     private CommentReportJpaEntity getJpaEntity(Long reportId) {
         return commentReportRepository.findById(reportId)
                 .orElseThrow(() -> new ModerationDomainException(ModerationErrorCode.REPORT_NOT_FOUND));
+    }
+
+    private String toLikePattern(String q) {
+        return q == null ? null : "%" + q.toLowerCase() + "%";
     }
 }

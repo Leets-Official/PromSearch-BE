@@ -91,6 +91,13 @@ prompt:
   pricing:
     premium-price-point: ${PROMPT_PREMIUM_PRICE_POINT:100}
 
+admin:
+  bootstrap:
+    # 값이 비어 있으면 기동 시 부트스트랩을 건너뛴다. 이미 같은 이메일의 계정이 있어도 건너뛴다.
+    email: ${ADMIN_BOOTSTRAP_EMAIL:}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+    nickname: ${ADMIN_BOOTSTRAP_NICKNAME:admin}
+
 auth:
   jwt:
     access-secret: ${JWT_ACCESS_SECRET}

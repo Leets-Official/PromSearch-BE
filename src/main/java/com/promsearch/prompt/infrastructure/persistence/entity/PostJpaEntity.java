@@ -196,4 +196,12 @@ public class PostJpaEntity extends BaseEntity {
     public void delete() {
         markDeleted();
     }
+
+    public void hide() {
+        if (status == PromptStatus.DELETED) {
+            return;
+        }
+        status = PromptStatus.HIDDEN;
+        hiddenAt = Instant.now();
+    }
 }
