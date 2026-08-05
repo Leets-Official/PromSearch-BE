@@ -64,6 +64,7 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `SWAGGER_ENABLE` | prod에서 Swagger 문서 노출 여부 (보통 `false`) |
 | `SWAGGER_AUTH_USERNAME` | `SWAGGER_ENABLE=true`일 때 Swagger Basic Auth 계정 |
 | `SWAGGER_AUTH_PASSWORD` | `SWAGGER_ENABLE=true`일 때 Swagger Basic Auth 비밀번호 |
+| `SERVER_FORWARD_HEADERS_STRATEGY` | HTTPS 종료 프록시 뒤 API가 `X-Forwarded-*` 헤더를 해석하는 방식. 운영 배포에서는 `FRAMEWORK` |
 | `KAKAO_CLIENT_ID` | 카카오 소셜 로그인 REST API 키 |
 | `KAKAO_CLIENT_SECRET` | 카카오 Client Secret 사용 시에만 필요 (아니면 빈 값) |
 | `GOOGLE_CLIENT_ID` | 구글 소셜 로그인 OAuth 2.0 클라이언트 ID |
@@ -78,6 +79,19 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 
 `deploy.yml`은 위 값들을 `docker run -e`로 컨테이너에 직접 전달합니다 (`docker run`에 아무 환경변수도 넘기지 않던 이전 버전에서는 컨테이너가 필수 설정값 검증에서 부팅에 실패했습니다).
 Worker 배포는 `AWS_SQS_WATERMARK_ENABLED=true`와 비어 있지 않은 Queue URL을 요구합니다.
+
+## HTTPS 종료 프록시
+
+운영 API는 HTTPS를 종료하는 신뢰할 수 있는 프록시 뒤에서 실행되므로, 배포 워크플로우가 API 컨테이너에 `SERVER_FORWARD_HEADERS_STRATEGY=FRAMEWORK`를 전달합니다. 이 설정으로 Spring이 `X-Forwarded-Proto`를 해석해 Swagger의 요청 URL을 HTTPS로 생성합니다.
+
+프록시는 다음 헤더를 백엔드에 전달해야 합니다. Nginx를 사용하는 경우 `location`의 `proxy_pass` 설정과 함께 지정합니다.
+
+```nginx
+proxy_set_header Host $host;
+proxy_set_header X-Forwarded-Proto $scheme;
+proxy_set_header X-Forwarded-Host $host;
+proxy_set_header X-Forwarded-Port $server_port;
+```
 
 ## 브랜치 ↔ 파이프라인 매핑
 
