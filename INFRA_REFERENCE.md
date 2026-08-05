@@ -77,6 +77,10 @@ GitHub Actions ── build & push ──▶ Docker Hub ── pull ──▶ EC
 | `AWS_SQS_WATERMARK_ENABLED` | SQS 발행기와 Worker 활성화 여부 (`true`) |
 | `AWS_SQS_WATERMARK_QUEUE_URL` | 이미지 워터마크 작업 SQS Queue URL |
 
+GitHub Actions 변수 `WATERMARK_WORKER_CONCURRENCY`로 한 Worker 내부의 동시 처리 수를 조절할 수 있으며,
+기본값은 `2`다. 이미지 디코딩·렌더링 바이트는 작업별로 별도 점유하므로 값을 늘리기 전에는 Worker heap과
+EC2 메모리 여유를 부하 테스트로 확인해야 한다.
+
 `deploy.yml`은 위 값들을 `docker run -e`로 컨테이너에 직접 전달합니다 (`docker run`에 아무 환경변수도 넘기지 않던 이전 버전에서는 컨테이너가 필수 설정값 검증에서 부팅에 실패했습니다).
 Worker 배포는 `AWS_SQS_WATERMARK_ENABLED=true`와 비어 있지 않은 Queue URL을 요구합니다.
 

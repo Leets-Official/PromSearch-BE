@@ -15,6 +15,7 @@ public class CorsConfig implements WebMvcConfigurer {
 
     private static final List<String> ALLOWED_ORIGIN_PATTERNS = List.of(
             "https://promsearch.kr",
+            "https://api.promsearch.kr",
             "https://prom-search-fe.vercel.app",
             "https://*.vercel.app"
     );

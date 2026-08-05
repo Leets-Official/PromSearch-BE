@@ -1,9 +1,12 @@
 package com.promsearch.worker.prompt.infrastructure.sqs;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -12,14 +15,21 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.promsearch.prompt.application.usecase.ProcessPromptImageWatermarkUseCase;
 import com.promsearch.prompt.application.usecase.dto.PromptImageWatermarkJob;
 import com.promsearch.prompt.infrastructure.messaging.sqs.WatermarkSqsProperties;
+import com.promsearch.worker.prompt.infrastructure.image.WatermarkRenderingProperties;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.springframework.core.io.ClassPathResource;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.DeleteMessageRequest;
 import software.amazon.awssdk.services.sqs.model.Message;
@@ -37,18 +47,27 @@ class SqsPromptImageWatermarkJobConsumerTest {
 
     private SqsClient sqsClient;
     private ProcessPromptImageWatermarkUseCase processUseCase;
+    private ExecutorService taskExecutor;
     private SqsPromptImageWatermarkJobConsumer consumer;
 
     @BeforeEach
     void setUp() {
         sqsClient = mock(SqsClient.class);
         processUseCase = mock(ProcessPromptImageWatermarkUseCase.class);
+        taskExecutor = Executors.newFixedThreadPool(2);
         consumer = new SqsPromptImageWatermarkJobConsumer(
                 sqsClient,
                 objectMapper,
                 processUseCase,
-                properties()
+                properties(),
+                renderingProperties(),
+                taskExecutor
         );
+    }
+
+    @AfterEach
+    void tearDown() {
+        taskExecutor.shutdownNow();
     }
 
     @DisplayName("워터마크 작업 성공 후 SQS 메시지를 삭제한다")
@@ -61,8 +80,8 @@ class SqsPromptImageWatermarkJobConsumerTest {
 
         consumer.pollAvailableMessage();
 
-        verify(processUseCase).process(job);
-        verify(sqsClient).deleteMessage(any(DeleteMessageRequest.class));
+        verify(processUseCase, timeout(1_000)).process(job);
+        verify(sqsClient, timeout(1_000)).deleteMessage(any(DeleteMessageRequest.class));
     }
 
     @DisplayName("워터마크 작업 실패 시 재시도를 위해 SQS 메시지를 삭제하지 않는다")
@@ -93,6 +112,30 @@ class SqsPromptImageWatermarkJobConsumerTest {
         verify(sqsClient, never()).deleteMessage(any(DeleteMessageRequest.class));
     }
 
+    @DisplayName("실행기 여유 슬롯 수만큼만 메시지를 선점한다")
+    @Test
+    void reserveMessagesOnlyForAvailableProcessingSlots() throws Exception {
+        PromptImageWatermarkJob job = job();
+        Message message = message(objectMapper.writeValueAsString(job));
+        CountDownLatch processingStarted = new CountDownLatch(2);
+        CountDownLatch releaseProcessing = new CountDownLatch(1);
+        when(sqsClient.receiveMessage(any(ReceiveMessageRequest.class)))
+                .thenReturn(response(message, message));
+        doAnswer(invocation -> {
+            processingStarted.countDown();
+            releaseProcessing.await(1, TimeUnit.SECONDS);
+            return null;
+        }).when(processUseCase).process(job);
+
+        consumer.pollAvailableMessage();
+
+        org.junit.jupiter.api.Assertions.assertTrue(processingStarted.await(1, TimeUnit.SECONDS));
+        consumer.pollAvailableMessage();
+
+        verify(sqsClient, times(1)).receiveMessage(any(ReceiveMessageRequest.class));
+        releaseProcessing.countDown();
+    }
+
     /** Worker 소비기 테스트에 필요한 유효한 기본 설정 생성 */
     private WatermarkSqsProperties properties() {
         return new WatermarkSqsProperties(
@@ -106,6 +149,24 @@ class SqsPromptImageWatermarkJobConsumerTest {
                 200,
                 20,
                 120
+        );
+    }
+
+    private WatermarkRenderingProperties renderingProperties() {
+        return new WatermarkRenderingProperties(
+                2,
+                new ClassPathResource("watermark/wordmark.png"),
+                "#6B7280",
+                0.26,
+                0.095,
+                80,
+                240,
+                0.123,
+                0.21,
+                0.018,
+                0.028,
+                0.92,
+                10_485_760
         );
     }
 
@@ -137,9 +198,9 @@ class SqsPromptImageWatermarkJobConsumerTest {
     }
 
     /** SQS 단일 메시지 수신 응답 생성 */
-    private ReceiveMessageResponse response(Message message) {
+    private ReceiveMessageResponse response(Message... messages) {
         return ReceiveMessageResponse.builder()
-                .messages(List.of(message))
+                .messages(List.of(messages))
                 .build();
     }
 }
