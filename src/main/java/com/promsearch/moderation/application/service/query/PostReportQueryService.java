@@ -29,7 +29,7 @@ public class PostReportQueryService implements SearchReportsUseCase {
     }
 
     private ReportPageInfo searchPostReports(SearchReportsQuery query) {
-        ReportPageResult result = loadPostReportPort.search(query.status(), query.page(), query.size());
+        ReportPageResult result = loadPostReportPort.search(query.status(), query.q(), query.page(), query.size());
 
         return new ReportPageInfo(
                 result.content().stream().map(ReportInfo::from).toList(),
@@ -38,7 +38,8 @@ public class PostReportQueryService implements SearchReportsUseCase {
     }
 
     private ReportPageInfo searchCommentReports(SearchReportsQuery query) {
-        CommentReportPageResult result = loadCommentReportPort.search(query.status(), query.page(), query.size());
+        CommentReportPageResult result =
+                loadCommentReportPort.search(query.status(), query.q(), query.page(), query.size());
 
         return new ReportPageInfo(
                 result.content().stream().map(ReportInfo::from).toList(),

@@ -14,6 +14,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.NoResultException;
 import jakarta.persistence.TypedQuery;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
@@ -37,15 +38,27 @@ public class GradeRequestQueryAdapter implements LoadGradeRequestListPort, LoadG
 
     private final EntityManager entityManager;
 
+    private static final String Q_CONDITION = """
+            exists (
+                select 1 from UserJpaEntity u
+                where u.id = gr.userId
+                  and (lower(u.email) like :q or lower(u.nickname) like :q)
+            )
+            """;
+
     @Override
     public GradeRequestListInfo list(GradeRequestListQuery query) {
-        String whereClause = query.status() != null ? " where gr.status = :status" : "";
+        String whereClause = buildWhereClause(query);
+        String likeQ = toLikePattern(query.q());
 
         TypedQuery<Object[]> contentQuery = entityManager.createQuery(
                         SELECT_COLUMNS + whereClause + " order by gr.createdAt asc", Object[].class)
                 .setParameter("activeStatus", PromptStatus.ACTIVE);
         if (query.status() != null) {
             contentQuery.setParameter("status", query.status());
+        }
+        if (likeQ != null) {
+            contentQuery.setParameter("q", likeQ);
         }
         List<GradeRequestSummaryInfo> content = contentQuery
                 .setFirstResult(toOffset(query.page(), query.size()))
@@ -60,10 +73,28 @@ public class GradeRequestQueryAdapter implements LoadGradeRequestListPort, LoadG
         if (query.status() != null) {
             countQuery.setParameter("status", query.status());
         }
+        if (likeQ != null) {
+            countQuery.setParameter("q", likeQ);
+        }
         long totalElements = countQuery.getSingleResult();
 
         boolean hasNext = ((long) query.page() + 1) * query.size() < totalElements;
         return new GradeRequestListInfo(content, query.page(), query.size(), totalElements, hasNext);
+    }
+
+    private String buildWhereClause(GradeRequestListQuery query) {
+        List<String> conditions = new ArrayList<>();
+        if (query.status() != null) {
+            conditions.add("gr.status = :status");
+        }
+        if (query.q() != null) {
+            conditions.add(Q_CONDITION);
+        }
+        return conditions.isEmpty() ? "" : " where " + String.join(" and ", conditions);
+    }
+
+    private String toLikePattern(String q) {
+        return q == null ? null : "%" + q.toLowerCase() + "%";
     }
 
     @Override

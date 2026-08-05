@@ -24,7 +24,7 @@ class GradeRequestQueryServiceTest {
     @Test
     void listDelegatesToPort() {
         GradeRequestQueryService service = new GradeRequestQueryService(loadGradeRequestListPort);
-        GradeRequestListQuery query = new GradeRequestListQuery(GradeRequestStatus.PENDING, 0, 20);
+        GradeRequestListQuery query = new GradeRequestListQuery(GradeRequestStatus.PENDING, null, 0, 20);
         GradeRequestListInfo info = new GradeRequestListInfo(List.of(), 0, 20, 0, false);
         when(loadGradeRequestListPort.list(query)).thenReturn(info);
 

@@ -27,7 +27,8 @@ public interface AdminReportControllerDocs {
             summary = "[ADMIN-REPORT-001] 신고 목록 조회",
             description = IMPLEMENTED_BY_KALLIN1
                     + "신고 대상 타입(POST, COMMENT)별로 처리 상태 필터를 적용해 신고 목록을 페이지네이션 조회합니다. "
-                    + "게시글 신고와 댓글 신고는 서로 다른 테이블에 저장되므로 targetType은 필수입니다."
+                    + "게시글 신고와 댓글 신고는 서로 다른 테이블에 저장되므로 targetType은 필수입니다. "
+                    + "q를 지정하면 신고 대상 내용(게시글 제목/댓글 본문) 또는 작성자 닉네임 부분일치로 필터링합니다."
     )
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "신고 목록 조회 성공"),
@@ -41,6 +42,9 @@ public interface AdminReportControllerDocs {
 
             @Parameter(description = "처리 상태 필터", example = "PENDING")
             @RequestParam(required = false) ReportStatus status,
+
+            @Parameter(description = "신고 대상 내용/작성자 닉네임 부분일치 검색어", example = "도배")
+            @RequestParam(required = false) String q,
 
             @Parameter(description = "페이지 번호(0부터 시작)", example = "0")
             @Min(value = 0, message = "page must be 0 or greater")

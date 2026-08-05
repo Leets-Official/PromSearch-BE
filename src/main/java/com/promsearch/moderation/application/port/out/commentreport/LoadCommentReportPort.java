@@ -7,5 +7,5 @@ public interface LoadCommentReportPort {
 
     CommentReport getById(Long reportId);
 
-    CommentReportPageResult search(ReportStatus status, int page, int size);
+    CommentReportPageResult search(ReportStatus status, String q, int page, int size);
 }

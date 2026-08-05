@@ -2,13 +2,18 @@ package com.promsearch.user.application.usecase.dto;
 
 import com.promsearch.user.domain.enums.GradeRequestStatus;
 
-public record GradeRequestListQuery(GradeRequestStatus status, int page, int size) {
+public record GradeRequestListQuery(GradeRequestStatus status, String q, int page, int size) {
 
     public static final int MAX_SIZE = 100;
     public static final int MAX_PAGE = 1_000;
 
     public GradeRequestListQuery {
+        q = normalize(q);
         validatePaging(page, size);
+    }
+
+    private static String normalize(String q) {
+        return q == null || q.isBlank() ? null : q.strip();
     }
 
     private static void validatePaging(int page, int size) {
