@@ -8,6 +8,7 @@ import com.promsearch.user.application.port.out.user.SaveUserInterestTagPort;
 import com.promsearch.user.application.port.out.user.SaveUserPort;
 import com.promsearch.user.application.port.out.profileimage.ProfileImageDeliveryPort;
 import com.promsearch.user.application.port.out.profileimage.ScheduleProfileImageDeletionPort;
+import com.promsearch.user.application.port.out.social.DeleteUserSocialAccountsPort;
 import com.promsearch.user.application.usecase.BootstrapAdminAccountUseCase;
 import com.promsearch.user.application.usecase.ChangePasswordUseCase;
 import com.promsearch.user.application.usecase.DeleteUserUseCase;
@@ -67,6 +68,7 @@ public class UserCommandService implements
     private final PasswordEncoder passwordEncoder;
     private final ProfileImageDeliveryPort profileImageDeliveryPort;
     private final ScheduleProfileImageDeletionPort profileImageDeletionPort;
+    private final DeleteUserSocialAccountsPort deleteUserSocialAccountsPort;
 
     @Override
     public SignupInfo signup(SignupCommand command) {
@@ -148,6 +150,7 @@ public class UserCommandService implements
     public void delete(Long userId) {
         User user = loadUserPort.getById(userId);
         saveUserPort.update(user.delete());
+        deleteUserSocialAccountsPort.deleteByUserId(userId);
         profileImageDeletionPort.afterCommit(user.getProfileImageObjectKey());
         log.info("user_deleted userId={}", userId);
     }

@@ -7,6 +7,7 @@ import com.promsearch.auth.domain.SocialAccount;
 import com.promsearch.auth.domain.enums.SocialProvider;
 import com.promsearch.auth.domain.exception.AuthDomainException;
 import com.promsearch.auth.domain.exception.AuthErrorCode;
+import com.promsearch.user.application.port.out.social.DeleteUserSocialAccountsPort;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -14,7 +15,10 @@ import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
-public class SocialAccountPersistenceAdapter implements LoadSocialAccountPort, SaveSocialAccountPort {
+public class SocialAccountPersistenceAdapter implements
+        LoadSocialAccountPort,
+        SaveSocialAccountPort,
+        DeleteUserSocialAccountsPort {
 
     private final SocialAccountRepository socialAccountRepository;
 
@@ -35,5 +39,10 @@ public class SocialAccountPersistenceAdapter implements LoadSocialAccountPort, S
     public Optional<SocialAccount> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId) {
         return socialAccountRepository.findByProviderAndProviderUserId(provider, providerUserId)
                 .map(SocialAccountJpaEntity::toDomain);
+    }
+
+    @Override
+    public void deleteByUserId(Long userId) {
+        socialAccountRepository.deleteByUserId(userId);
     }
 }

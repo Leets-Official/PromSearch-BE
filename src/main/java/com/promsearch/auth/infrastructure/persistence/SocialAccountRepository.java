@@ -10,4 +10,6 @@ public interface SocialAccountRepository extends JpaRepository<SocialAccountJpaE
     Optional<SocialAccountJpaEntity> findByProviderAndProviderUserId(SocialProvider provider, String providerUserId);
 
     boolean existsByProviderAndProviderUserId(SocialProvider provider, String providerUserId);
+
+    void deleteByUserId(Long userId);
 }
