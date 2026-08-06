@@ -33,6 +33,7 @@ class UserCommandServiceTest {
 
     private FakeUserRepository userRepository;
     private FakeSaveUserInterestTagPort saveUserInterestTagPort;
+    private Long deletedSocialAccountUserId;
     private UserCommandService userCommandService;
 
     @BeforeEach
@@ -50,7 +51,8 @@ class UserCommandServiceTest {
                 new TestPasswordEncoder(),
                 (externalUrl, objectKey) -> objectKey == null ? externalUrl : "signed:" + objectKey,
                 objectKey -> {
-                }
+                },
+                userId -> deletedSocialAccountUserId = userId
         );
     }
 
@@ -190,6 +192,7 @@ class UserCommandServiceTest {
         assertThat(deletedUser.getNickname()).startsWith("deleted_1_").endsWith("_user");
         assertThat(deletedUser.getName()).isEqualTo("Deleted User");
         assertThat(deletedUser.getProfileImageUrl()).isNull();
+        assertThat(deletedSocialAccountUserId).isEqualTo(1L);
     }
 
     @Test
